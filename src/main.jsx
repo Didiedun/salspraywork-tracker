@@ -1,6 +1,6 @@
-import React from ‘react’
+import React from “react”
 import { useState, useEffect, useCallback, useRef } from “react”
-import ReactDOM from ‘react-dom/client’
+import ReactDOM from “react-dom/client”
 
 // ╔══════════════════════════════════════════════════════════════╗
 // ║  SUPABASE CONFIG                                            ║
