@@ -17,7 +17,7 @@ export function JobForm({ initial, onSave, onClose, title }) {
     downpayment:    initial.downpayment    ?? '',
     date_in:        initial.date_in        ? initial.date_in.slice(0, 10)        : '',
     est_completion: initial.est_completion ? initial.est_completion.slice(0, 10) : '',
-  } : EMPTY)
+  } : { ...EMPTY, stage: stages[0]?.value || 'ready' })
   const [saving, setSaving] = useState(false)
   const [err, setErr]       = useState('')
 
