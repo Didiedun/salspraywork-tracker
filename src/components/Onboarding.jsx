@@ -73,10 +73,10 @@ export function Onboarding() {
     <div className="min-h-screen bg-canvas flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center mx-auto mb-4">
-            <Wrench className="w-7 h-7 text-white" />
+          <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center mx-auto mb-4">
+            <span className="font-display font-bold text-white text-2xl">DD</span>
           </div>
-          <h1 className="font-display font-bold text-2xl text-ink">Selamat Datang!</h1>
+          <h1 className="font-display font-bold text-2xl text-ink">Selamat Datang ke Digital Depot!</h1>
           <p className="text-mute text-sm mt-1">Pilih cara untuk bermula</p>
         </div>
 

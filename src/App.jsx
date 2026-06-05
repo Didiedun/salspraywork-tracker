@@ -33,8 +33,8 @@ function AppRoutes() {
       <Route path="/" element={!user ? <LandingPage /> : <Navigate to="/dashboard" replace />} />
 
       {/* Auth pages redirect away if already logged in */}
-      <Route path="/login"    element={!user ? <AuthScreen mode="login"    /> : <Navigate to="/dashboard" replace />} />
-      <Route path="/register" element={!user ? <AuthScreen mode="register" /> : <Navigate to="/dashboard" replace />} />
+      <Route path="/login"    element={!user ? <AuthScreen /> : <Navigate to="/dashboard" replace />} />
+      <Route path="/register" element={!user ? <AuthScreen /> : <Navigate to="/dashboard" replace />} />
 
       {/* Not logged in */}
       {!user && <Route path="*" element={<Navigate to="/login" replace />} />}

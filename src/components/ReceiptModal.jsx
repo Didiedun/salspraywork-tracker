@@ -88,7 +88,7 @@ export function ReceiptModal({ job, workshop, onClose }) {
 
             {/* Footer */}
             <p className="text-center text-ash text-xs mt-4 pt-4 border-t border-hairline">
-              Terima kasih kerana memilih SALSPRAYWORKLEGACY<br />
+              Terima kasih kerana mempercayai {workshop?.name || 'Digital Depot'}<br />
               {new Date().toLocaleString('ms-MY')}
             </p>
           </div>

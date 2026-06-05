@@ -336,7 +336,7 @@ export function CustomerView() {
           </div>
           <div className="border-t border-divider-dark pt-4 flex flex-wrap items-center justify-between gap-2">
             {workshop.phone && <p className="text-on-dark-mute text-xs">{workshop.phone}</p>}
-            <p className="text-on-dark-mute text-xs">Dikuasakan oleh SprayTrack</p>
+            <p className="text-on-dark-mute text-xs">Dikuasakan oleh Digital Depot</p>
           </div>
         </div>
       </footer>
