@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { paymentStatus, PAYMENT_LABEL, PAYMENT_COLOR } from '../constants'
 import { X, Printer } from 'lucide-react'
 
-export function ReceiptModal({ job, onClose }) {
+export function ReceiptModal({ job, workshop, onClose }) {
   const balance = (Number(job.total_amount) || 0) - (Number(job.downpayment) || 0)
   const fmt     = (v) => v != null ? `RM ${Number(v).toFixed(2)}` : '-'
   const fmtDate = (d) => d ? new Date(d).toLocaleDateString('ms-MY', { day: '2-digit', month: 'long', year: 'numeric' }) : '-'
@@ -60,8 +60,8 @@ export function ReceiptModal({ job, onClose }) {
             {/* Header */}
             <div className="text-center mb-5">
               <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center font-bold text-white text-2xl mx-auto mb-3">S</div>
-              <p className="font-display font-bold text-ink text-lg">SALSPRAYWORKLEGACY</p>
-              <p className="text-ash text-xs mt-0.5">TikTok: @salsprayworklegacy</p>
+              <p className="font-display font-bold text-ink text-lg">{workshop?.name || 'SprayTrack'}</p>
+              {workshop?.phone && <p className="text-ash text-xs mt-0.5">{workshop.phone}</p>}
             </div>
 
             {/* Plate */}

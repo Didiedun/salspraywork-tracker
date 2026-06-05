@@ -1,4 +1,3 @@
-export const ADMIN_PASSWORD = 'salspray2025'
 export const OVERDUE_DAYS = 7
 
 export const STAGES = [

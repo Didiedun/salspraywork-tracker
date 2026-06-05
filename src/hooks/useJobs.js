@@ -1,15 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 
-const LS_KEY = 'salspray_jobs'
-
-function lsLoad() {
-  try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]') } catch { return [] }
+const lsKey = (wid) => `jobs_${wid}`
+function lsLoad(wid) {
+  try { return JSON.parse(localStorage.getItem(lsKey(wid)) || '[]') } catch { return [] }
 }
-function lsSave(jobs) { localStorage.setItem(LS_KEY, JSON.stringify(jobs)) }
+function lsSave(wid, jobs) { localStorage.setItem(lsKey(wid), JSON.stringify(jobs)) }
 function uid() { return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}` }
 
-// Strip keys that don't exist as columns yet (graceful degradation for new fields)
 async function safeInsert(payload) {
   let { data, error } = await supabase.from('jobs').insert([payload]).select('*, job_attachments(*)').single()
   if (error?.message?.includes('est_completion')) {
@@ -30,78 +28,85 @@ async function safeUpdate(id, payload) {
   return data
 }
 
-export function useJobs() {
+export function useJobs(workshopId) {
   const [jobs, setJobs]       = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState(null)
   const [offline, setOffline] = useState(false)
 
   const fetchJobs = useCallback(async () => {
+    if (!workshopId) { setLoading(false); return }
     setLoading(true); setError(null)
     const { data, error: err } = await supabase
-      .from('jobs').select('*, job_attachments(*)').order('created_at', { ascending: false })
+      .from('jobs').select('*, job_attachments(*)')
+      .eq('workshop_id', workshopId)
+      .order('created_at', { ascending: false })
     if (err) {
-      setOffline(true); setJobs(lsLoad())
+      setOffline(true); setJobs(lsLoad(workshopId))
       if (err.code !== 'FETCH_ERROR') setError(err.message)
     } else {
-      setOffline(false); setJobs(data || []); lsSave(data || [])
+      setOffline(false); setJobs(data || []); lsSave(workshopId, data || [])
     }
     setLoading(false)
-  }, [])
+  }, [workshopId])
 
   useEffect(() => { fetchJobs() }, [fetchJobs])
 
   const addJob = async (jobData) => {
+    const payload = { ...jobData, workshop_id: workshopId }
     if (offline) {
-      const j = { ...jobData, id: uid(), created_at: new Date().toISOString(), job_attachments: [] }
-      const next = [j, ...lsLoad()]; lsSave(next); setJobs(next); return j
+      const j = { ...payload, id: uid(), created_at: new Date().toISOString(), job_attachments: [] }
+      const next = [j, ...lsLoad(workshopId)]; lsSave(workshopId, next); setJobs(next); return j
     }
-    const data = await safeInsert(jobData)
-    const next = [data, ...jobs]; setJobs(next); lsSave(next); return data
+    const data = await safeInsert(payload)
+    const next = [data, ...jobs]; setJobs(next); lsSave(workshopId, next); return data
   }
 
   const updateJob = async (id, updates) => {
     if (offline) {
-      const next = lsLoad().map(j => j.id === id ? { ...j, ...updates } : j)
-      lsSave(next); setJobs(next); return next.find(j => j.id === id)
+      const next = lsLoad(workshopId).map(j => j.id === id ? { ...j, ...updates } : j)
+      lsSave(workshopId, next); setJobs(next); return next.find(j => j.id === id)
     }
     const data = await safeUpdate(id, updates)
-    const next = jobs.map(j => j.id === id ? data : j); setJobs(next); lsSave(next); return data
+    const next = jobs.map(j => j.id === id ? data : j); setJobs(next); lsSave(workshopId, next); return data
   }
 
   const deleteJob = async (id) => {
     if (offline) {
-      const next = lsLoad().filter(j => j.id !== id); lsSave(next); setJobs(next); return
+      const next = lsLoad(workshopId).filter(j => j.id !== id)
+      lsSave(workshopId, next); setJobs(next); return
     }
     const { error: err } = await supabase.from('jobs').delete().eq('id', id)
     if (err) throw err
-    const next = jobs.filter(j => j.id !== id); setJobs(next); lsSave(next)
+    const next = jobs.filter(j => j.id !== id); setJobs(next); lsSave(workshopId, next)
   }
 
   const addAttachment = async (jobId, url, type, caption = '', stage = '') => {
     if (offline) {
       const a = { id: uid(), job_id: jobId, url, type, caption, stage, created_at: new Date().toISOString() }
-      const next = lsLoad().map(j => j.id === jobId ? { ...j, job_attachments: [...(j.job_attachments||[]), a] } : j)
-      lsSave(next); setJobs(next); return a
+      const next = lsLoad(workshopId).map(j =>
+        j.id === jobId ? { ...j, job_attachments: [...(j.job_attachments || []), a] } : j)
+      lsSave(workshopId, next); setJobs(next); return a
     }
     const { data, error: err } = await supabase
       .from('job_attachments').insert([{ job_id: jobId, url, type, caption, stage }]).select().single()
     if (err) throw err
-    const next = jobs.map(j => j.id === jobId ? { ...j, job_attachments: [...(j.job_attachments||[]), data] } : j)
-    setJobs(next); lsSave(next); return data
+    const next = jobs.map(j =>
+      j.id === jobId ? { ...j, job_attachments: [...(j.job_attachments || []), data] } : j)
+    setJobs(next); lsSave(workshopId, next); return data
   }
 
   const deleteAttachment = async (jobId, attachmentId) => {
     if (offline) {
-      const next = lsLoad().map(j => j.id === jobId
-        ? { ...j, job_attachments: j.job_attachments.filter(a => a.id !== attachmentId) } : j)
-      lsSave(next); setJobs(next); return
+      const next = lsLoad(workshopId).map(j =>
+        j.id === jobId ? { ...j, job_attachments: j.job_attachments.filter(a => a.id !== attachmentId) } : j)
+      lsSave(workshopId, next); setJobs(next); return
     }
     const { error: err } = await supabase.from('job_attachments').delete().eq('id', attachmentId)
     if (err) throw err
-    const next = jobs.map(j => j.id === jobId
-      ? { ...j, job_attachments: j.job_attachments.filter(a => a.id !== attachmentId) } : j)
-    setJobs(next); lsSave(next)
+    const next = jobs.map(j =>
+      j.id === jobId ? { ...j, job_attachments: j.job_attachments.filter(a => a.id !== attachmentId) } : j)
+    setJobs(next); lsSave(workshopId, next)
   }
 
   return { jobs, loading, error, offline, fetchJobs, addJob, updateJob, deleteJob, addAttachment, deleteAttachment }

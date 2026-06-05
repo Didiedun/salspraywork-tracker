@@ -1,12 +1,17 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { PaymentBadge, TypeBadge } from './StatusBadge'
 import { StageBar } from './StageBar'
 import { ReceiptModal } from './ReceiptModal'
 import { paymentStatus } from '../constants'
-import { Search, Car, FileText, Image, Phone, Printer, ArrowLeftRight, X } from 'lucide-react'
+import { Search, Car, FileText, Image, Phone, Printer, ArrowLeftRight, X, Wrench, RefreshCw } from 'lucide-react'
 
 export function CustomerView() {
+  const { slug } = useParams()
+  const [workshop, setWorkshop]   = useState(null)
+  const [wsLoading, setWsLoading] = useState(true)
+
   const [mode, setMode]             = useState('plate')
   const [query, setQuery]           = useState('')
   const [jobs, setJobs]             = useState([])
@@ -17,21 +22,30 @@ export function CustomerView() {
   const [beforeAfter, setBeforeAfter] = useState(false)
   const [showReceipt, setShowReceipt] = useState(false)
 
+  useEffect(() => {
+    if (!slug) { setWsLoading(false); return }
+    supabase.from('workshops').select('*').eq('slug', slug).maybeSingle()
+      .then(({ data }) => { setWorkshop(data || null); setWsLoading(false) })
+  }, [slug])
+
   const search = async (e) => {
     e.preventDefault()
+    if (!workshop) return
     const q = query.trim().toUpperCase().replace(/\s+/g, '')
     if (!q) return
     setLoading(true); setSearched(false); setActiveJob(null); setJobs([])
     if (mode === 'plate') {
       const { data } = await supabase
         .from('jobs').select('*, job_attachments(*)')
+        .eq('workshop_id', workshop.id)
         .ilike('plate', q).eq('archived', false)
-        .order('created_at', { ascending: false }).limit(1).single()
+        .order('created_at', { ascending: false }).limit(1).maybeSingle()
       setActiveJob(data || null)
     } else {
       const phone = query.trim()
       const { data } = await supabase
         .from('jobs').select('*, job_attachments(*)')
+        .eq('workshop_id', workshop.id)
         .ilike('phone', `%${phone}%`)
         .order('created_at', { ascending: false })
       const list = data || []
@@ -41,16 +55,16 @@ export function CustomerView() {
     setSearched(true); setLoading(false)
   }
 
-  const job         = activeJob
-  const photos      = job?.job_attachments?.filter(a => a.type === 'photo') || []
-  const firstPhoto  = photos[0]
-  const lastPhoto   = photos[photos.length - 1]
+  const job          = activeJob
+  const photos       = job?.job_attachments?.filter(a => a.type === 'photo') || []
+  const firstPhoto   = photos[0]
+  const lastPhoto    = photos[photos.length - 1]
   const hasBeforeAfter = photos.length >= 2
 
-  const formatDate  = (d) => d ? new Date(d).toLocaleDateString('ms-MY', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'
-  const formatMoney = (v) => v != null ? `RM ${Number(v).toFixed(2)}` : '-'
-  const balance     = job ? (Number(job.total_amount) || 0) - (Number(job.downpayment) || 0) : 0
-  const pStatus     = job ? paymentStatus(job) : null
+  const formatDate   = (d) => d ? new Date(d).toLocaleDateString('ms-MY', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'
+  const formatMoney  = (v) => v != null ? `RM ${Number(v).toFixed(2)}` : '-'
+  const balance      = job ? (Number(job.total_amount) || 0) - (Number(job.downpayment) || 0) : 0
+  const pStatus      = job ? paymentStatus(job) : null
 
   const paymentBorder = {
     paid:    'border-emerald-200 bg-emerald-50',
@@ -58,14 +72,30 @@ export function CustomerView() {
     unpaid:  'border-red-200 bg-red-50',
   }
 
+  if (wsLoading) return (
+    <div className="min-h-screen bg-canvas flex items-center justify-center">
+      <RefreshCw className="w-6 h-6 text-mute animate-spin" />
+    </div>
+  )
+
+  if (!workshop) return (
+    <div className="min-h-screen bg-canvas flex flex-col items-center justify-center p-4 text-center">
+      <Wrench className="w-12 h-12 text-ash mb-4 opacity-40" />
+      <p className="font-display font-bold text-ink text-lg">Bengkel tidak dijumpai</p>
+      <p className="text-mute text-sm mt-1">URL ini tidak wujud atau sudah tidak aktif.</p>
+    </div>
+  )
+
   return (
     <div className="min-h-screen bg-canvas flex flex-col">
       {/* Header */}
       <div className="bg-canvas border-b border-hairline">
         <div className="max-w-xl mx-auto px-4 py-5 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center font-bold text-white">S</div>
+          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+            <Wrench className="w-5 h-5 text-white" />
+          </div>
           <div>
-            <h1 className="font-display font-bold text-ink text-base leading-tight">SALSPRAYWORKLEGACY</h1>
+            <h1 className="font-display font-bold text-ink text-base leading-tight">{workshop.name}</h1>
             <p className="text-mute text-xs">Semak Status Kenderaan Anda</p>
           </div>
         </div>
@@ -79,7 +109,7 @@ export function CustomerView() {
               onClick={() => { setMode(m); setQuery(''); setSearched(false); setActiveJob(null); setJobs([]) }}
               className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
                 mode === m
-                  ? 'bg-canvas text-ink border border-hairline shadow-sm'
+                  ? 'bg-surface-dark text-on-dark'
                   : 'text-mute hover:text-charcoal'
               }`}>{label}</button>
           ))}
@@ -92,12 +122,10 @@ export function CustomerView() {
               ? <Car   className="absolute left-4 top-1/2 -translate-y-1/2 text-ash w-4 h-4" />
               : <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-ash w-4 h-4" />
             }
-            <input
-              value={query}
+            <input value={query}
               onChange={e => setQuery(mode === 'plate' ? e.target.value.toUpperCase() : e.target.value)}
               placeholder={mode === 'plate' ? 'cth: WXX 1234' : 'cth: 012-3456789'}
-              className="w-full bg-surface-card border border-hairline rounded-full pl-11 pr-5 py-3 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors"
-            />
+              className="w-full bg-surface-card border border-hairline rounded-full pl-11 pr-5 py-3 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors" />
           </div>
           <button type="submit" disabled={loading}
             className="bg-primary hover:bg-primary-deep disabled:opacity-50 text-white rounded-full px-5 py-3 flex items-center gap-2 font-semibold text-sm transition-colors">
@@ -136,13 +164,12 @@ export function CustomerView() {
           </div>
         )}
 
-        {/* Idle state — fills empty space before first search */}
+        {/* Idle state */}
         {!searched && (
           <div className="space-y-4 pt-2">
             <p className="text-center text-charcoal text-sm leading-relaxed">
               Masukkan nombor plat atau nombor telefon anda<br />untuk semak status kerja kenderaan.
             </p>
-
             <div>
               <p className="text-xs font-semibold text-mute uppercase tracking-wide mb-3 px-1">Perkhidmatan Kami</p>
               <div className="grid grid-cols-2 gap-2">
@@ -167,7 +194,6 @@ export function CustomerView() {
         {/* Job detail */}
         {job && (
           <div className="space-y-3">
-            {/* Stage progress */}
             <div className="bg-surface-card rounded-lg border border-hairline p-5">
               <div className="flex items-start justify-between mb-4">
                 <div>
@@ -176,23 +202,18 @@ export function CustomerView() {
                 </div>
                 <TypeBadge type={job.type} />
               </div>
-
               <div className="bg-canvas rounded-md p-4 border border-hairline">
                 <p className="text-mute text-xs mb-3 font-medium">Peringkat Kerja</p>
                 <StageBar current={job.stage} />
               </div>
-
               {job.est_completion && (
-                <div className="mt-3 bg-red-50 border border-red-200 rounded-md px-4 py-3 flex items-center gap-3">
-                  <div>
-                    <p className="text-primary text-xs font-semibold">Dijangka Siap</p>
-                    <p className="text-ink font-bold">{formatDate(job.est_completion)}</p>
-                  </div>
+                <div className="mt-3 bg-red-50 border border-red-200 rounded-md px-4 py-3">
+                  <p className="text-primary text-xs font-semibold">Dijangka Siap</p>
+                  <p className="text-ink font-bold">{formatDate(job.est_completion)}</p>
                 </div>
               )}
             </div>
 
-            {/* Payment + details */}
             <div className="bg-surface-card rounded-lg border border-hairline p-5 space-y-3">
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="bg-canvas rounded-md p-3 border border-hairline">
@@ -241,7 +262,6 @@ export function CustomerView() {
               )}
             </div>
 
-            {/* Before / After */}
             {hasBeforeAfter && (
               <div className="bg-surface-card rounded-lg border border-hairline p-5">
                 <div className="flex items-center justify-between mb-3">
@@ -254,7 +274,6 @@ export function CustomerView() {
                     {beforeAfter ? 'Grid' : 'Sebelum / Selepas'}
                   </button>
                 </div>
-
                 {beforeAfter ? (
                   <div className="grid grid-cols-2 gap-3">
                     <div>
@@ -282,7 +301,6 @@ export function CustomerView() {
               </div>
             )}
 
-            {/* Actions */}
             <div className="grid grid-cols-2 gap-3">
               {job.phone && (
                 <a href={`https://wa.me/60${job.phone.replace(/^0/, '')}?text=Salam%2C%20saya%20ingin%20tanya%20tentang%20kenderaan%20${job.plate}`}
@@ -299,19 +317,20 @@ export function CustomerView() {
             </div>
           </div>
         )}
-
       </div>
 
       {/* Footer */}
       <footer className="bg-surface-deep">
         <div className="max-w-xl mx-auto px-4 py-8">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center font-bold text-white text-sm flex-shrink-0">S</div>
-            <p className="font-display font-bold text-on-dark text-sm">SALSPRAYWORKLEGACY</p>
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+              <Wrench className="w-4 h-4 text-white" />
+            </div>
+            <p className="font-display font-bold text-on-dark text-sm">{workshop.name}</p>
           </div>
           <div className="border-t border-divider-dark pt-4 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-on-dark-mute text-xs">TikTok: @salsprayworklegacy</p>
-            <p className="text-on-dark-mute text-xs">Powered by SalSpray System</p>
+            {workshop.phone && <p className="text-on-dark-mute text-xs">{workshop.phone}</p>}
+            <p className="text-on-dark-mute text-xs">Dikuasakan oleh SprayTrack</p>
           </div>
         </div>
       </footer>
@@ -327,7 +346,7 @@ export function CustomerView() {
       )}
 
       {showReceipt && job && (
-        <ReceiptModal job={job} onClose={() => setShowReceipt(false)} />
+        <ReceiptModal job={job} workshop={workshop} onClose={() => setShowReceipt(false)} />
       )}
     </div>
   )

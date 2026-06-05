@@ -1,26 +1,71 @@
-import { useState } from 'react'
-import { CustomerView } from './components/CustomerView'
-import { LoginScreen } from './components/LoginScreen'
-import { Dashboard } from './components/Dashboard'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AppProvider, useApp } from './context/AppContext'
+import { AuthScreen }    from './components/AuthScreen'
+import { Onboarding }    from './components/Onboarding'
+import { Layout }        from './components/Layout'
+import { Dashboard }     from './components/Dashboard'
+import { InventoryPage } from './components/InventoryPage'
+import { WorkersPage }   from './components/WorkersPage'
+import { WorkerView }    from './components/WorkerView'
+import { CustomerView }  from './components/CustomerView'
+import { RefreshCw }     from 'lucide-react'
 
-export default function App() {
-  const [view, setView] = useState('customer') // 'customer' | 'login' | 'admin'
+function Spinner() {
+  return (
+    <div className="min-h-screen bg-canvas flex items-center justify-center">
+      <RefreshCw className="w-6 h-6 text-mute animate-spin" />
+    </div>
+  )
+}
 
-  const handleLogin = () => setView('admin')
-  const handleLogout = () => setView('customer')
-
-  if (view === 'admin') return <Dashboard onLogout={handleLogout} />
-  if (view === 'login') return <LoginScreen onLogin={handleLogin} onBack={() => setView('customer')} />
+function AppRoutes() {
+  const { user, workshop, role, loading } = useApp()
+  if (loading) return <Spinner />
 
   return (
-    <div className="relative">
-      <CustomerView />
-      <button
-        onClick={() => setView('login')}
-        className="fixed bottom-5 right-5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium rounded-full px-4 py-2 shadow-lg transition-colors z-40"
-      >
-        🔐 Staf
-      </button>
-    </div>
+    <Routes>
+      {/* Always-public: customer status page per workshop */}
+      <Route path="/w/:slug" element={<CustomerView />} />
+
+      {/* Auth pages redirect away if already logged in */}
+      <Route path="/login"    element={!user ? <AuthScreen mode="login"    /> : <Navigate to="/dashboard" replace />} />
+      <Route path="/register" element={!user ? <AuthScreen mode="register" /> : <Navigate to="/dashboard" replace />} />
+
+      {/* Not logged in */}
+      {!user && <Route path="*" element={<Navigate to="/login" replace />} />}
+
+      {/* Logged in, no workshop yet → onboarding */}
+      {user && !workshop && (
+        <>
+          <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="*" element={<Navigate to="/onboarding" replace />} />
+        </>
+      )}
+
+      {/* Worker: read-only job sheet */}
+      {user && workshop && role === 'worker' && (
+        <Route path="*" element={<WorkerView />} />
+      )}
+
+      {/* Owner: full dashboard */}
+      {user && workshop && role === 'owner' && (
+        <>
+          <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+          <Route path="/inventory" element={<Layout><InventoryPage /></Layout>} />
+          <Route path="/workers"   element={<Layout><WorkersPage /></Layout>} />
+          <Route path="*"          element={<Navigate to="/dashboard" replace />} />
+        </>
+      )}
+    </Routes>
+  )
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppProvider>
+        <AppRoutes />
+      </AppProvider>
+    </BrowserRouter>
   )
 }
