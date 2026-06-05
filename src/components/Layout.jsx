@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
-import { LayoutDashboard, Package, Users, LogOut, Wrench, ExternalLink } from 'lucide-react'
+import { LayoutDashboard, Package, Users, LogOut, Wrench, ExternalLink, Settings } from 'lucide-react'
 
 const navItems = [
   { to: '/dashboard', label: 'Kerja',     icon: LayoutDashboard },
   { to: '/inventory', label: 'Inventori', icon: Package },
   { to: '/workers',   label: 'Pekerja',   icon: Users },
+  { to: '/settings',  label: 'Tetapan',   icon: Settings },
 ]
 
 export function Layout({ children }) {
@@ -17,8 +18,11 @@ export function Layout({ children }) {
       <div className="bg-canvas border-b border-hairline sticky top-0 z-30">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-              <Wrench className="w-4 h-4 text-white" />
+            <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center flex-shrink-0 overflow-hidden">
+              {workshop?.logo_url
+                ? <img src={workshop.logo_url} alt="logo" className="w-full h-full object-cover" />
+                : <Wrench className="w-4 h-4 text-white" />
+              }
             </div>
             <p className="font-display font-bold text-ink text-sm truncate">{workshop?.name}</p>
           </div>

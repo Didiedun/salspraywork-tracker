@@ -4,11 +4,12 @@ import { AuthScreen }    from './components/AuthScreen'
 import { Onboarding }    from './components/Onboarding'
 import { Layout }        from './components/Layout'
 import { Dashboard }     from './components/Dashboard'
-import { InventoryPage } from './components/InventoryPage'
-import { WorkersPage }   from './components/WorkersPage'
-import { WorkerView }    from './components/WorkerView'
-import { CustomerView }  from './components/CustomerView'
-import { LandingPage }   from './components/LandingPage'
+import { InventoryPage }     from './components/InventoryPage'
+import { WorkersPage }       from './components/WorkersPage'
+import { WorkerView }        from './components/WorkerView'
+import { CustomerView }      from './components/CustomerView'
+import { LandingPage }       from './components/LandingPage'
+import { WorkshopSettings }  from './components/WorkshopSettings'
 import { RefreshCw }     from 'lucide-react'
 
 function Spinner() {
@@ -57,6 +58,7 @@ function AppRoutes() {
           <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
           <Route path="/inventory" element={<Layout><InventoryPage /></Layout>} />
           <Route path="/workers"   element={<Layout><WorkersPage /></Layout>} />
+          <Route path="/settings"  element={<Layout><WorkshopSettings /></Layout>} />
           <Route path="*"          element={<Navigate to="/dashboard" replace />} />
         </>
       )}

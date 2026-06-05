@@ -80,6 +80,98 @@ const faqs = [
   { q: 'Boleh saya eksport data saya?', a: 'Ya. Data invois dan rekod kenderaan boleh dicetak atau disimpan sebagai PDF pada bila-bila masa.' },
 ]
 
+function BillingToggle({ stats, loading }) {
+  const [annual, setAnnual] = useState(false)
+  const earlyBird = !loading && (stats?.workshops ?? 0) < 10
+
+  return (
+    <div className="max-w-3xl mx-auto">
+      {/* Monthly / Annual toggle */}
+      <div className="flex items-center justify-center gap-3 mb-8">
+        <span className={`text-sm font-semibold transition-colors ${!annual ? 'text-ink' : 'text-mute'}`}>Bulanan</span>
+        <button onClick={() => setAnnual(a => !a)}
+          className={`relative w-12 h-6 rounded-full transition-colors ${annual ? 'bg-primary' : 'bg-stone'}`}>
+          <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${annual ? 'translate-x-7' : 'translate-x-1'}`} />
+        </button>
+        <span className={`text-sm font-semibold transition-colors ${annual ? 'text-ink' : 'text-mute'}`}>Tahunan</span>
+      </div>
+
+      {/* Plan cards */}
+      <div className="grid sm:grid-cols-2 gap-6">
+
+        {/* ── Free / Early-bird ── */}
+        <div className="bg-surface-card border-2 border-primary rounded-xl p-6 relative">
+          <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+            <span className="bg-primary text-white text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap">
+              {earlyBird ? '⚡ EARLY BIRD' : 'PALING POPULAR'}
+            </span>
+          </div>
+
+          <p className="font-display font-bold text-ink text-lg mb-1 mt-1">
+            {earlyBird ? 'Percuma Selamanya' : 'Percubaan Percuma'}
+          </p>
+          <p className="text-mute text-sm mb-4">
+            {earlyBird ? `Untuk ${10 - (stats?.workshops ?? 0)} bengkel terawal lagi` : '14 hari, semua ciri tersedia'}
+          </p>
+
+          <div className="flex items-baseline gap-1 mb-1">
+            <span className="font-display font-bold text-5xl text-primary">RM 0</span>
+            <span className="text-mute text-sm">{earlyBird ? '/ selamanya' : '/ 14 hari'}</span>
+          </div>
+          <p className="text-xs text-charcoal mb-5">
+            {earlyBird ? 'Tiada caj selepas percubaan. Dijamin percuma.' : 'Tiada kad kredit diperlukan.'}
+          </p>
+
+          <ul className="space-y-2.5 mb-6">
+            {freeFeatures.map(f => (
+              <li key={f} className="flex items-center gap-2 text-sm text-charcoal">
+                <CheckCircle className="w-4 h-4 text-badge-success flex-shrink-0" /> {f}
+              </li>
+            ))}
+          </ul>
+
+          <Link to="/register"
+            className="block w-full bg-primary hover:bg-primary-deep text-white font-bold rounded-full py-3 text-center text-sm transition-colors">
+            {earlyBird ? 'Dapatkan Akses Percuma' : 'Mulakan Percuma'}
+          </Link>
+        </div>
+
+        {/* ── Pro (disabled) ── */}
+        <div className="bg-surface-card border border-hairline rounded-xl p-6 relative opacity-80">
+          <p className="font-display font-bold text-ink text-lg mb-1 mt-1">Pro</p>
+          <p className="text-mute text-sm mb-4">Untuk bengkel yang berkembang</p>
+
+          <div className="flex items-baseline gap-1 mb-1">
+            <span className="font-display font-bold text-5xl text-ink">
+              {annual ? 'RM 360' : 'RM 30'}
+            </span>
+            <span className="text-mute text-sm">/{annual ? 'tahun' : 'bulan'}</span>
+          </div>
+          {annual && (
+            <p className="text-xs text-badge-success font-semibold mb-1">Bersamaan RM 30/bulan</p>
+          )}
+          <p className="text-xs text-charcoal mb-5">Bermula selepas 10 bengkel pertama berdaftar.</p>
+
+          <ul className="space-y-2.5 mb-6">
+            {proFeatures.map(f => (
+              <li key={f} className="flex items-center gap-2 text-sm text-charcoal">
+                <CheckCircle className="w-4 h-4 text-stone flex-shrink-0" /> {f}
+              </li>
+            ))}
+          </ul>
+
+          <button disabled
+            className="w-full bg-canvas border border-hairline text-ash font-bold rounded-full py-3 text-sm cursor-not-allowed">
+            Akan Datang
+          </button>
+          <p className="text-center text-xs text-mute mt-2">Aktif selepas 10 bengkel berdaftar</p>
+        </div>
+
+      </div>
+    </div>
+  )
+}
+
 /* ─── main component ────────────────────────────────────── */
 export function LandingPage() {
   const stats   = usePlatformStats()
@@ -215,62 +307,28 @@ export function LandingPage() {
 
       {/* ── PRICING ── */}
       <section id="harga" className="max-w-5xl mx-auto px-4 py-20">
-        <div className="text-center mb-12">
+        <div className="text-center mb-4">
           <p className="text-xs font-bold text-primary uppercase tracking-widest mb-3">Harga</p>
           <h2 className="font-display font-bold text-3xl sm:text-4xl text-ink mb-4">Bermula dengan RM 0</h2>
-          <p className="text-charcoal text-lg">Cuba percuma selama 14 hari. Teruskan dengan RM30 sebulan sahaja.</p>
+          <p className="text-charcoal text-lg">Cuba percuma selama 14 hari. Teruskan dengan harga yang berbaloi.</p>
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
-          {/* Free plan */}
-          <div className="bg-surface-card border-2 border-primary rounded-xl p-8 relative">
-            <div className="absolute -top-3.5 left-6">
-              <span className="bg-primary text-white text-xs font-bold px-4 py-1.5 rounded-full">MULA DI SINI</span>
+        {/* Early adopter promo */}
+        {!loading && stats?.workshops < 10 && (
+          <div className="max-w-3xl mx-auto mb-8">
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 flex items-center gap-4">
+              <Zap className="w-5 h-5 text-amber-600 flex-shrink-0" fill="currentColor" />
+              <div className="flex-1">
+                <p className="text-amber-800 font-bold text-sm">Tawaran Pengguna Awal — {10 - (stats?.workshops ?? 0)} tempat lagi!</p>
+                <p className="text-amber-700 text-xs mt-0.5">Bengkel yang mendaftar sekarang mendapat akses <strong>PERCUMA SELAMANYA</strong> — tiada caj selepas percubaan.</p>
+              </div>
+              <span className="font-display font-bold text-2xl text-amber-700 flex-shrink-0">{stats?.workshops ?? 0}/10</span>
             </div>
-            <p className="text-charcoal font-semibold text-sm mb-2 mt-2">Percubaan Percuma</p>
-            <div className="flex items-end gap-1 mb-1">
-              <span className="font-display font-bold text-5xl text-ink">RM 0</span>
-            </div>
-            <p className="text-mute text-sm mb-6">14 hari penuh, tanpa had</p>
-            <ul className="space-y-2.5 mb-8">
-              {freeFeatures.map(f => (
-                <li key={f} className="flex items-start gap-2.5 text-sm text-charcoal">
-                  <CheckCircle className="w-4 h-4 text-badge-success flex-shrink-0 mt-0.5" />
-                  {f}
-                </li>
-              ))}
-            </ul>
-            <Link to="/register"
-              className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-deep text-white font-bold rounded-full py-3.5 transition-colors text-sm">
-              Mulakan Percuma <ArrowRight className="w-4 h-4" />
-            </Link>
-            <p className="text-center text-ash text-xs mt-3">Tiada kad kredit diperlukan</p>
           </div>
+        )}
 
-          {/* Pro plan */}
-          <div className="bg-surface-card border border-hairline rounded-xl p-8">
-            <p className="text-charcoal font-semibold text-sm mb-2">Selepas Percubaan</p>
-            <div className="flex items-end gap-1 mb-1">
-              <span className="text-mute text-lg font-semibold">RM</span>
-              <span className="font-display font-bold text-5xl text-ink">30</span>
-              <span className="text-mute mb-2 text-sm">/bulan</span>
-            </div>
-            <p className="text-mute text-sm mb-6">Aktif selepas tempoh percuma</p>
-            <ul className="space-y-2.5 mb-8">
-              {proFeatures.map(f => (
-                <li key={f} className="flex items-start gap-2.5 text-sm text-charcoal">
-                  <CheckCircle className="w-4 h-4 text-badge-success flex-shrink-0 mt-0.5" />
-                  {f}
-                </li>
-              ))}
-            </ul>
-            <Link to="/register"
-              className="w-full flex items-center justify-center gap-2 bg-surface-dark hover:bg-surface-deep text-on-dark font-bold rounded-full py-3.5 transition-colors text-sm">
-              Cuba Sekarang <ArrowRight className="w-4 h-4" />
-            </Link>
-            <p className="text-center text-ash text-xs mt-3">Teruskan selepas 14 hari percuma</p>
-          </div>
-        </div>
+        {/* Billing toggle */}
+        <BillingToggle stats={stats} loading={loading} />
       </section>
 
       {/* ── TRUST STRIP ── */}

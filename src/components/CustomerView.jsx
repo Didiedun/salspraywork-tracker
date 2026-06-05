@@ -91,8 +91,11 @@ export function CustomerView() {
       {/* Header */}
       <div className="bg-canvas border-b border-hairline">
         <div className="max-w-xl mx-auto px-4 py-5 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-            <Wrench className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0 overflow-hidden">
+            {workshop.logo_url
+              ? <img src={workshop.logo_url} alt="logo" className="w-full h-full object-cover" />
+              : <Wrench className="w-5 h-5 text-white" />
+            }
           </div>
           <div>
             <h1 className="font-display font-bold text-ink text-base leading-tight">{workshop.name}</h1>
@@ -323,8 +326,11 @@ export function CustomerView() {
       <footer className="bg-surface-deep">
         <div className="max-w-xl mx-auto px-4 py-8">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-              <Wrench className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 overflow-hidden">
+              {workshop.logo_url
+                ? <img src={workshop.logo_url} alt="logo" className="w-full h-full object-cover" />
+                : <Wrench className="w-4 h-4 text-white" />
+              }
             </div>
             <p className="font-display font-bold text-on-dark text-sm">{workshop.name}</p>
           </div>

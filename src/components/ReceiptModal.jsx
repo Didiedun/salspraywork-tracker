@@ -59,7 +59,12 @@ export function ReceiptModal({ job, workshop, onClose }) {
           <div className="p-5">
             {/* Header */}
             <div className="text-center mb-5">
-              <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center font-bold text-white text-2xl mx-auto mb-3">S</div>
+              <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center font-bold text-white text-2xl mx-auto mb-3 overflow-hidden">
+                {workshop?.logo_url
+                  ? <img src={workshop.logo_url} alt="logo" className="w-full h-full object-cover" />
+                  : (workshop?.name?.[0]?.toUpperCase() || 'S')
+                }
+              </div>
               <p className="font-display font-bold text-ink text-lg">{workshop?.name || 'SprayTrack'}</p>
               {workshop?.phone && <p className="text-ash text-xs mt-0.5">{workshop.phone}</p>}
             </div>
