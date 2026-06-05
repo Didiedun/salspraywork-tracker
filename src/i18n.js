@@ -272,6 +272,9 @@ export const translations = {
     land_monthly:  'Bulanan',
     land_annual:   'Tahunan',
     land_save_rm:  'Jimat RM',
+
+    /* whatsapp message */
+    wa_msg: 'Hi, saya ingin tanya tentang kenderaan',
   },
 
   en: {
@@ -547,5 +550,8 @@ export const translations = {
     land_monthly:  'Monthly',
     land_annual:   'Annual',
     land_save_rm:  'Save RM',
+
+    /* whatsapp message */
+    wa_msg: 'Hello, I would like to enquire about vehicle',
   },
 }

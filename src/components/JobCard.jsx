@@ -153,7 +153,7 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
               </span>
             )}
             {job.phone && (
-              <a href={`https://wa.me/60${job.phone.replace(/^0/, '')}?text=Salam%2C%20tentang%20kenderaan%20${job.plate}`}
+              <a href={(() => { const d = job.phone.replace(/\D/g,''); const p = d.startsWith('60') ? d : '60'+d.replace(/^0/,''); return `https://wa.me/${p}?text=${encodeURIComponent(t('wa_msg') + ' ' + job.plate)}` })()}
                 target="_blank" rel="noreferrer"
                 className="text-badge-success hover:text-emerald-700 font-semibold" onClick={e => e.stopPropagation()}>
                 {t('card_whatsapp')}
