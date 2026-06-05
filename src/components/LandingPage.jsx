@@ -1,174 +1,208 @@
 import { Link } from 'react-router-dom'
+import { usePlatformStats } from '../hooks/usePlatformStats'
 import {
   Wrench, ClipboardList, Package, Users, Smartphone, FileText,
-  CheckCircle, ArrowRight, Star, BarChart2, Bell, Shield
+  CheckCircle, ArrowRight, BarChart2, Shield, Bell, Zap,
+  ChevronDown, ChevronRight, Star, TrendingUp, Clock, Camera
 } from 'lucide-react'
+import { useState } from 'react'
 
+/* ─── helpers ─────────────────────────────────────────── */
+function scrollTo(id) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+}
+
+function StatCard({ value, label, loading }) {
+  return (
+    <div className="text-center">
+      <p className="font-display font-bold text-3xl sm:text-4xl text-primary">
+        {loading ? '—' : value}
+      </p>
+      <p className="text-charcoal text-sm mt-1 font-medium">{label}</p>
+    </div>
+  )
+}
+
+function FaqItem({ q, a }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <button onClick={() => setOpen(o => !o)}
+      className="w-full text-left bg-surface-card border border-hairline rounded-lg px-6 py-5 hover:bg-surface-bone transition-colors">
+      <div className="flex items-center justify-between gap-4">
+        <p className="font-semibold text-ink text-sm">{q}</p>
+        <ChevronDown className={`w-4 h-4 text-ash flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </div>
+      {open && <p className="text-charcoal text-sm mt-3 leading-relaxed">{a}</p>}
+    </button>
+  )
+}
+
+/* ─── data ─────────────────────────────────────────────── */
 const features = [
-  {
-    icon: ClipboardList,
-    title: 'Pengurusan Kerja',
-    desc: 'Tambah, kemaskini dan jejak semua kerja dalam bengkel. Tahu status setiap kereta pada bila-bila masa.',
-  },
-  {
-    icon: Smartphone,
-    title: 'Pelanggan Semak Sendiri',
-    desc: 'Pelanggan boleh semak status kenderaan mereka sendiri melalui link khas bengkel anda. Kurang panggilan, lebih fokus.',
-  },
-  {
-    icon: Package,
-    title: 'Inventori Masa Nyata',
-    desc: 'Pantau stok cat, bahan dan peralatan. Amaran automatik bila stok hampir habis.',
-  },
-  {
-    icon: Users,
-    title: 'Akaun Pekerja',
-    desc: 'Jemput pekerja masuk sistem. Mereka lihat tugasan mereka sahaja — tanpa akses ke maklumat kewangan.',
-  },
-  {
-    icon: FileText,
-    title: 'Resit & Invois',
-    desc: 'Jana resit profesional terus dari sistem. Pelanggan boleh simpan sebagai PDF.',
-  },
-  {
-    icon: BarChart2,
-    title: 'Laporan Pendapatan',
-    desc: 'Lihat carta pendapatan bulanan, kerja tertunggak dan prestasi bengkel dalam sekilas pandang.',
-  },
+  { icon: ClipboardList, title: 'Pengurusan Kerja',       desc: 'Jejak semua kerja dari mula hingga siap. Tahu status setiap kenderaan dalam bengkel pada bila-bila masa.' },
+  { icon: Smartphone,   title: 'Portal Status Pelanggan', desc: 'Pelanggan semak status kenderaan sendiri melalui link khas. Kurang panggilan masuk, lebih fokus kerja.' },
+  { icon: Package,      title: 'Inventori Masa Nyata',    desc: 'Pantau stok cat dan bahan. Amaran automatik sebelum kehabisan supaya operasi tidak terganggu.' },
+  { icon: Users,        title: 'Pengurusan Pekerja',      desc: 'Jemput pekerja masuk sistem dengan kod jemputan. Mereka lihat tugasan sahaja — tanpa akses kewangan.' },
+  { icon: FileText,     title: 'Resit & Invois Digital',  desc: 'Jana resit profesional terus dari sistem. Pelanggan simpan sebagai PDF tanpa perlukan pencetak.' },
+  { icon: BarChart2,    title: 'Laporan Pendapatan',      desc: 'Carta pendapatan bulanan, kerja tertunggak dan prestasi bengkel tersedia dalam sekilas pandang.' },
+  { icon: Camera,       title: 'Gambar Sebelum & Selepas', desc: 'Lampir foto setiap peringkat kerja. Tunjuk hasil kerja kepada pelanggan dengan visual yang jelas.' },
+  { icon: Clock,        title: 'Amaran Kerja Tertangguh', desc: 'Sistem tanda kerja yang melebihi tempoh secara automatik. Pastikan tiada kerja yang terlupa.' },
 ]
 
 const steps = [
-  { num: '01', title: 'Daftar Percuma', desc: 'Buat akaun dalam masa 30 saat. Tiada kad kredit diperlukan.' },
-  { num: '02', title: 'Tetapkan Bengkel', desc: 'Masukkan nama bengkel. Sistem terus sedia untuk digunakan.' },
-  { num: '03', title: 'Mula Urus Kerja', desc: 'Tambah kerja pertama dan kongsi link status kepada pelanggan.' },
+  { num: '01', title: 'Daftar Percuma',      desc: 'Buat akaun dalam masa 30 saat. Tiada kad kredit, tiada kontrak.' },
+  { num: '02', title: 'Tetapkan Bengkel',    desc: 'Namakan bengkel anda. Link status pelanggan terus sedia untuk dikongsi.' },
+  { num: '03', title: 'Mula Urus Kerja',     desc: 'Tambah kerja pertama dan ajak pekerja masuk. Semua sudah sedia.' },
 ]
 
-const pricingFeatures = [
-  'Kerja tanpa had',
-  'Paparan status pelanggan',
-  'Pengurusan inventori',
-  'Akaun pekerja (tanpa had)',
+const freeFeatures = [
+  'Kerja tanpa had (14 hari)',
+  'Portal status pelanggan',
+  'Pekerja tanpa had',
   'Resit & invois digital',
+  'Inventori asas',
   'Laporan pendapatan',
-  'Sokongan melalui WhatsApp',
+]
+const proFeatures = [
+  'Semua ciri percuma',
+  'Kerja & inventori tanpa had',
+  'Laporan lanjutan',
+  'Sokongan WhatsApp',
+  'Kemas kini ciri baru percuma',
+  'Data disimpan selamanya',
 ]
 
 const faqs = [
-  {
-    q: 'Adakah data saya selamat?',
-    a: 'Ya. Data anda disimpan di Supabase, platform pangkalan data bertaraf enterprise yang digunakan oleh ribuan syarikat di seluruh dunia. Setiap bengkel hanya boleh akses data mereka sendiri.',
-  },
-  {
-    q: 'Boleh guna dari telefon?',
-    a: 'Ya, SprayTrack direka khas untuk mudah alih. Ia berfungsi lancar di telefon, tablet dan komputer tanpa perlu muat turun aplikasi.',
-  },
-  {
-    q: 'Apa yang berlaku selepas 14 hari percuma?',
-    a: 'Anda akan dimaklumkan. Jika ingin teruskan, bayar RM30/bulan. Jika tidak, akaun akan dibekukan tetapi data anda tidak dipadam.',
-  },
-  {
-    q: 'Berapa ramai pekerja boleh ditambah?',
-    a: 'Tiada had. Tambah seberapa ramai pekerja yang anda perlukan tanpa kos tambahan.',
-  },
+  { q: 'Apa yang berlaku selepas 14 hari?', a: 'Kami akan hantar peringatan. Jika ingin teruskan, bayar RM30/bulan. Jika tidak, akaun dibekukan tetapi data anda tidak dipadam — boleh aktifkan semula bila-bila masa.' },
+  { q: 'Boleh guna dari telefon?', a: 'Ya, SprayTrack direka khas untuk mudah alih. Berfungsi lancar di telefon, tablet dan komputer tanpa perlu muat turun aplikasi. Buka pelayar web, terus boleh guna.' },
+  { q: 'Adakah data bengkel saya selamat?', a: 'Data anda disimpan di Supabase — platform pangkalan data bertaraf enterprise yang disulitkan. Setiap bengkel hanya boleh akses data mereka sendiri.' },
+  { q: 'Berapa ramai pekerja boleh ditambah?', a: 'Tiada had. Tambah seberapa ramai pekerja yang anda perlukan tanpa kos tambahan langsung.' },
+  { q: 'Boleh saya eksport data saya?', a: 'Ya. Data invois dan rekod kenderaan boleh dicetak atau disimpan sebagai PDF pada bila-bila masa.' },
 ]
 
+/* ─── main component ────────────────────────────────────── */
 export function LandingPage() {
+  const stats   = usePlatformStats()
+  const loading = stats === null
+
   return (
     <div className="min-h-screen bg-canvas">
-      {/* Nav */}
-      <nav className="sticky top-0 z-40 bg-canvas/90 backdrop-blur border-b border-hairline">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+
+      {/* ── NAV ── */}
+      <nav className="sticky top-0 z-40 bg-canvas/95 backdrop-blur border-b border-hairline">
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
               <Wrench className="w-4 h-4 text-white" />
             </div>
-            <span className="font-display font-bold text-ink text-base">SprayTrack</span>
+            <span className="font-display font-bold text-ink">SprayTrack</span>
+          </div>
+          <div className="hidden sm:flex items-center gap-1">
+            {[['Ciri-ciri','#ciri'], ['Cara Kerja','#cara'], ['Harga','#harga'], ['FAQ','#faq']].map(([label, id]) => (
+              <button key={id} onClick={() => scrollTo(id.slice(1))}
+                className="text-sm text-mute hover:text-ink px-3 py-2 rounded-full hover:bg-surface-bone transition-colors font-medium">
+                {label}
+              </button>
+            ))}
           </div>
           <div className="flex items-center gap-2">
             <Link to="/login"
               className="text-sm font-semibold text-charcoal hover:text-ink px-4 py-2 rounded-full hover:bg-surface-bone transition-colors">
               Log Masuk
             </Link>
-            <Link to="/register"
-              className="text-sm font-semibold bg-primary hover:bg-primary-deep text-white px-5 py-2 rounded-full transition-colors">
+            <button onClick={() => scrollTo('harga')}
+              className="text-sm font-bold bg-primary hover:bg-primary-deep text-white px-5 py-2 rounded-full transition-colors">
               Cuba Percuma
-            </Link>
+            </button>
           </div>
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="max-w-5xl mx-auto px-4 pt-20 pb-16 text-center">
-        <div className="inline-flex items-center gap-2 bg-red-50 border border-red-200 text-primary text-xs font-semibold px-4 py-1.5 rounded-full mb-6">
-          <Star className="w-3.5 h-3.5" /> Percuma 14 hari · Tiada kad kredit diperlukan
+      {/* ── HERO ── */}
+      <section className="max-w-5xl mx-auto px-4 pt-16 pb-12 text-center">
+        <div className="inline-flex items-center gap-2 bg-red-50 border border-red-100 text-primary text-xs font-bold px-4 py-1.5 rounded-full mb-6 tracking-wide">
+          <Zap className="w-3.5 h-3.5" fill="currentColor" /> PERCUMA 14 HARI · TIADA KAD KREDIT
         </div>
-        <h1 className="font-display font-bold text-4xl sm:text-5xl text-ink leading-tight mb-5 max-w-3xl mx-auto">
-          Urus Bengkel Cat Anda<br />
-          <span className="text-primary">Lebih Mudah, Lebih Kemas</span>
+
+        <h1 className="font-display font-bold text-4xl sm:text-[3.25rem] text-ink leading-[1.15] mb-5 max-w-3xl mx-auto">
+          Cara Terbaik Urus<br />
+          <span className="text-primary">Bengkel Cat & Spray</span>
         </h1>
-        <p className="text-charcoal text-lg sm:text-xl max-w-2xl mx-auto mb-8 leading-relaxed">
-          Sistem pengurusan lengkap untuk bengkel cat & spray. Jejak kerja, inventori, pekerja dan pelanggan — semua dalam satu platform.
+
+        <p className="text-charcoal text-lg sm:text-xl max-w-xl mx-auto mb-8 leading-relaxed">
+          Jejak kerja, inventori, pekerja dan pelanggan — semua dalam satu sistem mudah. Pelanggan semak status sendiri. Anda fokus kerja.
         </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link to="/register"
-            className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-deep text-white font-bold rounded-full px-8 py-4 text-base transition-colors">
-            Mulakan Percuma <ArrowRight className="w-4 h-4" />
-          </Link>
-          <Link to="/login"
+
+        <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
+          <button onClick={() => scrollTo('harga')}
+            className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-deep text-white font-bold rounded-full px-8 py-4 text-base transition-colors shadow-sm">
+            Cuba Percuma 14 Hari <ArrowRight className="w-4 h-4" />
+          </button>
+          <button onClick={() => scrollTo('ciri')}
             className="flex items-center justify-center gap-2 bg-surface-card hover:bg-surface-bone border border-hairline text-ink font-semibold rounded-full px-8 py-4 text-base transition-colors">
-            Log Masuk
-          </Link>
+            Lihat Ciri-ciri <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
-        <p className="text-ash text-sm mt-4">14 hari percuma · Kemudian RM30/bulan · Batal bila-bila masa</p>
+
+        <div className="flex items-center justify-center gap-6 text-sm text-mute">
+          {['Cuba percuma 14 hari', 'Tiada kad kredit', 'Batal bila-bila masa'].map(t => (
+            <span key={t} className="flex items-center gap-1.5">
+              <CheckCircle className="w-3.5 h-3.5 text-badge-success" /> {t}
+            </span>
+          ))}
+        </div>
       </section>
 
-      {/* Stats strip */}
+      {/* ── LIVE STATS ── */}
       <section className="border-y border-hairline bg-surface-card">
-        <div className="max-w-5xl mx-auto px-4 py-8 grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
-          {[
-            { value: 'RM30', label: 'Sebulan sahaja' },
-            { value: '14 hari', label: 'Cuba percuma' },
-            { value: '∞', label: 'Pekerja & kerja' },
-            { value: '24/7', label: 'Akses dari mana-mana' },
-          ].map(({ value, label }) => (
-            <div key={label}>
-              <p className="font-display font-bold text-2xl text-primary">{value}</p>
-              <p className="text-charcoal text-sm mt-1">{label}</p>
-            </div>
-          ))}
+        <div className="max-w-5xl mx-auto px-4 py-10">
+          <p className="text-center text-xs font-bold text-mute uppercase tracking-widest mb-8">
+            SprayTrack Dalam Angka — Data Masa Nyata
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-10">
+            <StatCard value={`${stats?.workshops ?? '—'}+`}    label="Bengkel Berdaftar"   loading={loading} />
+            <StatCard value={`${stats?.jobs ?? '—'}+`}         label="Kenderaan Direkod"   loading={loading} />
+            <StatCard value={`${stats?.paid ?? '—'}+`}         label="Invois Diselesaikan" loading={loading} />
+            <StatCard value={`${stats?.photos ?? '—'}+`}       label="Gambar Dimuat Naik"  loading={loading} />
+          </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="max-w-5xl mx-auto px-4 py-20">
+      {/* ── FEATURES ── */}
+      <section id="ciri" className="max-w-5xl mx-auto px-4 py-20">
         <div className="text-center mb-12">
-          <h2 className="font-display font-bold text-3xl text-ink mb-3">Semua yang bengkel anda perlukan</h2>
-          <p className="text-charcoal text-lg max-w-xl mx-auto">Direka khas untuk bengkel cat & spray di Malaysia. Mudah digunakan, tanpa latihan khas.</p>
+          <p className="text-xs font-bold text-primary uppercase tracking-widest mb-3">Ciri-ciri Utama</p>
+          <h2 className="font-display font-bold text-3xl sm:text-4xl text-ink mb-4">Semua yang bengkel anda perlukan</h2>
+          <p className="text-charcoal text-lg max-w-xl mx-auto">Direka khas untuk bengkel cat & spray Malaysia. Mudah digunakan, tanpa latihan khas.</p>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {features.map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="bg-surface-card border border-hairline rounded-lg p-6 hover:shadow-sm transition-shadow">
-              <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center mb-4">
-                <Icon className="w-5 h-5 text-primary" />
+            <div key={title} className="bg-surface-card border border-hairline rounded-lg p-5 hover:shadow-sm hover:-translate-y-0.5 transition-all">
+              <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center mb-3">
+                <Icon className="w-4 h-4 text-primary" />
               </div>
-              <h3 className="font-display font-bold text-ink mb-2">{title}</h3>
-              <p className="text-charcoal text-sm leading-relaxed">{desc}</p>
+              <h3 className="font-display font-bold text-ink text-sm mb-1.5">{title}</h3>
+              <p className="text-charcoal text-xs leading-relaxed">{desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="bg-surface-card border-y border-hairline">
+      {/* ── HOW IT WORKS ── */}
+      <section id="cara" className="bg-surface-card border-y border-hairline">
         <div className="max-w-5xl mx-auto px-4 py-20">
           <div className="text-center mb-12">
-            <h2 className="font-display font-bold text-3xl text-ink mb-3">Mula dalam 3 langkah</h2>
+            <p className="text-xs font-bold text-primary uppercase tracking-widest mb-3">Cara Kerja</p>
+            <h2 className="font-display font-bold text-3xl sm:text-4xl text-ink mb-4">Mula dalam 3 langkah mudah</h2>
             <p className="text-charcoal text-lg">Sistem anda sedia dalam masa kurang dari 5 minit.</p>
           </div>
           <div className="grid sm:grid-cols-3 gap-8">
-            {steps.map(({ num, title, desc }) => (
-              <div key={num} className="text-center">
-                <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center mx-auto mb-4">
+            {steps.map(({ num, title, desc }, i) => (
+              <div key={num} className="relative text-center">
+                {i < steps.length - 1 && (
+                  <div className="hidden sm:block absolute top-7 left-[calc(50%+2rem)] right-0 border-t-2 border-dashed border-red-200" />
+                )}
+                <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center mx-auto mb-4 relative z-10">
                   <span className="font-display font-bold text-white text-lg">{num}</span>
                 </div>
                 <h3 className="font-display font-bold text-ink text-lg mb-2">{title}</h3>
@@ -179,51 +213,77 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Pricing */}
-      <section className="max-w-5xl mx-auto px-4 py-20" id="harga">
+      {/* ── PRICING ── */}
+      <section id="harga" className="max-w-5xl mx-auto px-4 py-20">
         <div className="text-center mb-12">
-          <h2 className="font-display font-bold text-3xl text-ink mb-3">Harga yang jelas, tiada kejutan</h2>
-          <p className="text-charcoal text-lg">Satu pelan sahaja. Semua ciri tersedia.</p>
+          <p className="text-xs font-bold text-primary uppercase tracking-widest mb-3">Harga</p>
+          <h2 className="font-display font-bold text-3xl sm:text-4xl text-ink mb-4">Bermula dengan RM 0</h2>
+          <p className="text-charcoal text-lg">Cuba percuma selama 14 hari. Teruskan dengan RM30 sebulan sahaja.</p>
         </div>
-        <div className="max-w-sm mx-auto">
-          <div className="bg-surface-card border-2 border-primary rounded-xl p-8 text-center shadow-sm relative">
-            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-              <span className="bg-primary text-white text-xs font-bold px-4 py-1.5 rounded-full">PALING POPULAR</span>
+
+        <div className="grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
+          {/* Free plan */}
+          <div className="bg-surface-card border-2 border-primary rounded-xl p-8 relative">
+            <div className="absolute -top-3.5 left-6">
+              <span className="bg-primary text-white text-xs font-bold px-4 py-1.5 rounded-full">MULA DI SINI</span>
             </div>
-            <p className="text-charcoal font-semibold mb-1">Pelan Bengkel</p>
-            <div className="flex items-end justify-center gap-1 my-4">
-              <span className="text-mute text-lg">RM</span>
-              <span className="font-display font-bold text-5xl text-ink">30</span>
-              <span className="text-mute mb-2">/bulan</span>
+            <p className="text-charcoal font-semibold text-sm mb-2 mt-2">Percubaan Percuma</p>
+            <div className="flex items-end gap-1 mb-1">
+              <span className="font-display font-bold text-5xl text-ink">RM 0</span>
             </div>
-            <p className="text-badge-success text-sm font-semibold mb-6">14 hari percuma · Tiada kad kredit</p>
-            <ul className="space-y-3 text-left mb-8">
-              {pricingFeatures.map(f => (
-                <li key={f} className="flex items-center gap-3 text-sm text-charcoal">
-                  <CheckCircle className="w-4 h-4 text-badge-success flex-shrink-0" />
+            <p className="text-mute text-sm mb-6">14 hari penuh, tanpa had</p>
+            <ul className="space-y-2.5 mb-8">
+              {freeFeatures.map(f => (
+                <li key={f} className="flex items-start gap-2.5 text-sm text-charcoal">
+                  <CheckCircle className="w-4 h-4 text-badge-success flex-shrink-0 mt-0.5" />
                   {f}
                 </li>
               ))}
             </ul>
             <Link to="/register"
-              className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-deep text-white font-bold rounded-full py-4 transition-colors text-sm">
-              Cuba Percuma Sekarang <ArrowRight className="w-4 h-4" />
+              className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-deep text-white font-bold rounded-full py-3.5 transition-colors text-sm">
+              Mulakan Percuma <ArrowRight className="w-4 h-4" />
             </Link>
+            <p className="text-center text-ash text-xs mt-3">Tiada kad kredit diperlukan</p>
+          </div>
+
+          {/* Pro plan */}
+          <div className="bg-surface-card border border-hairline rounded-xl p-8">
+            <p className="text-charcoal font-semibold text-sm mb-2">Selepas Percubaan</p>
+            <div className="flex items-end gap-1 mb-1">
+              <span className="text-mute text-lg font-semibold">RM</span>
+              <span className="font-display font-bold text-5xl text-ink">30</span>
+              <span className="text-mute mb-2 text-sm">/bulan</span>
+            </div>
+            <p className="text-mute text-sm mb-6">Aktif selepas tempoh percuma</p>
+            <ul className="space-y-2.5 mb-8">
+              {proFeatures.map(f => (
+                <li key={f} className="flex items-start gap-2.5 text-sm text-charcoal">
+                  <CheckCircle className="w-4 h-4 text-badge-success flex-shrink-0 mt-0.5" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <Link to="/register"
+              className="w-full flex items-center justify-center gap-2 bg-surface-dark hover:bg-surface-deep text-on-dark font-bold rounded-full py-3.5 transition-colors text-sm">
+              Cuba Sekarang <ArrowRight className="w-4 h-4" />
+            </Link>
+            <p className="text-center text-ash text-xs mt-3">Teruskan selepas 14 hari percuma</p>
           </div>
         </div>
       </section>
 
-      {/* Trust */}
+      {/* ── TRUST STRIP ── */}
       <section className="bg-surface-bone border-y border-hairline">
         <div className="max-w-5xl mx-auto px-4 py-12">
-          <div className="grid sm:grid-cols-3 gap-6 text-center">
+          <div className="grid sm:grid-cols-3 gap-8 text-center">
             {[
-              { icon: Shield, title: 'Data Selamat', desc: 'Enkripsi penuh. Data bengkel anda tidak dikongsi dengan sesiapa.' },
-              { icon: Bell,   title: 'Sentiasa Terkini', desc: 'Akses dari telefon, tablet atau komputer. Data sentiasa disegerakkan.' },
-              { icon: Wrench, title: 'Sokongan Aktif', desc: 'Ada masalah? Hubungi kami melalui WhatsApp. Kami respon dengan cepat.' },
+              { icon: Shield,   title: 'Data Selamat',         desc: 'Enkripsi penuh. Data bengkel anda tidak dikongsi dengan sesiapa.' },
+              { icon: Bell,     title: 'Akses Dari Mana-mana', desc: 'Telefon, tablet atau komputer. Data sentiasa disegerakkan dalam masa nyata.' },
+              { icon: TrendingUp, title: 'Sokong Pertumbuhan', desc: 'Dari 1 pekerja ke 20 — sistem skala mengikut keperluan bengkel anda.' },
             ].map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="flex flex-col items-center">
-                <div className="w-10 h-10 rounded-full bg-surface-card border border-hairline flex items-center justify-center mb-3">
+              <div key={title}>
+                <div className="w-10 h-10 rounded-full bg-surface-card border border-hairline flex items-center justify-center mx-auto mb-3">
                   <Icon className="w-5 h-5 text-primary" />
                 </div>
                 <h3 className="font-semibold text-ink mb-1">{title}</h3>
@@ -234,34 +294,37 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="max-w-3xl mx-auto px-4 py-20">
+      {/* ── FAQ ── */}
+      <section id="faq" className="max-w-3xl mx-auto px-4 py-20">
         <div className="text-center mb-10">
+          <p className="text-xs font-bold text-primary uppercase tracking-widest mb-3">FAQ</p>
           <h2 className="font-display font-bold text-3xl text-ink">Soalan Lazim</h2>
         </div>
-        <div className="space-y-4">
-          {faqs.map(({ q, a }) => (
-            <div key={q} className="bg-surface-card border border-hairline rounded-lg p-6">
-              <h3 className="font-semibold text-ink mb-2">{q}</h3>
-              <p className="text-charcoal text-sm leading-relaxed">{a}</p>
-            </div>
-          ))}
+        <div className="space-y-3">
+          {faqs.map(f => <FaqItem key={f.q} {...f} />)}
         </div>
       </section>
 
-      {/* CTA */}
+      {/* ── FINAL CTA ── */}
       <section className="bg-primary">
         <div className="max-w-3xl mx-auto px-4 py-16 text-center">
-          <h2 className="font-display font-bold text-3xl text-white mb-4">Sedia urus bengkel dengan lebih baik?</h2>
-          <p className="text-white/80 text-lg mb-8">Cuba percuma selama 14 hari. Tiada kad kredit. Batal bila-bila masa.</p>
+          <p className="text-white/70 text-sm font-semibold uppercase tracking-widest mb-4">Sedia bermula?</p>
+          <h2 className="font-display font-bold text-3xl sm:text-4xl text-white mb-5">
+            Cuba percuma. Tiada risiko.
+          </h2>
+          <p className="text-white/80 text-lg mb-8">
+            14 hari penuh, semua ciri tersedia. Tiada kad kredit.<br className="hidden sm:block" />
+            Batal bila-bila masa tanpa sebarang caj.
+          </p>
           <Link to="/register"
-            className="inline-flex items-center gap-2 bg-white hover:bg-surface-bone text-primary font-bold rounded-full px-8 py-4 text-base transition-colors">
-            Mulakan Percuma <ArrowRight className="w-4 h-4" />
+            className="inline-flex items-center gap-2 bg-white hover:bg-surface-bone text-primary font-bold rounded-full px-10 py-4 text-base transition-colors">
+            Mulakan Percuma Sekarang <ArrowRight className="w-4 h-4" />
           </Link>
+          <p className="text-white/50 text-xs mt-4">Daftar dalam 30 saat · Tiada kad kredit</p>
         </div>
       </section>
 
-      {/* Footer */}
+      {/* ── FOOTER ── */}
       <footer className="bg-surface-deep">
         <div className="max-w-5xl mx-auto px-4 py-10">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
@@ -270,18 +333,25 @@ export function LandingPage() {
                 <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center">
                   <Wrench className="w-3.5 h-3.5 text-white" />
                 </div>
-                <span className="font-display font-bold text-on-dark text-sm">SprayTrack</span>
+                <span className="font-display font-bold text-on-dark">SprayTrack</span>
               </div>
-              <p className="text-on-dark-mute text-xs">Sistem pengurusan bengkel cat & spray untuk Malaysia.</p>
+              <p className="text-on-dark-mute text-xs max-w-xs">Sistem pengurusan bengkel cat & spray untuk Malaysia. Mudah, pantas dan boleh dipercayai.</p>
             </div>
-            <div className="flex items-center gap-6 text-on-dark-mute text-xs">
-              <Link to="/login"    className="hover:text-on-dark transition-colors">Log Masuk</Link>
-              <Link to="/register" className="hover:text-on-dark transition-colors">Daftar</Link>
+            <div className="flex flex-col sm:items-end gap-3">
+              <div className="flex items-center gap-5 text-on-dark-mute text-xs">
+                {[['Ciri-ciri','ciri'], ['Cara Kerja','cara'], ['Harga','harga'], ['FAQ','faq']].map(([label, id]) => (
+                  <button key={id} onClick={() => scrollTo(id)} className="hover:text-on-dark transition-colors">{label}</button>
+                ))}
+              </div>
+              <div className="flex items-center gap-3">
+                <Link to="/login"    className="text-on-dark-mute hover:text-on-dark text-xs transition-colors">Log Masuk</Link>
+                <Link to="/register" className="bg-primary hover:bg-primary-deep text-white text-xs font-semibold px-4 py-2 rounded-full transition-colors">Daftar Percuma</Link>
+              </div>
             </div>
           </div>
           <div className="border-t border-divider-dark mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2">
             <p className="text-on-dark-mute text-xs">© {new Date().getFullYear()} SprayTrack. Hak cipta terpelihara.</p>
-            <p className="text-on-dark-mute text-xs">Dibina untuk bengkel Malaysia</p>
+            <p className="text-on-dark-mute text-xs">Dibina untuk bengkel Malaysia 🇲🇾</p>
           </div>
         </div>
       </footer>
