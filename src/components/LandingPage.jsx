@@ -55,21 +55,21 @@ const steps = [
   { num: '03', title: 'Mula Urus Kerja',     desc: 'Tambah kerja pertama dan ajak pekerja masuk. Semua sudah sedia.' },
 ]
 
-const freeFeatures = [
-  'Kerja tanpa had (14 hari)',
+const trialFeatures = [
+  'Kerja & rekod kenderaan tanpa had',
   'Portal status pelanggan',
-  'Pekerja tanpa had',
-  'Resit & invois digital',
-  'Inventori asas',
-  'Laporan pendapatan',
+  'Pengurusan pekerja & kod jemputan',
+  'Resit & invois digital (print / PDF)',
+  'Inventori & pemantauan stok',
+  'Laporan pendapatan bulanan',
 ]
 const proFeatures = [
-  'Semua ciri percuma',
-  'Kerja & inventori tanpa had',
-  'Laporan lanjutan',
-  'Sokongan WhatsApp',
+  'Akses berterusan — tiada had masa',
+  'Semua ciri dalam pelan percubaan',
+  'Sokongan keutamaan via WhatsApp',
+  'Laporan & analitik lanjutan',
+  'Eksport data (CSV / PDF)',
   'Kemas kini ciri baru percuma',
-  'Data disimpan selamanya',
 ]
 
 const faqs = [
@@ -93,78 +93,91 @@ function BillingToggle({ stats, loading }) {
           className={`relative w-12 h-6 rounded-full transition-colors ${annual ? 'bg-primary' : 'bg-stone'}`}>
           <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${annual ? 'translate-x-7' : 'translate-x-1'}`} />
         </button>
-        <span className={`text-sm font-semibold transition-colors ${annual ? 'text-ink' : 'text-mute'}`}>Tahunan</span>
+        <span className={`text-sm font-semibold transition-colors ${annual ? 'text-ink' : 'text-mute'}`}>
+          Tahunan <span className="text-xs font-normal text-mute">(RM 360/thn)</span>
+        </span>
       </div>
 
-      {/* Plan cards */}
-      <div className="grid sm:grid-cols-2 gap-6">
+      {/* Plan cards — extra top padding so the badge isn't clipped */}
+      <div className="grid sm:grid-cols-2 gap-6 pt-5">
 
-        {/* ── Free / Early-bird ── */}
-        <div className="bg-surface-card border-2 border-primary rounded-xl p-6 relative">
-          <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-            <span className="bg-primary text-white text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap">
-              {earlyBird ? '⚡ EARLY BIRD' : 'PALING POPULAR'}
+        {/* ── Free Trial / Early-bird ── */}
+        <div className="relative">
+          <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
+            <span className="bg-primary text-white text-xs font-bold px-4 py-1.5 rounded-full whitespace-nowrap shadow-sm">
+              {earlyBird ? '⚡ EARLY BIRD' : '✦ PALING POPULAR'}
             </span>
           </div>
+          <div className="bg-surface-card border-2 border-primary rounded-xl p-6 h-full flex flex-col">
+            <p className="font-display font-bold text-ink text-xl mb-0.5">
+              {earlyBird ? 'Percuma Selamanya' : 'Cuba Percuma'}
+            </p>
+            <p className="text-mute text-sm mb-4">
+              {earlyBird
+                ? `Tinggal ${10 - (stats?.workshops ?? 0)} tempat — daftar sekarang`
+                : 'Akses penuh selama 14 hari, tiada komitmen'}
+            </p>
 
-          <p className="font-display font-bold text-ink text-lg mb-1 mt-1">
-            {earlyBird ? 'Percuma Selamanya' : 'Percubaan Percuma'}
-          </p>
-          <p className="text-mute text-sm mb-4">
-            {earlyBird ? `Untuk ${10 - (stats?.workshops ?? 0)} bengkel terawal lagi` : '14 hari, semua ciri tersedia'}
-          </p>
+            <div className="flex items-baseline gap-1 mb-1">
+              <span className="font-display font-bold text-5xl text-primary">RM 0</span>
+              <span className="text-mute text-sm font-medium">
+                {earlyBird ? ' / selamanya' : ' / 14 hari'}
+              </span>
+            </div>
+            <p className="text-xs text-charcoal mb-5">
+              {earlyBird
+                ? 'Tiada caj langsung. Dijamin percuma selama-lamanya.'
+                : 'Tiada kad kredit. Batal bila-bila masa.'}
+            </p>
 
-          <div className="flex items-baseline gap-1 mb-1">
-            <span className="font-display font-bold text-5xl text-primary">RM 0</span>
-            <span className="text-mute text-sm">{earlyBird ? '/ selamanya' : '/ 14 hari'}</span>
+            <ul className="space-y-2.5 mb-6 flex-1">
+              {(earlyBird ? proFeatures : trialFeatures).map(f => (
+                <li key={f} className="flex items-start gap-2 text-sm text-charcoal">
+                  <CheckCircle className="w-4 h-4 text-badge-success flex-shrink-0 mt-0.5" /> {f}
+                </li>
+              ))}
+            </ul>
+
+            <Link to="/register"
+              className="block w-full bg-primary hover:bg-primary-deep text-white font-bold rounded-full py-3 text-center text-sm transition-colors">
+              {earlyBird ? 'Dapatkan Akses Percuma Selamanya' : 'Mulakan Percubaan Percuma'}
+            </Link>
           </div>
-          <p className="text-xs text-charcoal mb-5">
-            {earlyBird ? 'Tiada caj selepas percubaan. Dijamin percuma.' : 'Tiada kad kredit diperlukan.'}
-          </p>
-
-          <ul className="space-y-2.5 mb-6">
-            {freeFeatures.map(f => (
-              <li key={f} className="flex items-center gap-2 text-sm text-charcoal">
-                <CheckCircle className="w-4 h-4 text-badge-success flex-shrink-0" /> {f}
-              </li>
-            ))}
-          </ul>
-
-          <Link to="/register"
-            className="block w-full bg-primary hover:bg-primary-deep text-white font-bold rounded-full py-3 text-center text-sm transition-colors">
-            {earlyBird ? 'Dapatkan Akses Percuma' : 'Mulakan Percuma'}
-          </Link>
         </div>
 
-        {/* ── Pro (disabled) ── */}
-        <div className="bg-surface-card border border-hairline rounded-xl p-6 relative opacity-80">
-          <p className="font-display font-bold text-ink text-lg mb-1 mt-1">Pro</p>
-          <p className="text-mute text-sm mb-4">Untuk bengkel yang berkembang</p>
+        {/* ── Pro (coming soon) ── */}
+        <div className="relative">
+          <div className="bg-surface-card border border-hairline rounded-xl p-6 h-full flex flex-col opacity-75">
+            <p className="font-display font-bold text-ink text-xl mb-0.5">Pro</p>
+            <p className="text-mute text-sm mb-4">Untuk bengkel yang terus berkembang</p>
 
-          <div className="flex items-baseline gap-1 mb-1">
-            <span className="font-display font-bold text-5xl text-ink">
-              {annual ? 'RM 360' : 'RM 30'}
-            </span>
-            <span className="text-mute text-sm">/{annual ? 'tahun' : 'bulan'}</span>
+            <div className="flex items-baseline gap-1 mb-1">
+              <span className="font-display font-bold text-5xl text-ink">
+                {annual ? 'RM 360' : 'RM 30'}
+              </span>
+              <span className="text-mute text-sm font-medium">/{annual ? 'tahun' : 'bulan'}</span>
+            </div>
+            {annual && (
+              <p className="text-xs text-mute mb-1">Bayar sekali setahun — lebih mudah</p>
+            )}
+            <p className="text-xs text-charcoal mb-5">
+              Akan diaktifkan selepas 10 bengkel pertama berdaftar.
+            </p>
+
+            <ul className="space-y-2.5 mb-6 flex-1">
+              {proFeatures.map(f => (
+                <li key={f} className="flex items-start gap-2 text-sm text-charcoal">
+                  <CheckCircle className="w-4 h-4 text-stone flex-shrink-0 mt-0.5" /> {f}
+                </li>
+              ))}
+            </ul>
+
+            <button disabled
+              className="w-full bg-canvas border border-hairline text-ash font-bold rounded-full py-3 text-sm cursor-not-allowed">
+              Akan Datang
+            </button>
+            <p className="text-center text-xs text-mute mt-2">Aktif selepas 10 bengkel berdaftar</p>
           </div>
-          {annual && (
-            <p className="text-xs text-badge-success font-semibold mb-1">Bersamaan RM 30/bulan</p>
-          )}
-          <p className="text-xs text-charcoal mb-5">Bermula selepas 10 bengkel pertama berdaftar.</p>
-
-          <ul className="space-y-2.5 mb-6">
-            {proFeatures.map(f => (
-              <li key={f} className="flex items-center gap-2 text-sm text-charcoal">
-                <CheckCircle className="w-4 h-4 text-stone flex-shrink-0" /> {f}
-              </li>
-            ))}
-          </ul>
-
-          <button disabled
-            className="w-full bg-canvas border border-hairline text-ash font-bold rounded-full py-3 text-sm cursor-not-allowed">
-            Akan Datang
-          </button>
-          <p className="text-center text-xs text-mute mt-2">Aktif selepas 10 bengkel berdaftar</p>
         </div>
 
       </div>
