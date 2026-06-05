@@ -13,6 +13,7 @@ export function WorkshopSettings() {
   const [phone, setPhone]         = useState(workshop?.phone     || '')
   const [address, setAddress]     = useState(workshop?.address   || '')
   const [instagram, setInstagram] = useState(workshop?.instagram || '')
+  const [tiktok, setTiktok]       = useState(workshop?.tiktok     || '')
   const [saving, setSaving]       = useState(false)
   const [uploading, setUploading] = useState(false)
   const [saved, setSaved]         = useState(false)
@@ -59,7 +60,7 @@ export function WorkshopSettings() {
     try {
       const { error: err } = await supabase
         .from('workshops')
-        .update({ name: name.trim(), phone: phone.trim(), address: address.trim() || null, instagram: instagram.trim().replace(/^@/, '') || null })
+        .update({ name: name.trim(), phone: phone.trim(), address: address.trim() || null, instagram: instagram.trim().replace(/^@/, '') || null, tiktok: tiktok.trim().replace(/^@/, '') || null })
         .eq('id', workshop.id)
       if (err) throw err
       await reloadWorkshop()
@@ -183,6 +184,12 @@ export function WorkshopSettings() {
           <label className="text-xs font-semibold text-charcoal block mb-1.5">{t('st_instagram')}</label>
           <input value={instagram} onChange={e => setInstagram(e.target.value)}
             placeholder={t('st_instagram_ph')} className={inputCls} />
+        </div>
+
+        <div>
+          <label className="text-xs font-semibold text-charcoal block mb-1.5">{t('st_tiktok')}</label>
+          <input value={tiktok} onChange={e => setTiktok(e.target.value)}
+            placeholder={t('st_tiktok_ph')} className={inputCls} />
         </div>
 
         {saved && <p className="text-badge-success text-xs bg-green-50 border border-green-200 rounded-md px-3 py-2">{t('st_saved')}</p>}

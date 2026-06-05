@@ -8,6 +8,7 @@ export const translations = {
     nav_portal:    'Portal Pelanggan',
     nav_logout:    'Log Keluar',
     lang_other:    'English',
+    nav_tutorial:  'Tutorial',
 
     /* common */
     save:           'Simpan',
@@ -168,6 +169,8 @@ export const translations = {
     st_address_ph:   'cth: No 12, Jalan Maju, 47500 Subang Jaya',
     st_instagram:    'Instagram',
     st_instagram_ph: 'cth: @bengkelmajujaya',
+    st_tiktok:       'TikTok',
+    st_tiktok_ph:    'cth: @bengkelmajujaya',
     st_link:         'Link Status Pelanggan',
     st_link_hint:    'Kongsi link ini supaya pelanggan boleh semak status kenderaan sendiri.',
 
@@ -275,6 +278,24 @@ export const translations = {
 
     /* whatsapp message */
     wa_msg: 'Hi, saya ingin tanya tentang kenderaan',
+
+    /* tutorial */
+    tut_title:    'Tutorial',
+    tut_prev:     'Sebelum',
+    tut_next:     'Seterusnya',
+    tut_done:     'Faham!',
+    tut_s1_title: 'Dashboard',
+    tut_s1_desc:  'Lihat semua kenderaan yang sedang dalam bengkel. Kenderaan yang sudah lama akan ditanda merah secara automatik.',
+    tut_s2_title: 'Tambah Kerja Baru',
+    tut_s2_desc:  'Klik "+ Kerja Baru" untuk daftar kenderaan baru. Isi nombor plat, nama pemilik, model kereta dan butiran bayaran.',
+    tut_s3_title: 'Jejak Peringkat Kerja',
+    tut_s3_desc:  'Gunakan butang "Maju" dan "Undur" pada setiap kad kerja untuk tukar peringkat. Bar kemajuan dikemas kini secara langsung.',
+    tut_s4_title: 'Jana Invois',
+    tut_s4_desc:  'Klik "Invois" pada mana-mana kad untuk buka invois A4. Boleh cetak atau simpan sebagai PDF dan kongsi dengan pelanggan.',
+    tut_s5_title: 'Portal Pelanggan',
+    tut_s5_desc:  'Kongsi link unik bengkel anda dengan pelanggan. Mereka boleh semak status kenderaan sendiri tanpa perlu hubungi anda.',
+    tut_s6_title: 'Tetapan Bengkel',
+    tut_s6_desc:  'Muat naik logo, isi alamat, nombor telefon dan media sosial. Sesuaikan peringkat kerja mengikut aliran kerja bengkel anda.',
   },
 
   en: {
@@ -286,6 +307,7 @@ export const translations = {
     nav_portal:    'Customer Portal',
     nav_logout:    'Sign Out',
     lang_other:    'Bahasa',
+    nav_tutorial:  'Tutorial',
 
     /* common */
     save:           'Save',
@@ -446,6 +468,8 @@ export const translations = {
     st_address_ph:   'e.g. No 12, Jalan Maju, 47500 Subang Jaya',
     st_instagram:    'Instagram',
     st_instagram_ph: 'e.g. @workshopname',
+    st_tiktok:       'TikTok',
+    st_tiktok_ph:    'e.g. @workshopname',
     st_link:         'Customer Status Link',
     st_link_hint:    'Share this link so customers can check their vehicle status.',
 
@@ -553,5 +577,23 @@ export const translations = {
 
     /* whatsapp message */
     wa_msg: 'Hello, I would like to enquire about vehicle',
+
+    /* tutorial */
+    tut_title:    'Tutorial',
+    tut_prev:     'Back',
+    tut_next:     'Next',
+    tut_done:     'Got it!',
+    tut_s1_title: 'Dashboard',
+    tut_s1_desc:  'See all vehicles currently in the workshop. Overdue vehicles are automatically flagged in red.',
+    tut_s2_title: 'Add a New Job',
+    tut_s2_desc:  'Click "+ New Job" to register a vehicle. Fill in the plate number, owner name, car model, and payment details.',
+    tut_s3_title: 'Track Work Stages',
+    tut_s3_desc:  'Use the "Advance" and "Back" buttons on each job card to change the work stage. The progress bar updates in real time.',
+    tut_s4_title: 'Generate Invoice',
+    tut_s4_desc:  'Click "Invoice" on any job card to open a printable A4 invoice. Save as PDF and share it with the customer.',
+    tut_s5_title: 'Customer Portal',
+    tut_s5_desc:  'Share your unique workshop link with customers. They can track their own vehicle status without calling you.',
+    tut_s6_title: 'Workshop Settings',
+    tut_s6_desc:  'Upload your logo, fill in your address, phone, and social media. Customise the work stages to match your workflow.',
   },
 }

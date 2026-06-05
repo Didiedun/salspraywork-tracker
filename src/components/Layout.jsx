@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LanguageContext'
-import { LayoutDashboard, Package, Users, LogOut, ExternalLink, Settings, Menu, X, Globe } from 'lucide-react'
+import { TutorialModal } from './TutorialModal'
+import { LayoutDashboard, Package, Users, LogOut, ExternalLink, Settings, Menu, X, Globe, HelpCircle } from 'lucide-react'
 
 function Sidebar({ workshop, signOut, onClose }) {
   const { lang, setLang, t } = useLang()
+  const [showTutorial, setShowTutorial] = useState(false)
 
   const navItems = [
     { to: '/dashboard', label: t('nav_dashboard'), icon: LayoutDashboard },
@@ -65,6 +67,11 @@ function Sidebar({ workshop, signOut, onClose }) {
             {t('nav_portal')}
           </a>
         )}
+        <button onClick={() => setShowTutorial(true)}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-on-dark/60 hover:text-on-dark hover:bg-white/5 transition-colors">
+          <HelpCircle className="w-4 h-4 flex-shrink-0" />
+          {t('nav_tutorial')}
+        </button>
         <button
           onClick={() => setLang(lang === 'ms' ? 'en' : 'ms')}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-on-dark/60 hover:text-on-dark hover:bg-white/5 transition-colors">
@@ -77,6 +84,8 @@ function Sidebar({ workshop, signOut, onClose }) {
           {t('nav_logout')}
         </button>
       </div>
+
+      {showTutorial && <TutorialModal onClose={() => setShowTutorial(false)} />}
     </div>
   )
 }
