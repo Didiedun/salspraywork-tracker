@@ -164,6 +164,10 @@ export const translations = {
     st_stages_err:   'Sila isi semua nama peringkat.',
     st_stages_saved: 'Peringkat disimpan berjaya!',
     st_stages_save:  'Simpan Peringkat',
+    st_address:      'Alamat Bengkel',
+    st_address_ph:   'cth: No 12, Jalan Maju, 47500 Subang Jaya',
+    st_instagram:    'Instagram',
+    st_instagram_ph: 'cth: @bengkelmajujaya',
     st_link:         'Link Status Pelanggan',
     st_link_hint:    'Kongsi link ini supaya pelanggan boleh semak status kenderaan sendiri.',
 
@@ -435,6 +439,10 @@ export const translations = {
     st_stages_err:   'Please fill in all stage names.',
     st_stages_saved: 'Stages saved successfully!',
     st_stages_save:  'Save Stages',
+    st_address:      'Workshop Address',
+    st_address_ph:   'e.g. No 12, Jalan Maju, 47500 Subang Jaya',
+    st_instagram:    'Instagram',
+    st_instagram_ph: 'e.g. @workshopname',
     st_link:         'Customer Status Link',
     st_link_hint:    'Share this link so customers can check their vehicle status.',
 

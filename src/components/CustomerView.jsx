@@ -58,9 +58,10 @@ export function CustomerView() {
   }
 
   const job          = activeJob
-  const photos       = job?.job_attachments?.filter(a => a.type === 'photo') || []
-  const firstPhoto   = photos[0]
-  const lastPhoto    = photos[photos.length - 1]
+  const photos         = job?.job_attachments?.filter(a => a.type === 'photo') || []
+  const firstPhoto     = photos[0]
+  const lastPhoto      = photos[photos.length - 1]
+  const hasPhotos      = photos.length > 0
   const hasBeforeAfter = photos.length >= 2
 
   const wsWaNum = workshop?.phone ? (() => { const d = workshop.phone.replace(/\D/g,''); return d.startsWith('60') ? d : '60'+d.replace(/^0/,'') })() : null
@@ -270,19 +271,21 @@ export function CustomerView() {
               )}
             </div>
 
-            {hasBeforeAfter && (
+            {hasPhotos && (
               <div className="bg-surface-card rounded-lg border border-hairline p-5">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-ink font-semibold flex items-center gap-2 text-sm">
                     <Image className="w-4 h-4 text-primary" /> {t('cv_photos_lbl')} ({photos.length})
                   </p>
-                  <button onClick={() => setBeforeAfter(x => !x)}
-                    className="flex items-center gap-1.5 text-xs bg-canvas border border-hairline text-charcoal px-3 py-1.5 rounded-full hover:bg-surface-bone transition-colors font-semibold">
-                    <ArrowLeftRight className="w-3.5 h-3.5" />
-                    {beforeAfter ? t('cv_grid') : t('cv_ba_toggle')}
-                  </button>
+                  {hasBeforeAfter && (
+                    <button onClick={() => setBeforeAfter(x => !x)}
+                      className="flex items-center gap-1.5 text-xs bg-canvas border border-hairline text-charcoal px-3 py-1.5 rounded-full hover:bg-surface-bone transition-colors font-semibold">
+                      <ArrowLeftRight className="w-3.5 h-3.5" />
+                      {beforeAfter ? t('cv_grid') : t('cv_ba_toggle')}
+                    </button>
+                  )}
                 </div>
-                {beforeAfter ? (
+                {beforeAfter && hasBeforeAfter ? (
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <p className="text-xs text-mute text-center mb-1.5 font-medium">{t('cv_before')}</p>
