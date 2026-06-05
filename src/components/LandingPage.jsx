@@ -55,132 +55,159 @@ const steps = [
   { num: '03', title: 'Mula Urus Kerja',     desc: 'Tambah kerja pertama dan ajak pekerja masuk. Semua sudah sedia.' },
 ]
 
+/* Features you get in the 14-day trial (with limits) */
 const trialFeatures = [
-  'Kerja & rekod kenderaan tanpa had',
+  'Rekod kenderaan (maks 30 kerja aktif)',
   'Portal status pelanggan',
-  'Pengurusan pekerja & kod jemputan',
   'Resit & invois digital (print / PDF)',
-  'Inventori & pemantauan stok',
-  'Laporan pendapatan bulanan',
+  '1 akaun pekerja',
+  'Inventori (maks 20 item)',
+  'Ringkasan pendapatan asas',
 ]
-const proFeatures = [
-  'Akses berterusan — tiada had masa',
-  'Semua ciri dalam pelan percubaan',
-  'Sokongan keutamaan via WhatsApp',
+
+/* Extra features unlocked in Pro on top of trial */
+const proExtras = [
+  'Kerja, pekerja & inventori tanpa had',
   'Laporan & analitik lanjutan',
   'Eksport data (CSV / PDF)',
-  'Kemas kini ciri baru percuma',
+  'Sokongan keutamaan WhatsApp',
+]
+
+/* Early bird users get the full Pro feature set free forever */
+const earlyBirdFeatures = [
+  'Kerja & rekod kenderaan tanpa had',
+  'Portal status pelanggan',
+  'Pekerja & kod jemputan tanpa had',
+  'Resit & invois digital (print / PDF)',
+  'Inventori & pemantauan stok tanpa had',
+  'Laporan & analitik lanjutan',
+  'Eksport data (CSV / PDF)',
 ]
 
 const faqs = [
-  { q: 'Apa yang berlaku selepas 14 hari?', a: 'Kami akan hantar peringatan. Jika ingin teruskan, bayar RM30/bulan. Jika tidak, akaun dibekukan tetapi data anda tidak dipadam — boleh aktifkan semula bila-bila masa.' },
+  { q: 'Apa yang berlaku selepas 14 hari percubaan?', a: 'Kami akan hantar peringatan sebelum tamat. Jika ingin teruskan, naik taraf ke Pro (RM30/bulan). Jika tidak, akaun dibekukan tetapi data anda tidak dipadam — boleh aktifkan semula bila-bila masa.' },
+  { q: 'Apa had dalam percubaan percuma?', a: 'Semasa percubaan 14 hari, anda boleh rekod sehingga 30 kerja aktif, tambah 1 akaun pekerja, dan simpan sehingga 20 item inventori. Naik taraf ke Pro untuk had tanpa had dan ciri analitik lanjutan.' },
   { q: 'Boleh guna dari telefon?', a: 'Ya, SprayTrack direka khas untuk mudah alih. Berfungsi lancar di telefon, tablet dan komputer tanpa perlu muat turun aplikasi. Buka pelayar web, terus boleh guna.' },
-  { q: 'Adakah data bengkel saya selamat?', a: 'Data anda disimpan di Supabase — platform pangkalan data bertaraf enterprise yang disulitkan. Setiap bengkel hanya boleh akses data mereka sendiri.' },
-  { q: 'Berapa ramai pekerja boleh ditambah?', a: 'Tiada had. Tambah seberapa ramai pekerja yang anda perlukan tanpa kos tambahan langsung.' },
-  { q: 'Boleh saya eksport data saya?', a: 'Ya. Data invois dan rekod kenderaan boleh dicetak atau disimpan sebagai PDF pada bila-bila masa.' },
+  { q: 'Adakah data bengkel saya selamat?', a: 'Data anda disimpan di Supabase — platform pangkalan data bertaraf enterprise yang disulitkan. Setiap bengkel hanya boleh akses data mereka sendiri sahaja.' },
+  { q: 'Boleh saya eksport data saya?', a: 'Eksport CSV dan PDF tersedia dalam pelan Pro. Semasa percubaan, resit dan invois boleh dicetak atau disimpan sebagai PDF secara individu.' },
 ]
 
 function BillingToggle({ stats, loading }) {
   const [annual, setAnnual] = useState(false)
   const earlyBird = !loading && (stats?.workshops ?? 0) < 10
+  const spotsLeft = Math.max(0, 10 - (stats?.workshops ?? 0))
+  const features  = earlyBird ? earlyBirdFeatures : trialFeatures
 
   return (
-    <div className="max-w-3xl mx-auto">
-      {/* Monthly / Annual toggle */}
-      <div className="flex items-center justify-center gap-3 mb-8">
-        <span className={`text-sm font-semibold transition-colors ${!annual ? 'text-ink' : 'text-mute'}`}>Bulanan</span>
-        <button onClick={() => setAnnual(a => !a)}
-          className={`relative w-12 h-6 rounded-full transition-colors ${annual ? 'bg-primary' : 'bg-stone'}`}>
-          <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${annual ? 'translate-x-7' : 'translate-x-1'}`} />
-        </button>
-        <span className={`text-sm font-semibold transition-colors ${annual ? 'text-ink' : 'text-mute'}`}>
-          Tahunan <span className="text-xs font-normal text-mute">(RM 360/thn)</span>
-        </span>
-      </div>
+    <div className="max-w-2xl mx-auto space-y-5">
 
-      {/* Plan cards — extra top padding so the badge isn't clipped */}
-      <div className="grid sm:grid-cols-2 gap-6 pt-5">
-
-        {/* ── Free Trial / Early-bird ── */}
-        <div className="relative">
-          <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
-            <span className="bg-primary text-white text-xs font-bold px-4 py-1.5 rounded-full whitespace-nowrap shadow-sm">
-              {earlyBird ? '⚡ EARLY BIRD' : '✦ PALING POPULAR'}
-            </span>
+      {/* ── Step 1: Free / Early-bird card (full width, prominent) ── */}
+      <div className="rounded-2xl overflow-hidden border-2 border-primary">
+        {/* Coloured header strip */}
+        <div className="bg-primary px-5 py-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            {earlyBird
+              ? <><Zap className="w-3.5 h-3.5 text-white flex-shrink-0" fill="white" />
+                  <span className="text-white font-bold text-sm">EARLY BIRD — {spotsLeft} tempat lagi</span></>
+              : <><Star className="w-3.5 h-3.5 text-white flex-shrink-0" />
+                  <span className="text-white font-bold text-sm">PERCUBAAN PERCUMA</span></>
+            }
           </div>
-          <div className="bg-surface-card border-2 border-primary rounded-xl p-6 h-full flex flex-col">
-            <p className="font-display font-bold text-ink text-xl mb-0.5">
-              {earlyBird ? 'Percuma Selamanya' : 'Cuba Percuma'}
-            </p>
-            <p className="text-mute text-sm mb-4">
-              {earlyBird
-                ? `Tinggal ${10 - (stats?.workshops ?? 0)} tempat — daftar sekarang`
-                : 'Akses penuh selama 14 hari, tiada komitmen'}
-            </p>
+          <span className="text-white/70 text-xs hidden sm:block">
+            {earlyBird ? 'Percuma selama-lamanya' : '14 hari · tiada kad kredit'}
+          </span>
+        </div>
 
-            <div className="flex items-baseline gap-1 mb-1">
-              <span className="font-display font-bold text-5xl text-primary">RM 0</span>
-              <span className="text-mute text-sm font-medium">
-                {earlyBird ? ' / selamanya' : ' / 14 hari'}
-              </span>
+        {/* Card body */}
+        <div className="bg-surface-card px-5 py-5">
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div>
+              <div className="flex items-baseline gap-1.5">
+                <span className="font-display font-bold text-4xl text-ink">RM 0</span>
+                <span className="text-mute text-sm">{earlyBird ? '/ selamanya' : '/ 14 hari'}</span>
+              </div>
+              <p className="text-charcoal text-sm mt-1 max-w-xs">
+                {earlyBird
+                  ? 'Tanpa sebarang caj — dijamin percuma selama-lamanya.'
+                  : 'Cuba semua ciri tanpa komitmen. Tiada kad kredit.'}
+              </p>
             </div>
-            <p className="text-xs text-charcoal mb-5">
-              {earlyBird
-                ? 'Tiada caj langsung. Dijamin percuma selama-lamanya.'
-                : 'Tiada kad kredit. Batal bila-bila masa.'}
-            </p>
-
-            <ul className="space-y-2.5 mb-6 flex-1">
-              {(earlyBird ? proFeatures : trialFeatures).map(f => (
-                <li key={f} className="flex items-start gap-2 text-sm text-charcoal">
-                  <CheckCircle className="w-4 h-4 text-badge-success flex-shrink-0 mt-0.5" /> {f}
-                </li>
-              ))}
-            </ul>
-
             <Link to="/register"
-              className="block w-full bg-primary hover:bg-primary-deep text-white font-bold rounded-full py-3 text-center text-sm transition-colors">
-              {earlyBird ? 'Dapatkan Akses Percuma Selamanya' : 'Mulakan Percubaan Percuma'}
+              className="flex-shrink-0 inline-flex items-center gap-1.5 bg-primary hover:bg-primary-deep text-white font-bold rounded-full px-5 py-2.5 text-sm transition-colors whitespace-nowrap">
+              {earlyBird ? 'Daftar Sekarang' : 'Cuba Percuma'} <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
-        </div>
 
-        {/* ── Pro (coming soon) ── */}
-        <div className="relative">
-          <div className="bg-surface-card border border-hairline rounded-xl p-6 h-full flex flex-col opacity-75">
-            <p className="font-display font-bold text-ink text-xl mb-0.5">Pro</p>
-            <p className="text-mute text-sm mb-4">Untuk bengkel yang terus berkembang</p>
-
-            <div className="flex items-baseline gap-1 mb-1">
-              <span className="font-display font-bold text-5xl text-ink">
-                {annual ? 'RM 360' : 'RM 30'}
-              </span>
-              <span className="text-mute text-sm font-medium">/{annual ? 'tahun' : 'bulan'}</span>
-            </div>
-            {annual && (
-              <p className="text-xs text-mute mb-1">Bayar sekali setahun — lebih mudah</p>
-            )}
-            <p className="text-xs text-charcoal mb-5">
-              Akan diaktifkan selepas 10 bengkel pertama berdaftar.
-            </p>
-
-            <ul className="space-y-2.5 mb-6 flex-1">
-              {proFeatures.map(f => (
-                <li key={f} className="flex items-start gap-2 text-sm text-charcoal">
-                  <CheckCircle className="w-4 h-4 text-stone flex-shrink-0 mt-0.5" /> {f}
-                </li>
-              ))}
-            </ul>
-
-            <button disabled
-              className="w-full bg-canvas border border-hairline text-ash font-bold rounded-full py-3 text-sm cursor-not-allowed">
-              Akan Datang
-            </button>
-            <p className="text-center text-xs text-mute mt-2">Aktif selepas 10 bengkel berdaftar</p>
+          {/* Feature grid */}
+          <div className="border-t border-hairline pt-4 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2">
+            {features.map(f => (
+              <div key={f} className="flex items-start gap-1.5">
+                <CheckCircle className="w-3.5 h-3.5 text-badge-success flex-shrink-0 mt-0.5" />
+                <span className="text-xs text-charcoal leading-snug">{f}</span>
+              </div>
+            ))}
+            {/* Show what's locked in trial */}
+            {!earlyBird && proExtras.map(f => (
+              <div key={f} className="flex items-start gap-1.5">
+                <span className="text-stone text-xs flex-shrink-0 mt-0.5 font-bold leading-none">—</span>
+                <span className="text-xs text-mute leading-snug line-through">{f}</span>
+              </div>
+            ))}
           </div>
         </div>
-
       </div>
+
+      {/* ── Upgrade path separator ── */}
+      {!earlyBird && (
+        <div className="flex items-center gap-3">
+          <div className="flex-1 border-t border-dashed border-hairline" />
+          <span className="text-xs text-mute font-medium px-1">Selepas 14 hari, sambung dengan</span>
+          <div className="flex-1 border-t border-dashed border-hairline" />
+        </div>
+      )}
+
+      {/* ── Step 2: Pro plan (compact, toggle lives here) ── */}
+      {!earlyBird && (
+        <div className="bg-surface-bone border border-hairline rounded-2xl p-5">
+          <div className="flex items-start justify-between gap-4">
+            {/* Left: name + what you unlock */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-display font-bold text-ink text-base">Pro</span>
+                <span className="text-[10px] bg-canvas border border-hairline text-ash px-2 py-0.5 rounded-full font-semibold tracking-wide">AKAN DATANG</span>
+              </div>
+              <p className="text-charcoal text-xs mb-3">Semua dalam percubaan, ditambah:</p>
+              <div className="space-y-1.5">
+                {proExtras.map(f => (
+                  <div key={f} className="flex items-center gap-2">
+                    <span className="text-primary font-bold text-sm leading-none flex-shrink-0">+</span>
+                    <span className="text-sm text-charcoal">{f}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right: price + monthly/annual toggle */}
+            <div className="flex-shrink-0 text-right">
+              <p className="font-display font-bold text-3xl text-ink leading-none">
+                {annual ? 'RM 360' : 'RM 30'}
+              </p>
+              <p className="text-mute text-xs mt-0.5 mb-3">/{annual ? 'tahun' : 'bulan'}</p>
+              {/* Toggle — only here since it only affects Pro pricing */}
+              <div className="flex items-center justify-end gap-1.5">
+                <span className={`text-xs font-semibold transition-colors ${!annual ? 'text-ink' : 'text-mute'}`}>Bln</span>
+                <button onClick={() => setAnnual(a => !a)}
+                  className={`relative w-9 h-5 rounded-full transition-colors ${annual ? 'bg-primary' : 'bg-stone'}`}>
+                  <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${annual ? 'translate-x-[18px]' : 'translate-x-0.5'}`} />
+                </button>
+                <span className={`text-xs font-semibold transition-colors ${annual ? 'text-ink' : 'text-mute'}`}>Thn</span>
+              </div>
+              <p className="text-[10px] text-mute mt-2 leading-snug">Aktif selepas<br/>10 bengkel daftar</p>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
