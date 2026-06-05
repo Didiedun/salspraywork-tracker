@@ -1,19 +1,23 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
-import { LayoutDashboard, Package, Users, LogOut, ExternalLink, Settings, Menu, X } from 'lucide-react'
-
-const navItems = [
-  { to: '/dashboard', label: 'Dashboard',  icon: LayoutDashboard },
-  { to: '/inventory', label: 'Inventori',  icon: Package },
-  { to: '/workers',   label: 'Pekerja',    icon: Users },
-  { to: '/settings',  label: 'Tetapan',    icon: Settings },
-]
+import { useLang } from '../context/LanguageContext'
+import { LayoutDashboard, Package, Users, LogOut, ExternalLink, Settings, Menu, X, Globe } from 'lucide-react'
 
 function Sidebar({ workshop, signOut, onClose }) {
+  const { lang, setLang, t } = useLang()
+
+  const navItems = [
+    { to: '/dashboard', label: t('nav_dashboard'), icon: LayoutDashboard },
+    { to: '/inventory', label: t('nav_inventory'), icon: Package },
+    { to: '/workers',   label: t('nav_workers'),   icon: Users },
+    { to: '/settings',  label: t('nav_settings'),  icon: Settings },
+  ]
+
+  const initial = workshop?.name?.[0]?.toUpperCase() || 'D'
   const logoEl = workshop?.logo_url
     ? <img src={workshop.logo_url} alt="logo" className="w-full h-full object-cover" />
-    : <span className="font-display font-bold text-white text-xs">DD</span>
+    : <span className="font-display font-bold text-white text-xs">{initial}</span>
 
   return (
     <div className="w-56 bg-surface-deep h-full flex flex-col">
@@ -24,11 +28,10 @@ function Sidebar({ workshop, signOut, onClose }) {
             {logoEl}
           </div>
           <div className="min-w-0">
-            <p className="text-on-dark font-display font-bold text-sm leading-tight">Digital Depot</p>
-            <p className="text-on-dark/50 text-xs truncate leading-tight">{workshop?.name}</p>
+            <p className="text-on-dark font-display font-bold text-sm leading-tight truncate">{workshop?.name || 'Digital Depot'}</p>
+            <p className="text-on-dark/40 text-xs leading-tight">Digital Depot</p>
           </div>
         </div>
-        {/* Close on mobile */}
         {onClose && (
           <button onClick={onClose} className="sm:hidden text-on-dark/50 hover:text-on-dark transition-colors flex-shrink-0">
             <X className="w-4 h-4" />
@@ -59,13 +62,19 @@ function Sidebar({ workshop, signOut, onClose }) {
           <a href={`/w/${workshop.slug}`} target="_blank" rel="noreferrer"
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-on-dark/60 hover:text-on-dark hover:bg-white/5 transition-colors">
             <ExternalLink className="w-4 h-4 flex-shrink-0" />
-            Portal Pelanggan
+            {t('nav_portal')}
           </a>
         )}
+        <button
+          onClick={() => setLang(lang === 'ms' ? 'en' : 'ms')}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-on-dark/60 hover:text-on-dark hover:bg-white/5 transition-colors">
+          <Globe className="w-4 h-4 flex-shrink-0" />
+          {t('lang_other')}
+        </button>
         <button onClick={signOut}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-on-dark/60 hover:text-on-dark hover:bg-white/5 transition-colors">
           <LogOut className="w-4 h-4 flex-shrink-0" />
-          Log Keluar
+          {t('nav_logout')}
         </button>
       </div>
     </div>
@@ -106,7 +115,9 @@ export function Layout({ children }) {
             <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center flex-shrink-0 overflow-hidden">
               {workshop?.logo_url
                 ? <img src={workshop.logo_url} alt="logo" className="w-full h-full object-cover" />
-                : <span className="font-display font-bold text-white text-[10px]">DD</span>
+                : <span className="font-display font-bold text-white text-[10px]">
+                    {workshop?.name?.[0]?.toUpperCase() || 'D'}
+                  </span>
               }
             </div>
             <p className="font-display font-bold text-ink text-sm truncate">{workshop?.name}</p>

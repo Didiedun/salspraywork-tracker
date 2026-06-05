@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import { DEFAULT_STAGES } from '../constants'
 
 const AppContext = createContext(null)
 
@@ -51,7 +52,7 @@ export function AppProvider({ children }) {
 
   const createWorkshop = async (name, slug) => {
     const { data, error } = await supabase
-      .from('workshops').insert([{ name, slug, owner_id: user.id }]).select().single()
+      .from('workshops').insert([{ name, slug, owner_id: user.id, stages: DEFAULT_STAGES }]).select().single()
     if (error) throw error
     setWorkshop(data); setRole('owner')
     return data

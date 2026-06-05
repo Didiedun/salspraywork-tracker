@@ -224,9 +224,9 @@ const earlyBirdFeatures = [
 ]
 
 const faqs = [
-  { q: 'Apa yang berlaku selepas 14 hari percubaan?', a: 'Kami akan hantar peringatan sebelum tamat. Jika ingin teruskan, naik taraf ke Pro (RM30/bulan). Jika tidak, akaun dibekukan — data anda tidak dipadam dan boleh diaktifkan semula bila-bila masa.' },
+  { q: 'Apa yang berlaku selepas tempoh percuma?', a: 'Kami akan hantar peringatan sebelum tamat. Pendaftar awal (early bird) mendapat RM20/bulan selamanya selepas 12 bulan percuma. Pendaftar biasa perlu naik taraf ke Pro (RM30/bulan) selepas 14 hari percubaan. Jika tidak, akaun dibekukan — data anda tidak dipadam.' },
   { q: 'Apa had dalam percubaan percuma?', a: 'Semasa 14 hari percubaan, anda boleh rekod sehingga 30 kerja aktif, tambah 1 akaun pekerja, dan simpan sehingga 20 item inventori. Naik taraf ke Pro untuk semua had tanpa had.' },
-  { q: 'Sistem ini untuk jenis bengkel apa?', a: 'Digital Depot sesuai untuk bengkel kereta — terutama bengkel cat & spray, ketuk & tarik, dempul dan polish. Kami sedang kembangkan sokongan untuk jenis bengkel lain. Portal pelanggan dan sistem rekod kerja boleh disesuaikan mengikut keperluan bengkel anda.' },
+  { q: 'Sistem ini untuk jenis bengkel apa?', a: 'Digital Depot sesuai untuk pelbagai jenis bengkel kereta — bengkel cat & spray, ketuk & tarik, dempul, polish, servis umum dan lain-lain. Setiap bengkel boleh tetapkan peringkat kerja sendiri mengikut aliran kerja mereka.' },
   { q: 'Boleh guna dari telefon?', a: 'Ya, Digital Depot direka khas untuk mudah alih. Berfungsi lancar di telefon, tablet dan komputer — tiada aplikasi perlu dimuat turun. Buka pelayar web, terus boleh guna.' },
   { q: 'Adakah data bengkel saya selamat?', a: 'Data anda disimpan di pelayan bertaraf enterprise dengan enkripsi penuh. Setiap bengkel hanya boleh akses data mereka sendiri. Kami tidak kongsi maklumat anda dengan mana-mana pihak.' },
 ]
@@ -236,15 +236,38 @@ function BillingToggle({ stats, loading }) {
   const [annual, setAnnual] = useState(false)
   const earlyBird = !loading && (stats?.workshops ?? 0) < 10
   const spotsLeft = Math.max(0, 10 - (stats?.workshops ?? 0))
-  const features  = earlyBird ? earlyBirdFeatures : trialFeatures
+  const freeFeatures = earlyBird ? earlyBirdFeatures : trialFeatures
+
+  const proMonthly = earlyBird ? 20 : 30
+  const proAnnual  = earlyBird ? 200 : 300
+  const proSaving  = earlyBird ? 40 : 60
+  const proPrice   = annual ? proAnnual : proMonthly
+  const proUnit    = annual ? 'tahun' : 'bulan'
 
   return (
-    <div className="max-w-2xl mx-auto space-y-5">
+    <div className="max-w-4xl mx-auto">
 
-      {/* ── Free / Early-bird card ── */}
-      <div className="rounded-2xl overflow-hidden border-2 border-primary">
-        <div className="bg-primary px-5 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
+      {/* ── Annual / Monthly toggle ── */}
+      <div className="flex items-center justify-center gap-3 mb-8">
+        <span className={`text-sm font-semibold transition-colors ${!annual ? 'text-ink' : 'text-mute'}`}>Bulanan</span>
+        <button onClick={() => setAnnual(a => !a)}
+          className={`relative w-12 h-6 rounded-full transition-colors ${annual ? 'bg-primary' : 'bg-stone'}`}>
+          <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${annual ? 'translate-x-[26px]' : 'translate-x-0.5'}`} />
+        </button>
+        <span className={`text-sm font-semibold transition-colors ${annual ? 'text-ink' : 'text-mute'}`}>
+          Tahunan
+          <span className="ml-1.5 text-xs font-bold text-badge-success bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full">
+            Jimat RM{proSaving}
+          </span>
+        </span>
+      </div>
+
+      {/* ── Side-by-side cards ── */}
+      <div className="grid sm:grid-cols-2 gap-5">
+
+        {/* Free / Early Bird card */}
+        <div className="rounded-2xl overflow-hidden border-2 border-primary flex flex-col">
+          <div className="bg-primary px-5 py-3 flex items-center gap-2">
             {earlyBird
               ? <><Zap className="w-3.5 h-3.5 text-white flex-shrink-0" fill="white" />
                   <span className="text-white font-bold text-sm">EARLY BIRD — {spotsLeft} tempat lagi</span></>
@@ -252,101 +275,100 @@ function BillingToggle({ stats, loading }) {
                   <span className="text-white font-bold text-sm">PERCUBAAN PERCUMA</span></>
             }
           </div>
-          <span className="text-white/70 text-xs hidden sm:block">
-            {earlyBird ? 'Percuma 12 bulan · kemudian RM15/bln' : '14 hari · tiada kad kredit'}
-          </span>
-        </div>
-
-        <div className="bg-surface-card px-5 py-5">
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <div>
-              <div className="flex items-baseline gap-1.5">
+          <div className="bg-surface-card px-5 py-5 flex flex-col flex-1">
+            <div className="mb-4">
+              <div className="flex items-baseline gap-1.5 mb-1">
                 <span className="font-display font-bold text-4xl text-ink">RM 0</span>
                 <span className="text-mute text-sm">{earlyBird ? '/ 12 bulan' : '/ 14 hari'}</span>
               </div>
-              <p className="text-charcoal text-sm mt-1 max-w-xs">
+              <p className="text-charcoal text-sm leading-snug">
                 {earlyBird
-                  ? 'Percuma penuh selama 12 bulan. Selepas itu, RM15/bulan (50% diskaun selamanya).'
-                  : 'Cuba semua ciri tanpa komitmen. Tiada kad kredit.'}
+                  ? `Percuma penuh 12 bulan. Selepas itu, RM${proMonthly}/bulan selamanya.`
+                  : 'Cuba semua ciri tanpa komitmen. Tiada kad kredit diperlukan.'}
               </p>
             </div>
+            <div className="space-y-2 mb-5 flex-1">
+              {freeFeatures.map(f => (
+                <div key={f} className="flex items-start gap-1.5">
+                  <CheckCircle className="w-3.5 h-3.5 text-badge-success flex-shrink-0 mt-0.5" />
+                  <span className="text-xs text-charcoal leading-snug">{f}</span>
+                </div>
+              ))}
+              {!earlyBird && proExtras.map(f => (
+                <div key={f} className="flex items-start gap-1.5">
+                  <span className="text-stone text-xs flex-shrink-0 font-bold leading-none mt-0.5">—</span>
+                  <span className="text-xs text-mute leading-snug line-through">{f}</span>
+                </div>
+              ))}
+            </div>
             <Link to="/register"
-              className="flex-shrink-0 inline-flex items-center gap-1.5 bg-primary hover:bg-primary-deep text-white font-bold rounded-full px-5 py-2.5 text-sm transition-colors whitespace-nowrap">
+              className="w-full inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-deep text-white font-bold rounded-full px-5 py-3 text-sm transition-colors">
               {earlyBird ? 'Daftar Sekarang' : 'Cuba Percuma'} <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
-
-          <div className="border-t border-hairline pt-4 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2">
-            {features.map(f => (
-              <div key={f} className="flex items-start gap-1.5">
-                <CheckCircle className="w-3.5 h-3.5 text-badge-success flex-shrink-0 mt-0.5" />
-                <span className="text-xs text-charcoal leading-snug">{f}</span>
-              </div>
-            ))}
-            {!earlyBird && proExtras.map(f => (
-              <div key={f} className="flex items-start gap-1.5">
-                <span className="text-stone text-xs flex-shrink-0 font-bold leading-none mt-0.5">—</span>
-                <span className="text-xs text-mute leading-snug line-through">{f}</span>
-              </div>
-            ))}
-          </div>
         </div>
-      </div>
 
-      {/* ── Upgrade separator ── */}
-      {!earlyBird && (
-        <div className="flex items-center gap-3">
-          <div className="flex-1 border-t border-dashed border-hairline" />
-          <span className="text-xs text-mute font-medium px-1">Selepas 14 hari, sambung dengan</span>
-          <div className="flex-1 border-t border-dashed border-hairline" />
-        </div>
-      )}
-
-      {/* ── Pro card (coming soon) ── */}
-      {!earlyBird && (
-        <div className="bg-surface-bone border border-hairline rounded-2xl p-5">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-display font-bold text-ink">Pro</span>
-                <span className="text-[10px] bg-canvas border border-hairline text-ash px-2 py-0.5 rounded-full font-semibold tracking-wide">AKAN DATANG</span>
-              </div>
-              <p className="text-charcoal text-xs mb-3">Semua dalam percubaan, ditambah:</p>
-              <div className="space-y-1.5">
-                {proExtras.map(f => (
-                  <div key={f} className="flex items-center gap-2">
-                    <span className="text-primary font-bold text-sm leading-none flex-shrink-0">+</span>
-                    <span className="text-sm text-charcoal">{f}</span>
-                  </div>
-                ))}
-              </div>
+        {/* Pro card */}
+        <div className="rounded-2xl overflow-hidden border border-hairline flex flex-col">
+          <div className="bg-surface-deep px-5 py-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-on-dark font-bold text-sm">Pro</span>
+              <span className="text-[10px] bg-white/10 text-on-dark/60 px-2 py-0.5 rounded-full font-semibold tracking-wide">AKAN DATANG</span>
             </div>
-            <div className="flex-shrink-0 text-right">
-              <p className="font-display font-bold text-3xl text-ink leading-none">
-                {annual ? 'RM 360' : 'RM 30'}
+            {earlyBird && (
+              <span className="text-[10px] text-on-dark/60 hidden sm:block">
+                Harga khas early bird
+              </span>
+            )}
+          </div>
+          <div className="bg-surface-bone px-5 py-5 flex flex-col flex-1">
+            <div className="mb-4">
+              <div className="flex items-baseline gap-1.5 mb-1">
+                <span className="font-display font-bold text-4xl text-ink">RM {proPrice}</span>
+                <span className="text-mute text-sm">/ {proUnit}</span>
+              </div>
+              {earlyBird && (
+                <p className="text-xs text-badge-success font-semibold mb-1">
+                  Harga awal selamanya — tidak akan naik
+                </p>
+              )}
+              <p className="text-charcoal text-sm leading-snug">
+                {earlyBird
+                  ? 'Semua ciri tanpa had — aktif selepas tempoh percuma.'
+                  : 'Semua dalam percubaan, ditambah ciri lanjutan tanpa had.'}
               </p>
-              <p className="text-mute text-xs mt-0.5 mb-3">/{annual ? 'tahun' : 'bulan'}</p>
-              <div className="flex items-center justify-end gap-1.5">
-                <span className={`text-xs font-semibold transition-colors ${!annual ? 'text-ink' : 'text-mute'}`}>Bln</span>
-                <button onClick={() => setAnnual(a => !a)}
-                  className={`relative w-9 h-5 rounded-full transition-colors ${annual ? 'bg-primary' : 'bg-stone'}`}>
-                  <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${annual ? 'translate-x-[18px]' : 'translate-x-0.5'}`} />
-                </button>
-                <span className={`text-xs font-semibold transition-colors ${annual ? 'text-ink' : 'text-mute'}`}>Thn</span>
-              </div>
-              <p className="text-[10px] text-mute mt-2 leading-snug">Aktif selepas<br />10 bengkel daftar</p>
             </div>
+            <div className="space-y-2 mb-5 flex-1">
+              {(earlyBird ? earlyBirdFeatures : trialFeatures).map(f => (
+                <div key={f} className="flex items-start gap-1.5">
+                  <CheckCircle className="w-3.5 h-3.5 text-ash flex-shrink-0 mt-0.5" />
+                  <span className="text-xs text-mute leading-snug">{f}</span>
+                </div>
+              ))}
+              {proExtras.map(f => (
+                <div key={f} className="flex items-start gap-1.5">
+                  <span className="text-primary font-bold text-sm leading-none flex-shrink-0">+</span>
+                  <span className="text-xs text-charcoal leading-snug font-medium">{f}</span>
+                </div>
+              ))}
+            </div>
+            <button disabled
+              className="w-full inline-flex items-center justify-center gap-2 bg-stone/40 text-mute font-semibold rounded-full px-5 py-3 text-sm cursor-not-allowed">
+              Akan Datang
+            </button>
           </div>
         </div>
-      )}
+
+      </div>
     </div>
   )
 }
 
 /* ─── main component ────────────────────────────────────── */
 export function LandingPage() {
-  const stats   = usePlatformStats()
-  const loading = stats === null
+  const stats     = usePlatformStats()
+  const loading   = stats === null
+  const earlyBird = !loading && (stats?.workshops ?? 0) < 10
 
   return (
     <div className="min-h-screen bg-canvas">
@@ -387,7 +409,8 @@ export function LandingPage() {
           {/* Text */}
           <div className="flex-1 text-center lg:text-left">
             <div className="inline-flex items-center gap-2 bg-red-50 border border-red-100 text-primary text-xs font-bold px-4 py-1.5 rounded-full mb-5 tracking-wide">
-              <Zap className="w-3.5 h-3.5" fill="currentColor" /> PERCUMA 14 HARI · TIADA KAD KREDIT
+              <Zap className="w-3.5 h-3.5" fill="currentColor" />
+              {earlyBird ? 'EARLY BIRD — PERCUMA 12 BULAN' : 'PERCUMA 14 HARI · TIADA KAD KREDIT'}
             </div>
             <h1 className="font-display font-bold text-4xl sm:text-5xl text-ink leading-[1.1] mb-4">
               Bengkel Anda,<br />
@@ -399,7 +422,7 @@ export function LandingPage() {
             <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mb-5">
               <button onClick={() => scrollTo('harga')}
                 className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-deep text-white font-bold rounded-full px-8 py-3.5 text-sm transition-colors shadow-sm">
-                Cuba Percuma 14 Hari <ArrowRight className="w-4 h-4" />
+                {earlyBird ? 'Daftar Percuma — 12 Bulan' : 'Cuba Percuma 14 Hari'} <ArrowRight className="w-4 h-4" />
               </button>
               <button onClick={() => scrollTo('ciri')}
                 className="inline-flex items-center justify-center gap-2 bg-surface-card hover:bg-surface-bone border border-hairline text-ink font-semibold rounded-full px-8 py-3.5 text-sm transition-colors">
@@ -550,12 +573,16 @@ export function LandingPage() {
       <section id="harga" className="max-w-5xl mx-auto px-4 py-16">
         <div className="text-center mb-8">
           <p className="text-xs font-bold text-primary uppercase tracking-widest mb-3">Harga</p>
-          <h2 className="font-display font-bold text-3xl sm:text-4xl text-ink mb-3">Bermula dengan RM 0</h2>
-          <p className="text-charcoal text-lg">Cuba percuma selama 14 hari. Naik taraf bila anda sedia.</p>
+          <h2 className="font-display font-bold text-3xl sm:text-4xl text-ink mb-3">
+            {earlyBird ? 'Percuma 12 bulan untuk pendaftar awal' : 'Bermula dengan RM 0'}
+          </h2>
+          <p className="text-charcoal text-lg">
+            {earlyBird ? 'Daftar sekarang sebelum kehabisan tempat.' : 'Cuba percuma selama 14 hari. Naik taraf bila anda sedia.'}
+          </p>
         </div>
 
-        {!loading && (stats?.workshops ?? 0) < 10 && (
-          <div className="max-w-2xl mx-auto mb-6">
+        {earlyBird && (
+          <div className="max-w-4xl mx-auto mb-6">
             <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 flex items-center gap-4">
               <Zap className="w-5 h-5 text-amber-600 flex-shrink-0" fill="currentColor" />
               <div className="flex-1">
@@ -563,7 +590,7 @@ export function LandingPage() {
                   Tawaran Pengguna Awal — {10 - (stats?.workshops ?? 0)} tempat lagi!
                 </p>
                 <p className="text-amber-700 text-xs mt-0.5">
-                  Daftar sekarang dan dapatkan <strong>PERCUMA 12 BULAN</strong>, kemudian RM15/bulan selamanya (50% diskaun).
+                  Daftar sekarang dan dapatkan <strong>PERCUMA 12 BULAN</strong>, kemudian RM20/bulan selamanya.
                 </p>
               </div>
               <span className="font-display font-bold text-2xl text-amber-700 flex-shrink-0">

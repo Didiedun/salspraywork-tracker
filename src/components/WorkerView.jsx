@@ -3,16 +3,18 @@ import { useApp } from '../context/AppContext'
 import { useJobs } from '../hooks/useJobs'
 import { StageBar } from './StageBar'
 import { PaymentBadge } from './StatusBadge'
-import { STAGES, STAGE_INDEX, nextStage, prevStage, daysIn, isOverdue, paymentStatus } from '../constants'
+import { daysIn } from '../constants'
+import { useStages } from '../hooks/useStages'
 import { RefreshCw, ChevronRight, ChevronLeft, Search, LogOut, Wrench, Clock } from 'lucide-react'
 
 export function WorkerView() {
   const { workshop, signOut } = useApp()
   const { jobs, loading, fetchJobs } = useJobs(workshop?.id)
   const [search, setSearch] = useState('')
+  const { stages, stageMap, lastValue, nextStage, prevStage, isOverdue: checkOverdue } = useStages()
 
   const activeJobs = useMemo(() =>
-    jobs.filter(j => !j.archived && j.stage !== 'siap')
+    jobs.filter(j => !j.archived && j.stage !== lastValue)
       .filter(j => {
         if (!search) return true
         const q = search.toLowerCase()
@@ -59,9 +61,9 @@ export function WorkerView() {
         <div className="grid grid-cols-3 gap-3">
           {[
             { label: 'Kerja Aktif',  value: jobs.filter(j => !j.archived).length,           color: 'text-primary'  },
-            { label: 'Dalam Proses', value: jobs.filter(j => !j.archived && j.stage !== 'siap' && j.stage !== 'ready').length, color: 'text-amber-600' },
+            { label: 'Dalam Proses', value: jobs.filter(j => !j.archived && j.stage !== lastValue && j.stage !== stages[0]?.value).length, color: 'text-amber-600' },
             { label: 'Siap Hari Ini', value: jobs.filter(j => {
-              if (j.stage !== 'siap') return false
+              if (j.stage !== lastValue) return false
               const d = new Date(j.updated_at || j.created_at)
               return d.toDateString() === new Date().toDateString()
             }).length, color: 'text-badge-success' },
@@ -94,11 +96,11 @@ export function WorkerView() {
         ) : (
           <div className="space-y-3">
             {activeJobs.map(job => {
-              const overdue  = isOverdue(job)
+              const overdue  = checkOverdue(job)
               const days     = daysIn(job)
-              const stageIdx = STAGE_INDEX[job.stage] ?? 0
+              const stageIdx = stageMap[job.stage] ?? 0
               const isFirst  = stageIdx === 0
-              const isLast   = stageIdx === STAGES.length - 1
+              const isLast   = job.stage === lastValue
 
               return (
                 <div key={job.id}
@@ -119,7 +121,7 @@ export function WorkerView() {
                       <PaymentBadge job={job} />
                     </div>
 
-                    <StageBar current={job.stage} />
+                    <StageBar current={job.stage} stages={stages} />
 
                     <div className="flex items-center gap-2 mt-3">
                       <button disabled={isFirst}
@@ -128,7 +130,7 @@ export function WorkerView() {
                       </button>
                       <div className="flex-1 text-center">
                         <span className="text-xs font-semibold text-charcoal">
-                          {STAGES[stageIdx]?.label}
+                          {stages[stageIdx]?.label}
                         </span>
                       </div>
                       <button disabled={isLast}

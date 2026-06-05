@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { PaymentBadge, TypeBadge } from './StatusBadge'
 import { StageBar } from './StageBar'
 import { ReceiptModal } from './ReceiptModal'
-import { paymentStatus } from '../constants'
+import { paymentStatus, SPRAY_STAGES } from '../constants'
 import { Search, Car, FileText, Image, Phone, Printer, ArrowLeftRight, X, Wrench, RefreshCw } from 'lucide-react'
 
 export function CustomerView() {
@@ -207,7 +207,7 @@ export function CustomerView() {
               </div>
               <div className="bg-canvas rounded-md p-4 border border-hairline">
                 <p className="text-mute text-xs mb-3 font-medium">Peringkat Kerja</p>
-                <StageBar current={job.stage} />
+                <StageBar current={job.stage} stages={Array.isArray(workshop?.stages) && workshop.stages.length > 0 ? workshop.stages : SPRAY_STAGES} />
               </div>
               {job.est_completion && (
                 <div className="mt-3 bg-red-50 border border-red-200 rounded-md px-4 py-3">

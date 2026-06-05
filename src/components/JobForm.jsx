@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { X, Save, Car, User, Phone, FileText, DollarSign, Calendar, Flag } from 'lucide-react'
-import { STAGES } from '../constants'
+import { useStages } from '../hooks/useStages'
 
 const EMPTY = {
   plate: '', owner: '', phone: '', car: '', notes: '',
@@ -10,6 +10,7 @@ const EMPTY = {
 }
 
 export function JobForm({ initial, onSave, onClose, title }) {
+  const { stages } = useStages()
   const [form, setForm] = useState(initial ? {
     ...EMPTY, ...initial,
     total_amount:   initial.total_amount   ?? '',
@@ -127,7 +128,7 @@ export function JobForm({ initial, onSave, onClose, title }) {
             <label className={labelCls}>Peringkat Kerja</label>
             <select value={form.stage} onChange={set('stage')}
               className="w-full bg-canvas border border-hairline rounded-full px-5 py-2.5 text-ink focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm">
-              {STAGES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+              {stages.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
             </select>
           </div>
 

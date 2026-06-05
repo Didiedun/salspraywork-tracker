@@ -4,7 +4,8 @@ import { PaymentBadge, TypeBadge } from './StatusBadge'
 import { StageBar } from './StageBar'
 import { JobForm } from './JobForm'
 import { ReceiptModal } from './ReceiptModal'
-import { STAGES, STAGE_INDEX, nextStage, prevStage, daysIn, isOverdue } from '../constants'
+import { daysIn } from '../constants'
+import { useStages } from '../hooks/useStages'
 import {
   Edit2, Trash2, Camera, Receipt, Printer, Image,
   ChevronDown, ChevronUp, Upload, X, ChevronRight, ChevronLeft, Clock
@@ -20,13 +21,15 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
   const photoRef   = useRef()
   const receiptRef = useRef()
 
+  const { stages, stageMap, lastValue, nextStage, prevStage, isOverdue: checkOverdue } = useStages()
+
   const photos   = job.job_attachments?.filter(a => a.type === 'photo')   || []
   const receipts = job.job_attachments?.filter(a => a.type === 'receipt') || []
 
-  const stageIdx = STAGE_INDEX[job.stage] ?? 0
+  const stageIdx = stageMap[job.stage] ?? 0
   const isFirst  = stageIdx === 0
-  const isLast   = stageIdx === STAGES.length - 1
-  const overdue  = isOverdue(job)
+  const isLast   = job.stage === lastValue
+  const overdue  = checkOverdue(job)
   const days     = daysIn(job)
 
   const formatDate  = (d) => d ? new Date(d).toLocaleDateString('ms-MY', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'
@@ -112,7 +115,7 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
 
           {/* Stage bar */}
           <div className="mt-3">
-            <StageBar current={job.stage} />
+            <StageBar current={job.stage} stages={stages} />
           </div>
 
           {/* Quick stage advance */}
@@ -126,7 +129,7 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
             </button>
             <div className="flex-1 text-center">
               <span className="text-xs font-semibold text-charcoal">
-                {STAGES[stageIdx]?.label}
+                {stages[stageIdx]?.label}
               </span>
             </div>
             <button
