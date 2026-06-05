@@ -6,6 +6,7 @@ import { JobForm } from './JobForm'
 import { ReceiptModal } from './ReceiptModal'
 import { daysIn } from '../constants'
 import { useStages } from '../hooks/useStages'
+import { useLang } from '../context/LanguageContext'
 import {
   Edit2, Trash2, Camera, Receipt, Printer, Image,
   ChevronDown, ChevronUp, Upload, X, ChevronRight, ChevronLeft, Clock
@@ -22,6 +23,7 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
   const receiptRef = useRef()
 
   const { stages, stageMap, lastValue, nextStage, prevStage, isOverdue: checkOverdue } = useStages()
+  const { t } = useLang()
 
   const photos   = job.job_attachments?.filter(a => a.type === 'photo')   || []
   const receipts = job.job_attachments?.filter(a => a.type === 'receipt') || []
@@ -63,13 +65,13 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
   }
 
   const handleDelete = () => {
-    if (window.confirm(`Padam kerja ${job.plate}?`)) onDelete(job.id)
+    if (window.confirm(`${t('card_confirm_delete')} ${job.plate}?`)) onDelete(job.id)
   }
 
   return (
     <>
       {editing && (
-        <JobForm title="Edit Kerja" initial={job}
+        <JobForm initial={job}
           onSave={(d) => onUpdate(job.id, d)} onClose={() => setEditing(false)} />
       )}
       {showReceipt && (
@@ -87,15 +89,13 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
       <div className={`bg-surface-card rounded-lg border overflow-hidden transition-shadow hover:shadow-sm ${
         overdue ? 'border-red-200' : 'border-hairline'
       }`}>
-        {/* Overdue banner */}
         {overdue && (
           <div className="bg-red-50 border-b border-red-100 px-4 py-1.5 flex items-center gap-2">
             <Clock className="w-3.5 h-3.5 text-red-500" />
-            <p className="text-red-600 text-xs font-semibold">Tertangguh — {days} hari dalam bengkel</p>
+            <p className="text-red-600 text-xs font-semibold">{t('overdue_label')} — {days} {t('card_overdue')}</p>
           </div>
         )}
 
-        {/* Header */}
         <div className="p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
@@ -104,7 +104,7 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
                 <TypeBadge type={job.type} />
                 {!overdue && days > 0 && (
                   <span className="text-xs text-mute flex items-center gap-1">
-                    <Clock className="w-3 h-3" />{days}h
+                    <Clock className="w-3 h-3" />{days}{t('overdue_days').split(' ')[0] === 'days' ? 'd' : 'h'}
                   </span>
                 )}
               </div>
@@ -113,19 +113,17 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
             <PaymentBadge job={job} />
           </div>
 
-          {/* Stage bar */}
           <div className="mt-3">
             <StageBar current={job.stage} stages={stages} />
           </div>
 
-          {/* Quick stage advance */}
           <div className="flex items-center gap-2 mt-3">
             <button
               onClick={() => advanceStage('prev')}
               disabled={isFirst || advancing}
               className="flex items-center gap-1 text-xs text-mute hover:text-ink disabled:opacity-30 bg-canvas hover:bg-surface-bone border border-hairline px-2.5 py-1.5 rounded-full transition-colors font-semibold"
             >
-              <ChevronLeft className="w-3.5 h-3.5" /> Undur
+              <ChevronLeft className="w-3.5 h-3.5" /> {t('card_retreat')}
             </button>
             <div className="flex-1 text-center">
               <span className="text-xs font-semibold text-charcoal">
@@ -137,37 +135,35 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
               disabled={isLast || advancing}
               className="flex items-center gap-1 text-xs text-primary hover:text-primary-deep disabled:opacity-30 bg-red-50 hover:bg-red-100 border border-red-200 px-2.5 py-1.5 rounded-full transition-colors font-semibold"
             >
-              Maju <ChevronRight className="w-3.5 h-3.5" />
+              {t('card_advance')} <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          {/* Meta row */}
           <div className="flex items-center gap-3 mt-2.5 text-xs text-mute flex-wrap">
             <span>{formatDate(job.date_in || job.created_at)}</span>
             {job.est_completion && (
-              <span className="text-primary font-semibold">Siap: {formatDate(job.est_completion)}</span>
+              <span className="text-primary font-semibold">{t('form_est')}: {formatDate(job.est_completion)}</span>
             )}
             {job.total_amount != null && (
               <span className="font-semibold text-charcoal">
                 {formatMoney(job.total_amount)}
-                {!job.paid && balance > 0 && <span className="text-amber-600"> · Baki {formatMoney(balance)}</span>}
+                {!job.paid && balance > 0 && <span className="text-amber-600"> · {t('pay_balance').split(' ')[0]} {formatMoney(balance)}</span>}
               </span>
             )}
             {job.phone && (
               <a href={`https://wa.me/60${job.phone.replace(/^0/, '')}?text=Salam%2C%20tentang%20kenderaan%20${job.plate}`}
                 target="_blank" rel="noreferrer"
                 className="text-badge-success hover:text-emerald-700 font-semibold" onClick={e => e.stopPropagation()}>
-                WhatsApp
+                {t('card_whatsapp')}
               </a>
             )}
           </div>
         </div>
 
-        {/* Expandable */}
         <div className="border-t border-hairline">
           <button onClick={() => setExpanded(x => !x)}
             className="w-full flex items-center justify-between px-4 py-2 text-xs text-mute hover:bg-canvas transition-colors">
-            <span>{photos.length} gambar · {receipts.length} resit</span>
+            <span>{photos.length} {t('card_photos')} · {receipts.length} {t('card_receipts')}</span>
             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
 
@@ -175,21 +171,20 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
             <div className="px-4 pb-4 space-y-4">
               {job.notes && (
                 <div className="bg-canvas rounded-md p-3 text-sm text-body">
-                  <span className="font-semibold text-charcoal text-xs block mb-1">Nota</span>
+                  <span className="font-semibold text-charcoal text-xs block mb-1">{t('card_notes')}</span>
                   {job.notes}
                 </div>
               )}
 
-              {/* Photos */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-xs font-semibold text-charcoal flex items-center gap-1.5">
-                    <Image className="w-3.5 h-3.5" /> Gambar ({photos.length})
+                    <Image className="w-3.5 h-3.5" /> {t('card_photos_lbl')} ({photos.length})
                   </p>
                   <button onClick={() => photoRef.current?.click()} disabled={!!uploading}
                     className="flex items-center gap-1.5 text-xs bg-canvas border border-hairline text-charcoal px-3 py-1.5 rounded-full hover:bg-surface-bone disabled:opacity-50 transition-colors font-semibold">
                     <Camera className="w-3.5 h-3.5" />
-                    {uploading === 'photo' ? 'Muat naik...' : 'Tambah'}
+                    {uploading === 'photo' ? t('uploading') : t('card_add_photo')}
                   </button>
                   <input ref={photoRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange('photo')} />
                 </div>
@@ -203,26 +198,25 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
                         {img.stage && (
                           <span className="absolute bottom-1 left-1 bg-ink/60 text-white text-xs px-1 rounded truncate max-w-[90%]">{img.stage}</span>
                         )}
-                        <button onClick={() => window.confirm('Padam?') && onDeleteAttachment(job.id, img.id)}
+                        <button onClick={() => window.confirm(t('delete') + '?') && onDeleteAttachment(job.id, img.id)}
                           className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <X className="w-3 h-3" />
                         </button>
                       </div>
                     ))}
                   </div>
-                ) : <p className="text-xs text-ash italic">Tiada gambar</p>}
+                ) : <p className="text-xs text-ash italic">{t('card_no_photos')}</p>}
               </div>
 
-              {/* Receipts */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-xs font-semibold text-charcoal flex items-center gap-1.5">
-                    <Receipt className="w-3.5 h-3.5" /> Resit ({receipts.length})
+                    <Receipt className="w-3.5 h-3.5" /> {t('card_rec_lbl')} ({receipts.length})
                   </p>
                   <button onClick={() => receiptRef.current?.click()} disabled={!!uploading}
                     className="flex items-center gap-1.5 text-xs bg-canvas border border-hairline text-charcoal px-3 py-1.5 rounded-full hover:bg-surface-bone disabled:opacity-50 transition-colors font-semibold">
                     <Upload className="w-3.5 h-3.5" />
-                    {uploading === 'receipt' ? 'Muat naik...' : 'Muat Naik'}
+                    {uploading === 'receipt' ? t('uploading') : t('card_upload')}
                   </button>
                   <input ref={receiptRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange('receipt')} />
                 </div>
@@ -232,7 +226,7 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
                       <div key={img.id} className="relative group">
                         <img src={img.url} alt="" className="w-full aspect-square object-cover rounded-md cursor-pointer" onClick={() => setLightbox(img.url)} />
                         {img.caption && <span className="absolute bottom-1 left-1 bg-ink/60 text-white text-xs px-1 rounded">{img.caption}</span>}
-                        <button onClick={() => window.confirm('Padam?') && onDeleteAttachment(job.id, img.id)}
+                        <button onClick={() => window.confirm(t('delete') + '?') && onDeleteAttachment(job.id, img.id)}
                           className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <X className="w-3 h-3" />
                         </button>
@@ -245,16 +239,15 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
           )}
         </div>
 
-        {/* Actions */}
         <div className="flex border-t border-hairline">
           <button onClick={() => setEditing(true)} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs text-mute hover:bg-canvas hover:text-ink transition-colors font-semibold">
-            <Edit2 className="w-3.5 h-3.5" /> Edit
+            <Edit2 className="w-3.5 h-3.5" /> {t('edit')}
           </button>
           <button onClick={() => setShowReceipt(true)} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs text-mute hover:bg-canvas hover:text-ink transition-colors border-x border-hairline font-semibold">
-            <Printer className="w-3.5 h-3.5" /> Invois
+            <Printer className="w-3.5 h-3.5" /> {t('card_invoice')}
           </button>
           <button onClick={handleDelete} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs text-red-500 hover:bg-red-50 transition-colors font-semibold">
-            <Trash2 className="w-3.5 h-3.5" /> Padam
+            <Trash2 className="w-3.5 h-3.5" /> {t('delete')}
           </button>
         </div>
       </div>

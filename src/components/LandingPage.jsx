@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { usePlatformStats } from '../hooks/usePlatformStats'
+import { useLang } from '../context/LanguageContext'
 import {
   ClipboardList, Package, Users, Smartphone, FileText,
   CheckCircle, ArrowRight, BarChart2, Shield, Zap,
@@ -234,6 +235,7 @@ const faqs = [
 /* ─── billing toggle component ───────────────────────── */
 function BillingToggle({ stats, loading }) {
   const [annual, setAnnual] = useState(false)
+  const { t } = useLang()
   const earlyBird = !loading && (stats?.workshops ?? 0) < 10
   const spotsLeft = Math.max(0, 10 - (stats?.workshops ?? 0))
   const freeFeatures = earlyBird ? earlyBirdFeatures : trialFeatures
@@ -249,15 +251,15 @@ function BillingToggle({ stats, loading }) {
 
       {/* ── Annual / Monthly toggle ── */}
       <div className="flex items-center justify-center gap-3 mb-8">
-        <span className={`text-sm font-semibold transition-colors ${!annual ? 'text-ink' : 'text-mute'}`}>Bulanan</span>
+        <span className={`text-sm font-semibold transition-colors ${!annual ? 'text-ink' : 'text-mute'}`}>{t('land_monthly')}</span>
         <button onClick={() => setAnnual(a => !a)}
           className={`relative w-12 h-6 rounded-full transition-colors ${annual ? 'bg-primary' : 'bg-stone'}`}>
           <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${annual ? 'translate-x-[26px]' : 'translate-x-0.5'}`} />
         </button>
-        <span className={`text-sm font-semibold transition-colors ${annual ? 'text-ink' : 'text-mute'}`}>
-          Tahunan
-          <span className="ml-1.5 text-xs font-bold text-badge-success bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full">
-            Jimat RM{proSaving}
+        <span className={`inline-flex items-center gap-1.5 text-sm font-semibold transition-colors ${annual ? 'text-ink' : 'text-mute'}`}>
+          {t('land_annual')}
+          <span className="text-xs font-bold text-badge-success bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+            {t('land_save_rm')}{proSaving}
           </span>
         </span>
       </div>
@@ -369,6 +371,7 @@ export function LandingPage() {
   const stats     = usePlatformStats()
   const loading   = stats === null
   const earlyBird = !loading && (stats?.workshops ?? 0) < 10
+  const { t } = useLang()
 
   return (
     <div className="min-h-screen bg-canvas">
@@ -383,7 +386,7 @@ export function LandingPage() {
             <span className="font-display font-bold text-ink">Digital Depot</span>
           </div>
           <div className="hidden sm:flex items-center gap-1">
-            {[['Ciri-ciri','ciri'], ['Cara Kerja','cara'], ['Harga','harga'], ['FAQ','faq']].map(([label, id]) => (
+            {[[t('land_features'),'ciri'], [t('land_how'),'cara'], [t('land_pricing'),'harga'], [t('land_faq'),'faq']].map(([label, id]) => (
               <button key={id} onClick={() => scrollTo(id)}
                 className="text-sm text-mute hover:text-ink px-3 py-2 rounded-full hover:bg-surface-bone transition-colors font-medium">
                 {label}
@@ -393,11 +396,11 @@ export function LandingPage() {
           <div className="flex items-center gap-2">
             <Link to="/login"
               className="text-sm font-semibold text-charcoal hover:text-ink px-4 py-2 rounded-full hover:bg-surface-bone transition-colors">
-              Log Masuk
+              {t('land_login')}
             </Link>
             <button onClick={() => scrollTo('harga')}
               className="text-sm font-bold bg-primary hover:bg-primary-deep text-white px-5 py-2 rounded-full transition-colors">
-              Cuba Percuma
+              {t('land_free')}
             </button>
           </div>
         </div>

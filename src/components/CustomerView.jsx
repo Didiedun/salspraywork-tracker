@@ -5,10 +5,12 @@ import { PaymentBadge, TypeBadge } from './StatusBadge'
 import { StageBar } from './StageBar'
 import { ReceiptModal } from './ReceiptModal'
 import { paymentStatus, SPRAY_STAGES } from '../constants'
+import { useLang } from '../context/LanguageContext'
 import { Search, Car, FileText, Image, Phone, Printer, ArrowLeftRight, X, Wrench, RefreshCw } from 'lucide-react'
 
 export function CustomerView() {
   const { slug } = useParams()
+  const { t } = useLang()
   const [workshop, setWorkshop]   = useState(null)
   const [wsLoading, setWsLoading] = useState(true)
 
@@ -81,8 +83,8 @@ export function CustomerView() {
   if (!workshop) return (
     <div className="min-h-screen bg-canvas flex flex-col items-center justify-center p-4 text-center">
       <Wrench className="w-12 h-12 text-ash mb-4 opacity-40" />
-      <p className="font-display font-bold text-ink text-lg">Bengkel tidak dijumpai</p>
-      <p className="text-mute text-sm mt-1">URL ini tidak wujud atau sudah tidak aktif.</p>
+      <p className="font-display font-bold text-ink text-lg">{t('cv_ws_missing')}</p>
+      <p className="text-mute text-sm mt-1">{t('cv_ws_gone')}</p>
     </div>
   )
 
@@ -99,7 +101,7 @@ export function CustomerView() {
           </div>
           <div>
             <h1 className="font-display font-bold text-ink text-base leading-tight">{workshop.name}</h1>
-            <p className="text-mute text-xs">Semak Status Kenderaan Anda</p>
+            <p className="text-mute text-xs">{t('cv_subtitle')}</p>
           </div>
         </div>
       </div>
@@ -107,7 +109,7 @@ export function CustomerView() {
       <div className="flex-1 max-w-xl mx-auto w-full px-4 py-8 space-y-5">
         {/* Mode toggle */}
         <div className="flex gap-2 bg-surface-card border border-hairline rounded-full p-1 w-fit">
-          {[['plate', 'No. Plat'], ['phone', 'No. Telefon']].map(([m, label]) => (
+          {[['plate', t('cv_plate_tab')], ['phone', t('cv_phone_tab')]].map(([m, label]) => (
             <button key={m}
               onClick={() => { setMode(m); setQuery(''); setSearched(false); setActiveJob(null); setJobs([]) }}
               className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
@@ -127,20 +129,20 @@ export function CustomerView() {
             }
             <input value={query}
               onChange={e => setQuery(mode === 'plate' ? e.target.value.toUpperCase() : e.target.value)}
-              placeholder={mode === 'plate' ? 'cth: WXX 1234' : 'cth: 012-3456789'}
+              placeholder={mode === 'plate' ? t('cv_plate_ph') : t('cv_phone_ph')}
               className="w-full bg-surface-card border border-hairline rounded-full pl-11 pr-5 py-3 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors" />
           </div>
           <button type="submit" disabled={loading}
             className="bg-primary hover:bg-primary-deep disabled:opacity-50 text-white rounded-full px-5 py-3 flex items-center gap-2 font-semibold text-sm transition-colors">
             <Search className="w-4 h-4" />
-            {loading ? '...' : 'Cari'}
+            {loading ? '...' : t('cv_search')}
           </button>
         </form>
 
         {/* Multiple results */}
         {searched && mode === 'phone' && jobs.length > 1 && !activeJob && (
           <div className="space-y-2">
-            <p className="text-charcoal text-sm font-medium">{jobs.length} kenderaan dijumpai — pilih:</p>
+            <p className="text-charcoal text-sm font-medium">{jobs.length} {t('cv_multiple')}</p>
             {jobs.map(j => (
               <button key={j.id} onClick={() => setActiveJob(j)}
                 className="w-full bg-surface-card hover:bg-surface-bone border border-hairline rounded-md p-4 text-left transition-colors">
@@ -162,19 +164,17 @@ export function CustomerView() {
         {/* Not found */}
         {searched && !job && (mode === 'plate' || (mode === 'phone' && jobs.length === 0)) && (
           <div className="bg-surface-card border border-hairline rounded-md p-8 text-center">
-            <p className="text-charcoal font-semibold mb-1">Kenderaan tidak dijumpai</p>
-            <p className="text-mute text-sm">Sila semak semula {mode === 'plate' ? 'nombor plat' : 'nombor telefon'} anda</p>
+            <p className="text-charcoal font-semibold mb-1">{t('cv_not_found')}</p>
+            <p className="text-mute text-sm">{mode === 'plate' ? t('cv_check_plate') : t('cv_check_phone')}</p>
           </div>
         )}
 
         {/* Idle state */}
         {!searched && (
           <div className="space-y-4 pt-2">
-            <p className="text-center text-charcoal text-sm leading-relaxed">
-              Masukkan nombor plat atau nombor telefon anda<br />untuk semak status kerja kenderaan.
-            </p>
+            <p className="text-center text-charcoal text-sm leading-relaxed">{t('cv_idle_prompt')}</p>
             <div>
-              <p className="text-xs font-semibold text-mute uppercase tracking-wide mb-3 px-1">Perkhidmatan Kami</p>
+              <p className="text-xs font-semibold text-mute uppercase tracking-wide mb-3 px-1">{t('cv_services')}</p>
               <div className="grid grid-cols-2 gap-2">
                 {[
                   { name: 'Ketuk & Tarik',  desc: 'Baiki kemek & kerosakan panel' },
@@ -206,12 +206,12 @@ export function CustomerView() {
                 <TypeBadge type={job.type} />
               </div>
               <div className="bg-canvas rounded-md p-4 border border-hairline">
-                <p className="text-mute text-xs mb-3 font-medium">Peringkat Kerja</p>
+                <p className="text-mute text-xs mb-3 font-medium">{t('cv_stage_lbl')}</p>
                 <StageBar current={job.stage} stages={Array.isArray(workshop?.stages) && workshop.stages.length > 0 ? workshop.stages : SPRAY_STAGES} />
               </div>
               {job.est_completion && (
                 <div className="mt-3 bg-red-50 border border-red-200 rounded-md px-4 py-3">
-                  <p className="text-primary text-xs font-semibold">Dijangka Siap</p>
+                  <p className="text-primary text-xs font-semibold">{t('cv_est')}</p>
                   <p className="text-ink font-bold">{formatDate(job.est_completion)}</p>
                 </div>
               )}
@@ -220,27 +220,27 @@ export function CustomerView() {
             <div className="bg-surface-card rounded-lg border border-hairline p-5 space-y-3">
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="bg-canvas rounded-md p-3 border border-hairline">
-                  <p className="text-mute text-xs mb-1 font-medium">Pemilik</p>
+                  <p className="text-mute text-xs mb-1 font-medium">{t('cv_owner')}</p>
                   <p className="text-ink font-semibold">{job.owner}</p>
                 </div>
                 <div className="bg-canvas rounded-md p-3 border border-hairline">
-                  <p className="text-mute text-xs mb-1 font-medium">Tarikh Masuk</p>
+                  <p className="text-mute text-xs mb-1 font-medium">{t('cv_date_in')}</p>
                   <p className="text-ink font-semibold">{formatDate(job.date_in || job.created_at)}</p>
                 </div>
               </div>
 
               <div className={`rounded-md p-4 border ${paymentBorder[pStatus] || 'border-hairline bg-canvas'}`}>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-charcoal text-xs font-semibold">Maklumat Bayaran</p>
+                  <p className="text-charcoal text-xs font-semibold">{t('pay_info')}</p>
                   <PaymentBadge job={job} />
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-charcoal">Jumlah</span>
+                  <span className="text-charcoal">{t('pay_total')}</span>
                   <span className="text-ink font-semibold">{formatMoney(job.total_amount)}</span>
                 </div>
                 {job.downpayment > 0 && (
                   <div className="flex items-center justify-between text-sm mt-1">
-                    <span className="text-charcoal">Deposit dibayar</span>
+                    <span className="text-charcoal">{t('pay_deposit_paid')}</span>
                     <span className="text-ink font-semibold">- {formatMoney(job.downpayment)}</span>
                   </div>
                 )}
@@ -248,7 +248,7 @@ export function CustomerView() {
                   <>
                     <div className="border-t border-hairline my-2" />
                     <div className="flex items-center justify-between">
-                      <span className="text-charcoal font-semibold text-sm">Baki perlu dibayar</span>
+                      <span className="text-charcoal font-semibold text-sm">{t('pay_balance')}</span>
                       <span className="text-ink font-display font-bold text-lg">{formatMoney(balance)}</span>
                     </div>
                   </>
@@ -258,7 +258,7 @@ export function CustomerView() {
               {job.notes && (
                 <div className="bg-canvas rounded-md p-3 border border-hairline">
                   <p className="text-mute text-xs mb-1 flex items-center gap-1 font-medium">
-                    <FileText className="w-3 h-3" /> Nota Kerja
+                    <FileText className="w-3 h-3" /> {t('cv_notes_lbl')}
                   </p>
                   <p className="text-charcoal text-sm">{job.notes}</p>
                 </div>
@@ -269,24 +269,24 @@ export function CustomerView() {
               <div className="bg-surface-card rounded-lg border border-hairline p-5">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-ink font-semibold flex items-center gap-2 text-sm">
-                    <Image className="w-4 h-4 text-primary" /> Gambar Progress ({photos.length})
+                    <Image className="w-4 h-4 text-primary" /> {t('cv_photos_lbl')} ({photos.length})
                   </p>
                   <button onClick={() => setBeforeAfter(x => !x)}
                     className="flex items-center gap-1.5 text-xs bg-canvas border border-hairline text-charcoal px-3 py-1.5 rounded-full hover:bg-surface-bone transition-colors font-semibold">
                     <ArrowLeftRight className="w-3.5 h-3.5" />
-                    {beforeAfter ? 'Grid' : 'Sebelum / Selepas'}
+                    {beforeAfter ? t('cv_grid') : t('cv_ba_toggle')}
                   </button>
                 </div>
                 {beforeAfter ? (
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <p className="text-xs text-mute text-center mb-1.5 font-medium">Sebelum</p>
-                      <img src={firstPhoto.url} alt="sebelum" className="w-full aspect-square object-cover rounded-md cursor-pointer"
+                      <p className="text-xs text-mute text-center mb-1.5 font-medium">{t('cv_before')}</p>
+                      <img src={firstPhoto.url} alt="before" className="w-full aspect-square object-cover rounded-md cursor-pointer"
                         onClick={() => setLightbox(firstPhoto.url)} />
                     </div>
                     <div>
-                      <p className="text-xs text-mute text-center mb-1.5 font-medium">Selepas</p>
-                      <img src={lastPhoto.url} alt="selepas" className="w-full aspect-square object-cover rounded-md cursor-pointer"
+                      <p className="text-xs text-mute text-center mb-1.5 font-medium">{t('cv_after')}</p>
+                      <img src={lastPhoto.url} alt="after" className="w-full aspect-square object-cover rounded-md cursor-pointer"
                         onClick={() => setLightbox(lastPhoto.url)} />
                     </div>
                   </div>
@@ -310,12 +310,12 @@ export function CustomerView() {
                   target="_blank" rel="noreferrer"
                   className="flex items-center justify-center gap-2 bg-badge-success hover:bg-emerald-700 text-white font-semibold rounded-full py-3.5 transition-colors text-sm">
                   <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                  Hubungi WA
+                  {t('cv_wa')}
                 </a>
               )}
               <button onClick={() => setShowReceipt(true)}
                 className={`flex items-center justify-center gap-2 bg-surface-dark hover:bg-surface-deep text-on-dark font-semibold rounded-full py-3.5 transition-colors text-sm ${!job.phone ? 'col-span-2' : ''}`}>
-                <Printer className="w-4 h-4" /> Download Resit
+                <Printer className="w-4 h-4" /> {t('cv_receipt')}
               </button>
             </div>
           </div>
@@ -336,7 +336,7 @@ export function CustomerView() {
           </div>
           <div className="border-t border-divider-dark pt-4 flex flex-wrap items-center justify-between gap-2">
             {workshop.phone && <p className="text-on-dark-mute text-xs">{workshop.phone}</p>}
-            <p className="text-on-dark-mute text-xs">Dikuasakan oleh Digital Depot</p>
+            <p className="text-on-dark-mute text-xs">{t('cv_powered')}</p>
           </div>
         </div>
       </footer>

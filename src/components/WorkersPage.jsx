@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
+import { useLang } from '../context/LanguageContext'
 import { supabase } from '../lib/supabase'
 import { Users, RefreshCw, Copy, Check, Trash2, RefreshCcw, UserPlus } from 'lucide-react'
 
@@ -9,6 +10,7 @@ function randomCode() {
 
 export function WorkersPage() {
   const { workshop } = useApp()
+  const { t } = useLang()
 
   const [workers, setWorkers]   = useState([])
   const [invites, setInvites]   = useState([])
@@ -51,7 +53,7 @@ export function WorkersPage() {
   }
 
   const removeWorker = async (member) => {
-    if (!window.confirm(`Keluarkan pekerja ini dari bengkel?`)) return
+    if (!window.confirm(t('wk_remove'))) return
     await supabase.from('workshop_members').delete().eq('id', member.id)
     setWorkers(prev => prev.filter(w => w.id !== member.id))
   }
@@ -73,8 +75,8 @@ export function WorkersPage() {
       {/* Workers list */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-display font-bold text-ink">Senarai Pekerja</h2>
-          <span className="text-xs text-mute bg-surface-card border border-hairline px-3 py-1 rounded-full">{workers.length} pekerja</span>
+          <h2 className="font-display font-bold text-ink">{t('wk_workers')}</h2>
+          <span className="text-xs text-mute bg-surface-card border border-hairline px-3 py-1 rounded-full">{workers.length} {t('wk_worker_count')}</span>
         </div>
 
         {loading ? (
@@ -82,8 +84,8 @@ export function WorkersPage() {
         ) : workers.length === 0 ? (
           <div className="bg-surface-card border border-hairline rounded-lg p-8 text-center">
             <Users className="w-10 h-10 text-ash opacity-40 mx-auto mb-3" />
-            <p className="text-charcoal font-semibold">Belum ada pekerja</p>
-            <p className="text-mute text-sm mt-1">Jana kod jemputan dan kongsi dengan pekerja anda.</p>
+            <p className="text-charcoal font-semibold">{t('wk_no_workers')}</p>
+            <p className="text-mute text-sm mt-1">{t('wk_no_workers_sub')}</p>
           </div>
         ) : (
           <div className="bg-surface-card rounded-lg border border-hairline overflow-hidden">
@@ -94,7 +96,7 @@ export function WorkersPage() {
                   <span className="text-charcoal font-bold text-sm">{(w.name || w.user?.email || '?')[0].toUpperCase()}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-ink font-semibold text-sm">{w.name || 'Tanpa nama'}</p>
+                  <p className="text-ink font-semibold text-sm">{w.name || t('wk_no_name')}</p>
                   <p className="text-mute text-xs truncate">{w.user?.email}</p>
                 </div>
                 <span className="text-xs bg-surface-bone border border-hairline px-2.5 py-1 rounded-full text-charcoal font-medium">
@@ -113,18 +115,18 @@ export function WorkersPage() {
       {/* Invite codes */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-display font-bold text-ink">Jemputan Aktif</h2>
+          <h2 className="font-display font-bold text-ink">{t('wk_invites')}</h2>
           <button onClick={generateInvite} disabled={generating}
             className="flex items-center gap-2 bg-primary hover:bg-primary-deep disabled:bg-stone text-white font-semibold rounded-full px-4 py-2 text-sm transition-colors border-2 border-primary hover:border-primary-deep disabled:border-stone">
             <UserPlus className="w-3.5 h-3.5" />
-            {generating ? 'Menjana...' : 'Jana Kod Baru'}
+            {generating ? t('wk_generating') : t('wk_gen_invite')}
           </button>
         </div>
 
         {invites.length === 0 ? (
           <div className="bg-surface-card border border-hairline rounded-lg p-6 text-center">
-            <p className="text-charcoal text-sm">Tiada jemputan aktif</p>
-            <p className="text-mute text-xs mt-1">Jana kod jemputan untuk kongsi dengan pekerja baru.</p>
+            <p className="text-charcoal text-sm">{t('wk_no_invites')}</p>
+            <p className="text-mute text-xs mt-1">{t('wk_no_invites_sub')}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -138,15 +140,15 @@ export function WorkersPage() {
                   </div>
                   {invite.expires_at && (
                     <p className="text-mute text-xs mt-0.5">
-                      Tamat: {new Date(invite.expires_at).toLocaleDateString('ms-MY')}
+                      {t('wk_expires')} {new Date(invite.expires_at).toLocaleDateString('ms-MY')}
                     </p>
                   )}
                 </div>
                 <button onClick={() => copyCode(invite.code)}
                   className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full border border-hairline bg-canvas hover:bg-surface-bone transition-colors whitespace-nowrap">
                   {copied === invite.code
-                    ? <><Check className="w-3.5 h-3.5 text-badge-success" /> Disalin</>
-                    : <><Copy className="w-3.5 h-3.5" /> Salin Kod</>
+                    ? <><Check className="w-3.5 h-3.5 text-badge-success" /> {t('copied')}</>
+                    : <><Copy className="w-3.5 h-3.5" /> {t('wk_copy')}</>
                   }
                 </button>
                 <button onClick={() => revokeInvite(invite)}
@@ -158,9 +160,7 @@ export function WorkersPage() {
           </div>
         )}
 
-        <p className="text-ash text-xs mt-3 px-1">
-          Kongsi kod ini dengan pekerja. Mereka perlu daftar akaun dahulu, kemudian masukkan kod semasa log masuk pertama kali.
-        </p>
+        <p className="text-ash text-xs mt-3 px-1">{t('wk_invite_hint')}</p>
       </div>
     </div>
   )
