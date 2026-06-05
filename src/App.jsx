@@ -8,6 +8,7 @@ import { InventoryPage } from './components/InventoryPage'
 import { WorkersPage }   from './components/WorkersPage'
 import { WorkerView }    from './components/WorkerView'
 import { CustomerView }  from './components/CustomerView'
+import { LandingPage }   from './components/LandingPage'
 import { RefreshCw }     from 'lucide-react'
 
 function Spinner() {
@@ -26,6 +27,9 @@ function AppRoutes() {
     <Routes>
       {/* Always-public: customer status page per workshop */}
       <Route path="/w/:slug" element={<CustomerView />} />
+
+      {/* Landing page — show when not logged in, redirect when logged in */}
+      <Route path="/" element={!user ? <LandingPage /> : <Navigate to="/dashboard" replace />} />
 
       {/* Auth pages redirect away if already logged in */}
       <Route path="/login"    element={!user ? <AuthScreen mode="login"    /> : <Navigate to="/dashboard" replace />} />
