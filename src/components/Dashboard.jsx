@@ -8,6 +8,7 @@ import { TodaySummary } from './TodaySummary'
 import { RevenueChart } from './RevenueChart'
 import { paymentStatus } from '../constants'
 import { Plus, Search, RefreshCw, Archive, TrendingUp, BarChart2, Copy, Check } from 'lucide-react'
+import { TutorialModal } from './TutorialModal'
 
 export function Dashboard() {
   const { workshop } = useApp()
@@ -18,6 +19,12 @@ export function Dashboard() {
   const [search,    setSearch]    = useState('')
   const [payFilter, setPayFilter] = useState('all')
   const [adding,    setAdding]    = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('onboarding_done'))
+
+  const closeOnboarding = () => {
+    localStorage.setItem('onboarding_done', 'true')
+    setShowOnboarding(false)
+  }
   const [showChart, setShowChart] = useState(false)
   const [copied,    setCopied]    = useState(false)
 
@@ -53,6 +60,7 @@ export function Dashboard() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-5 space-y-4">
+      {showOnboarding && <TutorialModal onClose={closeOnboarding} />}
       {offline && (
         <div className="bg-amber-50 border border-amber-200 rounded-md px-4 py-3 flex items-center gap-3 text-sm">
           <div>
