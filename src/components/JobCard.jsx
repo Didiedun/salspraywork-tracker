@@ -7,6 +7,7 @@ import { ReceiptModal } from './ReceiptModal'
 import { daysIn } from '../constants'
 import { useStages } from '../hooks/useStages'
 import { useLang } from '../context/LanguageContext'
+import { useApp } from '../context/AppContext'
 import {
   Edit2, Trash2, Camera, Receipt, Printer, Image,
   ChevronDown, ChevronUp, Upload, X, ChevronRight, ChevronLeft, Clock
@@ -24,6 +25,7 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
 
   const { stages, stageMap, lastValue, nextStage, prevStage, isOverdue: checkOverdue } = useStages()
   const { t } = useLang()
+  const { workshop } = useApp()
 
   const photos   = job.job_attachments?.filter(a => a.type === 'photo')   || []
   const receipts = job.job_attachments?.filter(a => a.type === 'receipt') || []
@@ -75,7 +77,7 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
           onSave={(d) => onUpdate(job.id, d)} onClose={() => setEditing(false)} />
       )}
       {showReceipt && (
-        <ReceiptModal job={job} onClose={() => setShowReceipt(false)} />
+        <ReceiptModal job={job} workshop={workshop} onClose={() => setShowReceipt(false)} />
       )}
       {lightbox && (
         <div className="fixed inset-0 bg-ink/80 z-50 flex items-center justify-center p-4" onClick={() => setLightbox(null)}>

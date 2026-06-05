@@ -41,10 +41,10 @@ export function ReceiptModal({ job, workshop, onClose }) {
     <>
       <style>{`
         @media print {
-          body > *:not(#receipt-print-root) { display: none !important; }
-          #receipt-print-root { position: fixed; inset: 0; z-index: 9999; background: white; }
+          body * { visibility: hidden; }
+          #receipt-print-root, #receipt-print-root * { visibility: visible; }
+          #receipt-print-root { position: fixed; top: 0; left: 0; width: 100%; background: white; }
           .no-print { display: none !important; }
-          .receipt-card { box-shadow: none !important; border: none !important; background: white !important; }
         }
       `}</style>
 
