@@ -50,6 +50,17 @@ export function AppProvider({ children }) {
     setWorkshop(null); setRole(null)
   }
 
+  const leaveWorkshop = async () => {
+    if (!user || !workshop) return
+    const { error } = await supabase
+      .from('workshop_members')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('workshop_id', workshop.id)
+    if (error) throw error
+    setWorkshop(null); setRole(null)
+  }
+
   const createWorkshop = async (name, slug) => {
     const { data, error } = await supabase
       .from('workshops').insert([{ name, slug, owner_id: user.id, stages: DEFAULT_STAGES }]).select().single()
@@ -61,7 +72,7 @@ export function AppProvider({ children }) {
   return (
     <AppContext.Provider value={{
       user, workshop, role, loading,
-      signIn, signUp, signOut,
+      signIn, signUp, signOut, leaveWorkshop,
       createWorkshop,
       reloadWorkshop: () => loadWorkshop(user?.id),
     }}>

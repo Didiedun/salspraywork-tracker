@@ -107,6 +107,9 @@ export const translations = {
     days_short:      'h',
 
     /* worker view */
+    wv_leave:         'Tinggalkan Bengkel',
+    wv_leave_confirm: 'Anda pasti mahu tinggalkan bengkel ini? Anda perlu kod jemputan baru untuk menyertai semula.',
+    wv_leave_error:   'Gagal tinggalkan bengkel. Cuba lagi.',
     wv_title:       'Paparan Pekerja',
     wv_active:      'Kerja Aktif',
     wv_in_progress: 'Dalam Proses',
@@ -413,6 +416,9 @@ export const translations = {
     days_short:      'd',
 
     /* worker view */
+    wv_leave:         'Leave Workshop',
+    wv_leave_confirm: 'Are you sure you want to leave this workshop? You will need a new invite code to rejoin.',
+    wv_leave_error:   'Failed to leave workshop. Please try again.',
     wv_title:       'Worker View',
     wv_active:      'Active Jobs',
     wv_in_progress: 'In Progress',

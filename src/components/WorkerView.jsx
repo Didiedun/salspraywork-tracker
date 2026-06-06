@@ -7,10 +7,10 @@ import { PaymentBadge } from './StatusBadge'
 import { daysIn } from '../constants'
 import { useStages } from '../hooks/useStages'
 import { useLang } from '../context/LanguageContext'
-import { RefreshCw, ChevronRight, ChevronLeft, Search, LogOut, Wrench, Clock, Camera, X, Image } from 'lucide-react'
+import { RefreshCw, ChevronRight, ChevronLeft, Search, LogOut, Wrench, Clock, Camera, X, Image, DoorOpen } from 'lucide-react'
 
 export function WorkerView() {
-  const { workshop, signOut } = useApp()
+  const { workshop, signOut, leaveWorkshop } = useApp()
   const { jobs, loading, fetchJobs, updateJob, addAttachment } = useJobs(workshop?.id)
   const [search, setSearch]     = useState('')
   const [advancing, setAdvancing] = useState({})
@@ -75,6 +75,15 @@ export function WorkerView() {
             <button onClick={fetchJobs}
               className="w-9 h-9 rounded-full flex items-center justify-center bg-surface-card border border-hairline text-mute hover:text-ink transition-colors">
               <RefreshCw className="w-4 h-4" />
+            </button>
+            <button
+              onClick={async () => {
+                if (window.confirm(t('wv_leave_confirm'))) {
+                  try { await leaveWorkshop() } catch { alert(t('wv_leave_error')) }
+                }
+              }}
+              className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-2 rounded-full transition-colors font-semibold">
+              <DoorOpen className="w-3.5 h-3.5" /> {t('wv_leave')}
             </button>
             <button onClick={signOut}
               className="flex items-center gap-1.5 text-xs text-charcoal bg-surface-card hover:bg-surface-bone border border-hairline px-3 py-2 rounded-full transition-colors font-semibold">

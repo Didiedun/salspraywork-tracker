@@ -15,12 +15,14 @@ export function WorkersPage() {
   const [workers, setWorkers]   = useState([])
   const [invites, setInvites]   = useState([])
   const [loading, setLoading]   = useState(true)
+  const [loadError, setLoadError] = useState('')
   const [copied, setCopied]     = useState(null)
   const [generating, setGenerating] = useState(false)
 
   const load = async () => {
     if (!workshop) return
-    const [{ data: members }, { data: pendingInvites }] = await Promise.all([
+    setLoadError('')
+    const [membersResult, invitesResult] = await Promise.all([
       supabase.rpc('get_workshop_members', { workshop_uuid: workshop.id }),
       supabase.from('workshop_invites')
         .select('*')
@@ -28,8 +30,9 @@ export function WorkersPage() {
         .is('used_at', null)
         .order('created_at', { ascending: false }),
     ])
-    setWorkers(members || [])
-    setInvites(pendingInvites || [])
+    if (membersResult.error) setLoadError(membersResult.error.message)
+    setWorkers(membersResult.data || [])
+    setInvites(invitesResult.data || [])
     setLoading(false)
   }
 
@@ -77,6 +80,11 @@ export function WorkersPage() {
           <span className="text-xs text-mute bg-surface-card border border-hairline px-3 py-1 rounded-full">{workers.length} {t('wk_worker_count')}</span>
         </div>
 
+        {loadError && (
+          <div className="bg-red-50 border border-red-200 rounded-md px-4 py-3 mb-3 text-xs text-red-700 font-medium">
+            Error: {loadError}
+          </div>
+        )}
         {loading ? (
           <div className="text-center py-8 text-mute"><RefreshCw className="w-5 h-5 animate-spin mx-auto" /></div>
         ) : workers.length === 0 ? (
