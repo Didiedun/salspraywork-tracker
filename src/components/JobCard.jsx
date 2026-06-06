@@ -13,6 +13,16 @@ import {
   ChevronDown, ChevronUp, X, ChevronRight, ChevronLeft, Clock, UserCheck
 } from 'lucide-react'
 
+function timeAgo(dateStr, lang) {
+  if (!dateStr) return null
+  const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000)
+  if (diff < 120)   return lang === 'ms' ? 'baru sahaja' : 'just now'
+  if (diff < 3600)  { const m = Math.floor(diff / 60);   return lang === 'ms' ? `${m} minit lalu`  : `${m}m ago` }
+  if (diff < 86400) { const h = Math.floor(diff / 3600); return lang === 'ms' ? `${h} jam lalu`    : `${h}h ago` }
+  const d = Math.floor(diff / 86400)
+  return lang === 'ms' ? `${d} hari lalu` : `${d}d ago`
+}
+
 export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAttachment }) {
   const [expanded, setExpanded]       = useState(false)
   const [editing, setEditing]         = useState(false)
@@ -23,7 +33,7 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
   const photoRef = useRef()
 
   const { stages, stageMap, lastValue, nextStage, prevStage, isOverdue: checkOverdue } = useStages()
-  const { t } = useLang()
+  const { t, lang } = useLang()
   const { workshop } = useApp()
 
   const photos = job.job_attachments?.filter(a => a.type === 'photo') || []
@@ -151,7 +161,8 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
             {job.updated_by && (
               <span className="flex items-center gap-1">
                 <UserCheck className="w-3 h-3" />
-                {job.updated_by.split('@')[0]}
+                {t('card_updated_by')} {job.updated_by.split('@')[0]}
+                {job.updated_at && <span className="text-ash">· {timeAgo(job.updated_at, lang)}</span>}
               </span>
             )}
             {job.est_completion && (

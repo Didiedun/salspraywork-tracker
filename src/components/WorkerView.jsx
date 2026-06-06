@@ -1,4 +1,14 @@
 import { useState, useMemo } from 'react'
+
+function timeAgo(dateStr, lang) {
+  if (!dateStr) return null
+  const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000)
+  if (diff < 120)   return lang === 'ms' ? 'baru sahaja' : 'just now'
+  if (diff < 3600)  { const m = Math.floor(diff / 60);   return lang === 'ms' ? `${m} minit lalu`  : `${m}m ago` }
+  if (diff < 86400) { const h = Math.floor(diff / 3600); return lang === 'ms' ? `${h} jam lalu`    : `${h}h ago` }
+  const d = Math.floor(diff / 86400)
+  return lang === 'ms' ? `${d} hari lalu` : `${d}d ago`
+}
 import { useApp } from '../context/AppContext'
 import { useJobs } from '../hooks/useJobs'
 import { supabase } from '../lib/supabase'
@@ -22,7 +32,7 @@ export function WorkerView() {
   const [savingName, setSavingName] = useState(false)
   const [nameSaved, setNameSaved]   = useState(false)
   const { stages, stageMap, lastValue, nextStage, prevStage, isOverdue: checkOverdue } = useStages()
-  const { t } = useLang()
+  const { t, lang } = useLang()
 
   const handleSaveName = async () => {
     if (!nameInput.trim()) { setEditingName(false); return }
@@ -214,9 +224,10 @@ export function WorkerView() {
 
                     <StageBar current={job.stage} stages={stages} />
                     {job.updated_by && (
-                      <p className="text-mute text-xs mt-1.5 flex items-center gap-1">
+                      <p className="text-mute text-xs mt-1.5 flex items-center gap-1 flex-wrap">
                         <UserCheck className="w-3 h-3" />
-                        {job.updated_by.split('@')[0]}
+                        {t('card_updated_by')} {job.updated_by.split('@')[0]}
+                        {job.updated_at && <span className="text-ash">· {timeAgo(job.updated_at, lang)}</span>}
                       </p>
                     )}
 

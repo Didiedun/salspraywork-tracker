@@ -298,6 +298,7 @@ export const translations = {
 
     /* stale / last-updated */
     cv_updated:       'Dikemaskini',
+    card_updated_by:  'Dikemaskini oleh',
     stale_label:      'Belum dikemaskini',
     dash_stale_label: 'kerja belum dikemaskini',
     dash_stale_sub:   'Kemaskini peringkat kerja supaya pelanggan dapat maklumat terkini.',
@@ -623,6 +624,7 @@ export const translations = {
 
     /* stale / last-updated */
     cv_updated:       'Updated',
+    card_updated_by:  'Updated by',
     stale_label:      'Not recently updated',
     dash_stale_label: 'jobs not recently updated',
     dash_stale_sub:   'Update work stages so customers get the latest info.',
