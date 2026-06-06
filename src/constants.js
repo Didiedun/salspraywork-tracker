@@ -53,3 +53,11 @@ export function daysIn(job) {
 export function isOverdue(job) {
   return !job.archived && job.stage !== 'siap' && daysIn(job) >= OVERDUE_DAYS
 }
+
+export const STALE_DAYS = 2
+
+export function isStale(job) {
+  if (job.archived) return false
+  const last = new Date(job.updated_at || job.created_at)
+  return Math.floor((Date.now() - last) / 86400000) >= STALE_DAYS
+}

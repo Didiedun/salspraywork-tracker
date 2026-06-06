@@ -4,7 +4,7 @@ import { PaymentBadge, TypeBadge } from './StatusBadge'
 import { StageBar } from './StageBar'
 import { JobForm } from './JobForm'
 import { ReceiptModal } from './ReceiptModal'
-import { daysIn } from '../constants'
+import { daysIn, isStale } from '../constants'
 import { useStages } from '../hooks/useStages'
 import { useLang } from '../context/LanguageContext'
 import { useApp } from '../context/AppContext'
@@ -34,6 +34,7 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
   const isFirst  = stageIdx === 0
   const isLast   = job.stage === lastValue
   const overdue  = checkOverdue(job)
+  const stale    = !overdue && !isLast && isStale(job)
   const days     = daysIn(job)
 
   const formatDate  = (d) => d ? new Date(d).toLocaleDateString('ms-MY', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'
@@ -44,7 +45,7 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
     setAdvancing(true)
     try {
       const newStage = dir === 'next' ? nextStage(job.stage) : prevStage(job.stage)
-      await onUpdate(job.id, { stage: newStage })
+      await onUpdate(job.id, { stage: newStage, updated_at: new Date().toISOString() })
     } finally { setAdvancing(false) }
   }
 
@@ -89,12 +90,18 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
       )}
 
       <div className={`bg-surface-card rounded-lg border overflow-hidden transition-shadow hover:shadow-sm ${
-        overdue ? 'border-red-200' : 'border-hairline'
+        overdue ? 'border-red-200' : stale ? 'border-amber-200' : 'border-hairline'
       }`}>
         {overdue && (
           <div className="bg-red-50 border-b border-red-100 px-4 py-1.5 flex items-center gap-2">
             <Clock className="w-3.5 h-3.5 text-red-500" />
             <p className="text-red-600 text-xs font-semibold">{t('overdue_label')} — {days} {t('card_overdue')}</p>
+          </div>
+        )}
+        {stale && (
+          <div className="bg-amber-50 border-b border-amber-100 px-4 py-1.5 flex items-center gap-2">
+            <Clock className="w-3.5 h-3.5 text-amber-500" />
+            <p className="text-amber-700 text-xs font-semibold">{t('stale_label')}</p>
           </div>
         )}
 

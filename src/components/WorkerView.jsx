@@ -10,8 +10,9 @@ import { RefreshCw, ChevronRight, ChevronLeft, Search, LogOut, Wrench, Clock } f
 
 export function WorkerView() {
   const { workshop, signOut } = useApp()
-  const { jobs, loading, fetchJobs } = useJobs(workshop?.id)
-  const [search, setSearch] = useState('')
+  const { jobs, loading, fetchJobs, updateJob } = useJobs(workshop?.id)
+  const [search, setSearch]     = useState('')
+  const [advancing, setAdvancing] = useState({})
   const { stages, stageMap, lastValue, nextStage, prevStage, isOverdue: checkOverdue } = useStages()
   const { t } = useLang()
 
@@ -26,6 +27,16 @@ export function WorkerView() {
       }),
     [jobs, search, lastValue]
   )
+
+  const advanceStage = async (job, dir) => {
+    setAdvancing(a => ({ ...a, [job.id]: true }))
+    try {
+      const newStage = dir === 'next' ? nextStage(job.stage) : prevStage(job.stage)
+      await updateJob(job.id, { stage: newStage, updated_at: new Date().toISOString() })
+    } finally {
+      setAdvancing(a => ({ ...a, [job.id]: false }))
+    }
+  }
 
   const formatDate = (d) => d
     ? new Date(d).toLocaleDateString('ms-MY', { day: '2-digit', month: 'short' })
@@ -94,11 +105,12 @@ export function WorkerView() {
         ) : (
           <div className="space-y-3">
             {activeJobs.map(job => {
-              const overdue  = checkOverdue(job)
-              const days     = daysIn(job)
-              const stageIdx = stageMap[job.stage] ?? 0
-              const isFirst  = stageIdx === 0
-              const isLast   = job.stage === lastValue
+              const overdue   = checkOverdue(job)
+              const days      = daysIn(job)
+              const stageIdx  = stageMap[job.stage] ?? 0
+              const isFirst   = stageIdx === 0
+              const isLast    = job.stage === lastValue
+              const isBusy    = advancing[job.id]
 
               return (
                 <div key={job.id}
@@ -122,17 +134,24 @@ export function WorkerView() {
                     <StageBar current={job.stage} stages={stages} />
 
                     <div className="flex items-center gap-2 mt-3">
-                      <button disabled={isFirst}
-                        className="flex items-center gap-1 text-xs text-mute disabled:opacity-30 bg-canvas border border-hairline px-2.5 py-1.5 rounded-full font-semibold">
+                      <button
+                        onClick={() => advanceStage(job, 'prev')}
+                        disabled={isFirst || isBusy}
+                        className="flex items-center gap-1 text-xs text-mute hover:text-ink disabled:opacity-30 bg-canvas hover:bg-surface-bone border border-hairline px-2.5 py-1.5 rounded-full transition-colors font-semibold">
                         <ChevronLeft className="w-3.5 h-3.5" /> {t('card_retreat')}
                       </button>
                       <div className="flex-1 text-center">
                         <span className="text-xs font-semibold text-charcoal">
-                          {stages[stageIdx]?.label}
+                          {isBusy
+                            ? <RefreshCw className="w-3 h-3 animate-spin inline" />
+                            : stages[stageIdx]?.label
+                          }
                         </span>
                       </div>
-                      <button disabled={isLast}
-                        className="flex items-center gap-1 text-xs text-primary disabled:opacity-30 bg-red-50 border border-red-200 px-2.5 py-1.5 rounded-full font-semibold">
+                      <button
+                        onClick={() => advanceStage(job, 'next')}
+                        disabled={isLast || isBusy}
+                        className="flex items-center gap-1 text-xs text-primary hover:text-primary-deep disabled:opacity-30 bg-red-50 hover:bg-red-100 border border-red-200 px-2.5 py-1.5 rounded-full transition-colors font-semibold">
                         {t('card_advance')} <ChevronRight className="w-3.5 h-3.5" />
                       </button>
                     </div>

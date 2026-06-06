@@ -6,8 +6,9 @@ import { JobCard } from './JobCard'
 import { JobForm } from './JobForm'
 import { TodaySummary } from './TodaySummary'
 import { RevenueChart } from './RevenueChart'
-import { paymentStatus } from '../constants'
-import { Plus, Search, RefreshCw, Archive, TrendingUp, BarChart2, Copy, Check } from 'lucide-react'
+import { paymentStatus, isStale } from '../constants'
+import { useStages } from '../hooks/useStages'
+import { Plus, Search, RefreshCw, Archive, TrendingUp, BarChart2, Copy, Check, AlertTriangle } from 'lucide-react'
 import { TutorialModal } from './TutorialModal'
 
 export function Dashboard() {
@@ -41,7 +42,9 @@ export function Dashboard() {
     return true
   }), [jobs, tab, search, payFilter])
 
+  const { lastValue } = useStages()
   const activeJobs   = jobs.filter(j => !j.archived)
+  const staleCount   = activeJobs.filter(j => j.stage !== lastValue && isStale(j)).length
   const unpaid       = activeJobs.filter(j => paymentStatus(j) === 'unpaid').length
   const deposit      = activeJobs.filter(j => paymentStatus(j) === 'deposit').length
   const paid         = activeJobs.filter(j => paymentStatus(j) === 'paid').length
@@ -68,6 +71,16 @@ export function Dashboard() {
             <p className="text-amber-700 text-xs mt-0.5">{t('dash_offline_sub')}</p>
           </div>
           <button onClick={fetchJobs} className="ml-auto text-xs text-amber-800 font-semibold underline whitespace-nowrap">{t('retry')}</button>
+        </div>
+      )}
+
+      {!loading && staleCount > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-md px-4 py-3 flex items-center gap-3 text-sm">
+          <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+          <div>
+            <p className="font-semibold text-amber-800">{staleCount} {t('dash_stale_label')}</p>
+            <p className="text-amber-700 text-xs mt-0.5">{t('dash_stale_sub')}</p>
+          </div>
         </div>
       )}
 

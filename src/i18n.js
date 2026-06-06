@@ -277,6 +277,12 @@ export const translations = {
     land_annual:   'Tahunan',
     land_save_rm:  'Jimat RM',
 
+    /* stale / last-updated */
+    cv_updated:       'Dikemaskini',
+    stale_label:      'Belum dikemaskini',
+    dash_stale_label: 'kerja belum dikemaskini',
+    dash_stale_sub:   'Kemaskini peringkat kerja supaya pelanggan dapat maklumat terkini.',
+
     /* whatsapp message */
     wa_msg: 'Hi, saya ingin tanya tentang kenderaan',
 
@@ -576,6 +582,12 @@ export const translations = {
     land_monthly:  'Monthly',
     land_annual:   'Annual',
     land_save_rm:  'Save RM',
+
+    /* stale / last-updated */
+    cv_updated:       'Updated',
+    stale_label:      'Not recently updated',
+    dash_stale_label: 'jobs not recently updated',
+    dash_stale_sub:   'Update work stages so customers get the latest info.',
 
     /* whatsapp message */
     wa_msg: 'Hello, I would like to enquire about vehicle',

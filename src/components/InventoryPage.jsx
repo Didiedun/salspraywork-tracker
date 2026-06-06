@@ -45,7 +45,7 @@ function ItemForm({ initial, onSave, onClose }) {
       <div className="bg-surface-card rounded-lg border border-hairline w-full max-w-md max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between p-5 border-b border-hairline flex-shrink-0">
           <h2 className="font-display font-bold text-ink">{initial ? t('inv_edit') : t('inv_new')}</h2>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-canvas transition-colors">
+          <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
             <X className="w-5 h-5 text-ash" />
           </button>
         </div>
@@ -64,7 +64,7 @@ function ItemForm({ initial, onSave, onClose }) {
               <div>
                 <label className={labelCls}>{t('inv_unit')}</label>
                 <select value={form.unit} onChange={set('unit')}
-                  className="w-full bg-canvas border border-hairline rounded-full px-5 py-2.5 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                  className="w-full bg-canvas border border-hairline rounded-lg px-5 py-2.5 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                   {['pcs', 'tin', 'liter', 'kg', 'meter', 'set', 'kotak'].map(u => (
                     <option key={u} value={u}>{u}</option>
                   ))}
@@ -74,16 +74,16 @@ function ItemForm({ initial, onSave, onClose }) {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={labelCls}>{t('inv_qty')}</label>
-                <input type="number" value={form.quantity} onChange={set('quantity')} min="0" step="0.01" placeholder="0" className={inputCls} />
+                <input type="text" inputMode="decimal" value={form.quantity} onChange={set('quantity')} placeholder="0" className={inputCls} />
               </div>
               <div>
                 <label className={labelCls}>{t('inv_reorder')}</label>
-                <input type="number" value={form.reorder_level} onChange={set('reorder_level')} min="0" step="0.01" placeholder="0" className={inputCls} />
+                <input type="text" inputMode="decimal" value={form.reorder_level} onChange={set('reorder_level')} placeholder="0" className={inputCls} />
               </div>
             </div>
             <div>
               <label className={labelCls}>{t('inv_cost')}</label>
-              <input type="number" value={form.unit_cost} onChange={set('unit_cost')} min="0" step="0.01" placeholder="0.00" className={inputCls} />
+              <input type="text" inputMode="decimal" value={form.unit_cost} onChange={set('unit_cost')} placeholder="0.00" className={inputCls} />
             </div>
             {error && <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
           </div>
@@ -156,7 +156,7 @@ export function InventoryPage() {
             className="w-full bg-surface-card border border-hairline rounded-full pl-11 pr-5 py-2.5 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors" />
         </div>
         <select value={filter} onChange={e => setFilter(e.target.value)}
-          className="bg-surface-card border border-hairline rounded-full px-5 py-2.5 text-ink text-sm focus:outline-none">
+          className="bg-surface-card border border-hairline rounded-lg px-5 py-2.5 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
           <option value="all">{t('inv_filter_all')}</option>
           <option value="low">{t('inv_filter_low')}</option>
         </select>

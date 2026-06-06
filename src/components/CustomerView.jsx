@@ -6,7 +6,17 @@ import { StageBar } from './StageBar'
 import { ReceiptModal } from './ReceiptModal'
 import { paymentStatus, SPRAY_STAGES } from '../constants'
 import { useLang } from '../context/LanguageContext'
-import { Search, Car, FileText, Image, Phone, Printer, ArrowLeftRight, X, Wrench, RefreshCw, Globe } from 'lucide-react'
+import { Search, Car, FileText, Image, Phone, Printer, ArrowLeftRight, X, Wrench, RefreshCw, Globe, Clock } from 'lucide-react'
+
+function timeAgo(dateStr, lang) {
+  if (!dateStr) return null
+  const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000)
+  if (diff < 120)  return lang === 'ms' ? 'baru sahaja' : 'just now'
+  if (diff < 3600) { const m = Math.floor(diff / 60);   return lang === 'ms' ? `${m} minit lalu`  : `${m} min ago` }
+  if (diff < 86400){ const h = Math.floor(diff / 3600); return lang === 'ms' ? `${h} jam lalu`    : `${h}h ago` }
+  const d = Math.floor(diff / 86400)
+  return lang === 'ms' ? `${d} hari lalu` : `${d}d ago`
+}
 
 function InstagramIcon({ className }) {
   return (
@@ -232,6 +242,12 @@ export function CustomerView() {
               <div className="bg-canvas rounded-md p-4 border border-hairline">
                 <p className="text-mute text-xs mb-3 font-medium">{t('cv_stage_lbl')}</p>
                 <StageBar current={job.stage} stages={Array.isArray(workshop?.stages) && workshop.stages.length > 0 ? workshop.stages : SPRAY_STAGES} />
+                {job.updated_at && (
+                  <p className="text-mute text-xs mt-2 flex items-center justify-end gap-1">
+                    <Clock className="w-3 h-3" />
+                    {t('cv_updated')} {timeAgo(job.updated_at, lang)}
+                  </p>
+                )}
               </div>
               {job.est_completion && (
                 <div className="mt-3 bg-red-50 border border-red-200 rounded-md px-4 py-3">
