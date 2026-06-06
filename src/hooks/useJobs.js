@@ -76,6 +76,16 @@ export function useJobs(workshopId) {
       const next = lsLoad(workshopId).filter(j => j.id !== id)
       lsSave(workshopId, next); setJobs(next); return
     }
+    const job = jobs.find(j => j.id === id)
+    const photos = job?.job_attachments?.filter(a => a.type === 'photo') || []
+    if (photos.length > 0) {
+      const paths = photos.map(a => {
+        const marker = '/object/public/attachments/'
+        const idx = a.url.indexOf(marker)
+        return idx !== -1 ? a.url.slice(idx + marker.length) : null
+      }).filter(Boolean)
+      if (paths.length > 0) await supabase.storage.from('attachments').remove(paths)
+    }
     const { error: err } = await supabase.from('jobs').delete().eq('id', id)
     if (err) throw err
     const next = jobs.filter(j => j.id !== id); setJobs(next); lsSave(workshopId, next)
