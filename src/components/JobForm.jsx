@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Save, Car, User, Phone, FileText, DollarSign, Calendar, Flag, Mail } from 'lucide-react'
+import { X, Save, Car, User, Phone, FileText, DollarSign, Calendar, Flag, Mail, Plus, Trash2 } from 'lucide-react'
 import { useStages } from '../hooks/useStages'
 import { useLang } from '../context/LanguageContext'
 
@@ -21,6 +21,7 @@ const EMPTY = {
   total_amount: '', downpayment: '', type: 'walk-in',
   stage: 'ready', paid: false, archived: false,
   date_in: '', est_completion: '',
+  services: [],
 }
 
 export function JobForm({ initial, onSave, onClose, title }) {
@@ -33,11 +34,32 @@ export function JobForm({ initial, onSave, onClose, title }) {
     customer_email: initial.customer_email ?? '',
     date_in:        initial.date_in        ? initial.date_in.slice(0, 10)        : '',
     est_completion: initial.est_completion ? initial.est_completion.slice(0, 10) : '',
+    services:       initial.services       || [],
   } : { ...EMPTY, stage: stages[0]?.value || 'ready' })
   const [saving, setSaving] = useState(false)
   const [err, setErr]       = useState('')
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
+
+  const recalcTotal = (services) =>
+    services.reduce((sum, s) => sum + (parseFloat(s.amount) || 0), 0)
+
+  const addService = () =>
+    setForm(f => ({ ...f, services: [...f.services, { description: '', amount: '' }] }))
+
+  const removeService = (i) =>
+    setForm(f => {
+      const services = f.services.filter((_, idx) => idx !== i)
+      const total = recalcTotal(services)
+      return { ...f, services, total_amount: total > 0 ? String(total.toFixed(2)) : f.total_amount }
+    })
+
+  const updateService = (i, key, val) =>
+    setForm(f => {
+      const services = f.services.map((s, idx) => idx === i ? { ...s, [key]: val } : s)
+      const total = recalcTotal(services)
+      return { ...f, services, total_amount: total > 0 ? String(total.toFixed(2)) : f.total_amount }
+    })
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -46,6 +68,8 @@ export function JobForm({ initial, onSave, onClose, title }) {
     }
     setSaving(true); setErr('')
     try {
+      const cleanServices = form.services.filter(s => s.description.trim())
+        .map(s => ({ description: s.description.trim(), amount: parseFloat(s.amount) || 0 }))
       await onSave({
         plate:          form.plate.trim().toUpperCase().replace(/\s+/g, ''),
         owner:          form.owner.trim(),
@@ -61,6 +85,7 @@ export function JobForm({ initial, onSave, onClose, title }) {
         archived:       form.archived,
         date_in:        form.date_in        || null,
         est_completion: form.est_completion || null,
+        services:       cleanServices,
       })
       onClose()
     } catch (e) { setErr(e.message) }
@@ -133,11 +158,51 @@ export function JobForm({ initial, onSave, onClose, title }) {
                 className="w-full bg-canvas border border-hairline rounded-xl px-4 py-3 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors resize-none" />
             </div>
 
-            {/* Money — text inputs with decimal keyboard (no spin buttons) */}
+            {/* Services / line items */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className={labelCls}><DollarSign className="w-3.5 h-3.5" /> {t('form_services')}</label>
+                <button type="button" onClick={addService}
+                  className="flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary-deep transition-colors">
+                  <Plus className="w-3.5 h-3.5" /> {t('form_add_service')}
+                </button>
+              </div>
+              {form.services.length > 0 && (
+                <div className="space-y-2 mb-2">
+                  {form.services.map((svc, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={svc.description}
+                        onChange={e => updateService(i, 'description', e.target.value)}
+                        placeholder={t('form_svc_desc_ph')}
+                        className="flex-1 bg-canvas border border-hairline rounded-full px-4 py-2.5 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors"
+                      />
+                      <input
+                        type="text" inputMode="decimal"
+                        value={svc.amount}
+                        onChange={e => updateService(i, 'amount', e.target.value)}
+                        placeholder="0.00"
+                        className="w-24 bg-canvas border border-hairline rounded-full px-4 py-2.5 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors text-right"
+                      />
+                      <button type="button" onClick={() => removeService(i)}
+                        className="w-8 h-8 flex items-center justify-center rounded-full text-mute hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Money — total auto-fills from services, deposit manual */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={labelCls}><DollarSign className="w-3.5 h-3.5" /> {t('form_total')}</label>
                 <input type="text" inputMode="decimal" value={form.total_amount} onChange={set('total_amount')} placeholder="0.00" className={inputCls} />
+                {form.services.length > 0 && (
+                  <p className="text-ash text-xs mt-1 px-1">{t('form_svc_total_auto')}</p>
+                )}
               </div>
               <div>
                 <label className={labelCls}><DollarSign className="w-3.5 h-3.5" /> {t('form_deposit')}</label>

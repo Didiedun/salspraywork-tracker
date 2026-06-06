@@ -8,20 +8,21 @@ export function AppProvider({ children }) {
   const [user, setUser]         = useState(null)
   const [workshop, setWorkshop] = useState(null)
   const [role, setRole]         = useState(null)
+  const [member, setMember]     = useState(null)
   const [loading, setLoading]   = useState(true)
 
   const loadWorkshop = useCallback(async (userId) => {
-    if (!userId) { setWorkshop(null); setRole(null); setLoading(false); return }
+    if (!userId) { setWorkshop(null); setRole(null); setMember(null); setLoading(false); return }
     const { data: owned } = await supabase
       .from('workshops').select('*').eq('owner_id', userId).maybeSingle()
-    if (owned) { setWorkshop(owned); setRole('owner'); setLoading(false); return }
-    const { data: member } = await supabase
+    if (owned) { setWorkshop(owned); setRole('owner'); setMember(null); setLoading(false); return }
+    const { data: memberData } = await supabase
       .from('workshop_members').select('*, workshops(*)')
       .eq('user_id', userId).maybeSingle()
-    if (member?.workshops) {
-      setWorkshop(member.workshops); setRole(member.role); setLoading(false); return
+    if (memberData?.workshops) {
+      setWorkshop(memberData.workshops); setRole(memberData.role); setMember(memberData); setLoading(false); return
     }
-    setWorkshop(null); setRole(null); setLoading(false)
+    setWorkshop(null); setRole(null); setMember(null); setLoading(false)
   }, [])
 
   useEffect(() => {
@@ -47,7 +48,7 @@ export function AppProvider({ children }) {
 
   const signOut = async () => {
     await supabase.auth.signOut()
-    setWorkshop(null); setRole(null)
+    setWorkshop(null); setRole(null); setMember(null)
   }
 
   const leaveWorkshop = async () => {
@@ -58,7 +59,17 @@ export function AppProvider({ children }) {
       .eq('user_id', user.id)
       .eq('workshop_id', workshop.id)
     if (error) throw error
-    setWorkshop(null); setRole(null)
+    setWorkshop(null); setRole(null); setMember(null)
+  }
+
+  const updateMemberName = async (name) => {
+    if (!member?.id) return
+    const { error } = await supabase
+      .from('workshop_members')
+      .update({ name: name.trim() })
+      .eq('id', member.id)
+    if (error) throw error
+    setMember(m => ({ ...m, name: name.trim() }))
   }
 
   const createWorkshop = async (name, slug) => {
@@ -71,9 +82,9 @@ export function AppProvider({ children }) {
 
   return (
     <AppContext.Provider value={{
-      user, workshop, role, loading,
+      user, workshop, role, member, loading,
       signIn, signUp, signOut, leaveWorkshop,
-      createWorkshop,
+      createWorkshop, updateMemberName,
       reloadWorkshop: () => loadWorkshop(user?.id),
     }}>
       {children}

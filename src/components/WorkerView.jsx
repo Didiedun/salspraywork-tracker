@@ -7,17 +7,32 @@ import { PaymentBadge } from './StatusBadge'
 import { daysIn, isStale } from '../constants'
 import { useStages } from '../hooks/useStages'
 import { useLang } from '../context/LanguageContext'
-import { RefreshCw, ChevronRight, ChevronLeft, Search, LogOut, Wrench, Clock, Camera, X, Image, DoorOpen, UserCheck } from 'lucide-react'
+import { RefreshCw, ChevronRight, ChevronLeft, Search, LogOut, Wrench, Clock, Camera, X, Image, DoorOpen, UserCheck, Pencil, Check } from 'lucide-react'
 
 export function WorkerView() {
-  const { workshop, signOut, leaveWorkshop } = useApp()
+  const { workshop, signOut, leaveWorkshop, member, updateMemberName } = useApp()
   const { jobs, loading, fetchJobs, updateJob, addAttachment } = useJobs(workshop?.id)
-  const [search, setSearch]     = useState('')
-  const [advancing, setAdvancing] = useState({})
-  const [uploading, setUploading] = useState({})
-  const [lightbox, setLightbox]   = useState(null)
+  const [search, setSearch]         = useState('')
+  const [advancing, setAdvancing]   = useState({})
+  const [uploading, setUploading]   = useState({})
+  const [lightbox, setLightbox]     = useState(null)
+  const [editingName, setEditingName] = useState(false)
+  const [nameInput, setNameInput]   = useState('')
+  const [savingName, setSavingName] = useState(false)
+  const [nameSaved, setNameSaved]   = useState(false)
   const { stages, stageMap, lastValue, nextStage, prevStage, isOverdue: checkOverdue } = useStages()
   const { t } = useLang()
+
+  const handleSaveName = async () => {
+    if (!nameInput.trim()) { setEditingName(false); return }
+    setSavingName(true)
+    try {
+      await updateMemberName(nameInput.trim())
+      setEditingName(false)
+      setNameSaved(true)
+      setTimeout(() => setNameSaved(false), 2000)
+    } finally { setSavingName(false) }
+  }
 
   const activeJobs = useMemo(() =>
     jobs.filter(j => !j.archived && j.stage !== lastValue)
@@ -62,13 +77,35 @@ export function WorkerView() {
     <div className="min-h-screen bg-canvas">
       <div className="bg-canvas border-b border-hairline sticky top-0 z-30">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
               <Wrench className="w-4 h-4 text-white" />
             </div>
-            <div>
-              <p className="font-display font-bold text-ink text-sm leading-tight">{workshop?.name}</p>
-              <p className="text-mute text-xs">{t('wv_title')}</p>
+            <div className="min-w-0">
+              <p className="font-display font-bold text-ink text-sm leading-tight truncate">{workshop?.name}</p>
+              {editingName ? (
+                <div className="flex items-center gap-1 mt-0.5">
+                  <input
+                    autoFocus
+                    type="text"
+                    value={nameInput}
+                    onChange={e => setNameInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') setEditingName(false) }}
+                    placeholder={t('wv_name_ph')}
+                    className="text-xs bg-canvas border border-hairline rounded-full px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary w-32"
+                  />
+                  <button onClick={handleSaveName} disabled={savingName}
+                    className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                    <Check className="w-3 h-3 text-white" />
+                  </button>
+                </div>
+              ) : (
+                <button onClick={() => { setNameInput(member?.name || ''); setEditingName(true) }}
+                  className="flex items-center gap-1 text-xs text-mute hover:text-charcoal group">
+                  <span>{nameSaved ? t('wv_name_saved') : (member?.name || t('wv_edit_name'))}</span>
+                  <Pencil className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-2">

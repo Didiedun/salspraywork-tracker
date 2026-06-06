@@ -77,18 +77,33 @@ function InvoiceBody({ job, workshop, t }) {
           <p style={S.label}>Keterangan</p>
           <p style={{ ...S.label, textAlign: 'right' }}>Amaun</p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', paddingBottom: 12, borderBottom: '1px solid #f3f4f6' }}>
-          <div style={{ paddingRight: 24 }}>
-            <p style={{ fontWeight: 600, fontSize: 14 }}>Servis Kenderaan — {job.plate}</p>
-            <p style={{ color: '#6b7280', fontSize: 12, marginTop: 3 }}>
-              {job.car}{job.stage ? ` · Peringkat: ${job.stage.toUpperCase()}` : ''}
-            </p>
+
+        {job.services?.length > 0 ? (
+          <>
+            {job.services.map((svc, i) => (
+              <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr auto', paddingBottom: 10, marginBottom: 10, borderBottom: '1px solid #f3f4f6' }}>
+                <p style={{ fontWeight: 500, fontSize: 14 }}>{svc.description}</p>
+                <p style={{ fontWeight: 600, fontSize: 14, textAlign: 'right' }}>{fmt(svc.amount)}</p>
+              </div>
+            ))}
             {job.notes && (
-              <p style={{ color: '#6b7280', fontSize: 12, marginTop: 3, fontStyle: 'italic' }}>{job.notes}</p>
+              <p style={{ color: '#6b7280', fontSize: 12, marginBottom: 10, fontStyle: 'italic' }}>{job.notes}</p>
             )}
+          </>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', paddingBottom: 12, borderBottom: '1px solid #f3f4f6' }}>
+            <div style={{ paddingRight: 24 }}>
+              <p style={{ fontWeight: 600, fontSize: 14 }}>Servis Kenderaan — {job.plate}</p>
+              <p style={{ color: '#6b7280', fontSize: 12, marginTop: 3 }}>
+                {job.car}{job.stage ? ` · Peringkat: ${job.stage.toUpperCase()}` : ''}
+              </p>
+              {job.notes && (
+                <p style={{ color: '#6b7280', fontSize: 12, marginTop: 3, fontStyle: 'italic' }}>{job.notes}</p>
+              )}
+            </div>
+            <p style={{ fontWeight: 600, fontSize: 14, textAlign: 'right' }}>{fmt(job.total_amount)}</p>
           </div>
-          <p style={{ fontWeight: 600, fontSize: 14, textAlign: 'right' }}>{fmt(job.total_amount)}</p>
-        </div>
+        )}
       </div>
 
       {/* Payment summary */}

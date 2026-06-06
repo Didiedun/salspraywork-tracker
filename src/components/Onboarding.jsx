@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LanguageContext'
 import { supabase } from '../lib/supabase'
-import { ArrowRight, Key } from 'lucide-react'
+import { ArrowRight, Key, User } from 'lucide-react'
 
 function toSlug(str) {
   return str.toLowerCase()
@@ -15,7 +15,7 @@ function toSlug(str) {
 }
 
 export function Onboarding() {
-  const { createWorkshop, reloadWorkshop, signOut } = useApp()
+  const { createWorkshop, reloadWorkshop, signOut, updateMemberName } = useApp()
   const { t } = useLang()
   const navigate = useNavigate()
 
@@ -26,6 +26,9 @@ export function Onboarding() {
   const [inviteCode, setInviteCode] = useState('')
   const [saving, setSaving]         = useState(false)
   const [error, setError]           = useState('')
+  const [joinedAs, setJoinedAs]     = useState(null)  // {workshop_id} after joining
+  const [workerName, setWorkerName] = useState('')
+  const [savingName, setSavingName] = useState(false)
 
   const handleNameChange = (e) => {
     setName(e.target.value)
@@ -53,14 +56,63 @@ export function Onboarding() {
       if (rpcErr) throw rpcErr
       if (data?.error === 'invalid_code') throw new Error(t('ob_bad_code'))
       await reloadWorkshop()
-      navigate('/dashboard')
+      setJoinedAs(true)
     } catch (err) {
       setError(err.message)
     } finally { setSaving(false) }
   }
 
+  const handleSaveName = async (e) => {
+    e.preventDefault()
+    setSavingName(true)
+    try {
+      if (workerName.trim()) await updateMemberName(workerName.trim())
+      navigate('/dashboard')
+    } catch {
+      navigate('/dashboard')
+    } finally { setSavingName(false) }
+  }
+
   const inputCls = 'w-full bg-canvas border border-hairline rounded-full px-5 py-3 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors'
   const btnCls   = 'w-full bg-primary hover:bg-primary-deep disabled:bg-stone disabled:cursor-not-allowed text-white font-semibold rounded-full py-3 flex items-center justify-center gap-2 transition-colors text-sm border-2 border-primary hover:border-primary-deep disabled:border-stone'
+
+  if (joinedAs) {
+    return (
+      <div className="min-h-screen bg-canvas flex flex-col items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center mx-auto mb-4">
+              <User className="w-7 h-7 text-white" />
+            </div>
+            <h1 className="font-display font-bold text-2xl text-ink">{t('ob_wname_title')}</h1>
+            <p className="text-mute text-sm mt-1 max-w-xs mx-auto">{t('ob_wname_sub')}</p>
+          </div>
+
+          <div className="bg-surface-card rounded-lg border border-hairline p-6">
+            <form onSubmit={handleSaveName} className="space-y-4">
+              <div>
+                <label className="text-charcoal text-xs font-semibold mb-1.5 block">{t('wv_your_name')}</label>
+                <input type="text" value={workerName}
+                  onChange={e => setWorkerName(e.target.value)}
+                  placeholder={t('ob_wname_ph')}
+                  autoFocus
+                  className={inputCls} />
+                <p className="text-ash text-xs mt-1.5 px-1">{t('ob_wname_hint')}</p>
+              </div>
+              <button type="submit" disabled={savingName} className={btnCls}>
+                {savingName ? t('saving') : <><span>{t('ob_wname_save')}</span><ArrowRight className="w-4 h-4" /></>}
+              </button>
+            </form>
+          </div>
+
+          <button onClick={() => navigate('/dashboard')}
+            className="mt-4 mx-auto block text-xs text-mute hover:text-charcoal">
+            {t('ob_wname_skip')}
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-canvas flex flex-col items-center justify-center p-4">

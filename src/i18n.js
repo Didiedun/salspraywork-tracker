@@ -88,6 +88,10 @@ export const translations = {
     form_paid:       'Lunas',
     form_archive:    'Arkib',
     form_required:   'Sila isi plat, nama & model kenderaan.',
+    form_services:      'Perkhidmatan',
+    form_add_service:   '+ Tambah Servis',
+    form_svc_desc_ph:   'cth: Cat Bumbung',
+    form_svc_total_auto: 'Jumlah dikira dari senarai servis',
 
     /* job card */
     card_advance:    'Maju',
@@ -109,6 +113,10 @@ export const translations = {
     days_short:      'h',
 
     /* worker view */
+    wv_your_name:     'Nama anda',
+    wv_name_ph:       'Masukkan nama anda',
+    wv_edit_name:     'Edit nama',
+    wv_name_saved:    'Nama disimpan!',
     wv_leave:         'Tinggalkan Bengkel',
     wv_leave_confirm: 'Anda pasti mahu tinggalkan bengkel ini? Anda perlu kod jemputan baru untuk menyertai semula.',
     wv_leave_error:   'Gagal tinggalkan bengkel. Cuba lagi.',
@@ -212,7 +220,13 @@ export const translations = {
     ob_logout:     'Log keluar',
     ob_slug_dupe:  'URL ini sudah digunakan, cuba nama lain.',
     ob_bad_code:   'Kod jemputan tidak sah atau sudah digunakan.',
-    ob_inv_label:  'Kod Jemputan',
+    ob_inv_label:    'Kod Jemputan',
+    ob_wname_title:  'Nama anda?',
+    ob_wname_sub:    'Nama ini akan dipaparkan kepada pemilik bengkel apabila anda mengemas kini status kerja.',
+    ob_wname_ph:     'cth: Ahmad Faiz',
+    ob_wname_hint:   'Boleh dikemaskini kemudian dalam profil pekerja.',
+    ob_wname_skip:   'Langkau buat masa ini',
+    ob_wname_save:   'Teruskan',
 
     /* receipt */
     rc_title:    'Resit Kenderaan',
@@ -399,6 +413,10 @@ export const translations = {
     form_paid:       'Paid',
     form_archive:    'Archive',
     form_required:   'Please fill in plate, owner name & vehicle model.',
+    form_services:      'Services',
+    form_add_service:   '+ Add Service',
+    form_svc_desc_ph:   'e.g. Roof Painting',
+    form_svc_total_auto: 'Total calculated from service list',
 
     /* job card */
     card_advance:    'Advance',
@@ -420,6 +438,10 @@ export const translations = {
     days_short:      'd',
 
     /* worker view */
+    wv_your_name:     'Your name',
+    wv_name_ph:       'Enter your name',
+    wv_edit_name:     'Edit name',
+    wv_name_saved:    'Name saved!',
     wv_leave:         'Leave Workshop',
     wv_leave_confirm: 'Are you sure you want to leave this workshop? You will need a new invite code to rejoin.',
     wv_leave_error:   'Failed to leave workshop. Please try again.',
@@ -523,7 +545,13 @@ export const translations = {
     ob_logout:     'Sign out',
     ob_slug_dupe:  'This URL is already taken, try a different name.',
     ob_bad_code:   'Invalid or already used invite code.',
-    ob_inv_label:  'Invite Code',
+    ob_inv_label:    'Invite Code',
+    ob_wname_title:  "What's your name?",
+    ob_wname_sub:    'This name will be shown to the workshop owner when you update a job status.',
+    ob_wname_ph:     'e.g. Ahmad Faiz',
+    ob_wname_hint:   'You can update this later in your worker profile.',
+    ob_wname_skip:   'Skip for now',
+    ob_wname_save:   'Continue',
 
     /* receipt */
     rc_title:    'Vehicle Receipt',
