@@ -106,7 +106,7 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
                 <TypeBadge type={job.type} />
                 {!overdue && days > 0 && (
                   <span className="text-xs text-mute flex items-center gap-1">
-                    <Clock className="w-3 h-3" />{days}{t('overdue_days').split(' ')[0] === 'days' ? 'd' : 'h'}
+                    <Clock className="w-3 h-3" />{days}{t('days_short')}
                   </span>
                 )}
               </div>

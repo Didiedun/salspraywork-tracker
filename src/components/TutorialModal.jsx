@@ -38,10 +38,12 @@ export function TutorialModal({ onClose }) {
           <p className="text-charcoal text-sm leading-relaxed">{t(s.descKey)}</p>
         </div>
 
-        <div className="flex justify-center gap-2 pb-2">
+        <div className="flex justify-center gap-1 pb-2">
           {STEPS.map((_, i) => (
             <button key={i} onClick={() => setStep(i)}
-              className={`transition-all rounded-full ${i === step ? 'w-5 h-2 bg-primary' : 'w-2 h-2 bg-hairline hover:bg-ash'}`} />
+              className="w-6 h-4 flex items-center justify-center">
+              <div className={`h-2 rounded-full transition-all ${i === step ? 'w-5 bg-primary' : 'w-2 bg-hairline hover:bg-ash'}`} />
+            </button>
           ))}
         </div>
 

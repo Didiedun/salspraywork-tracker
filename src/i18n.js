@@ -104,6 +104,7 @@ export const translations = {
     card_complete:   'Siap',
     card_confirm_delete: 'Padam kerja',
     card_overdue:    'hari dalam bengkel',
+    days_short:      'h',
 
     /* worker view */
     wv_title:       'Paparan Pekerja',
@@ -135,7 +136,7 @@ export const translations = {
     cv_ba_toggle:   'Sebelum / Selepas',
     cv_grid:        'Grid',
     cv_wa:          'Hubungi WA',
-    cv_receipt:     'Download Resit',
+    cv_receipt:     'Lihat Invois',
     cv_services:    'Perkhidmatan Kami',
     cv_idle_prompt: 'Masukkan nombor plat atau nombor telefon anda untuk semak status kerja kenderaan.',
     cv_powered:     'Dikuasakan oleh Digital Depot',
@@ -403,6 +404,7 @@ export const translations = {
     card_complete:   'Done',
     card_confirm_delete: 'Delete job',
     card_overdue:    'days in workshop',
+    days_short:      'd',
 
     /* worker view */
     wv_title:       'Worker View',
@@ -434,7 +436,7 @@ export const translations = {
     cv_ba_toggle:   'Before / After',
     cv_grid:        'Grid',
     cv_wa:          'Contact WA',
-    cv_receipt:     'Download Receipt',
+    cv_receipt:     'View Invoice',
     cv_services:    'Our Services',
     cv_idle_prompt: 'Enter your plate number or phone number to check your vehicle status.',
     cv_powered:     'Powered by Digital Depot',

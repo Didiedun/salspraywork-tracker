@@ -126,7 +126,7 @@ export function Dashboard() {
             className="w-full bg-surface-card border border-hairline rounded-full pl-11 pr-5 py-2.5 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors" />
         </div>
         <select value={payFilter} onChange={e => setPayFilter(e.target.value)}
-          className="bg-surface-card border border-hairline rounded-full px-5 py-2.5 text-ink focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm">
+          className="bg-surface-card border border-hairline rounded-lg px-4 py-2.5 text-ink focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm">
           <option value="all">{t('dash_filter_all')}</option>
           <option value="unpaid">{t('pay_unpaid')}</option>
           <option value="deposit">{t('pay_deposit')}</option>
