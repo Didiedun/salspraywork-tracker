@@ -4,7 +4,7 @@ import { useJobs } from '../hooks/useJobs'
 import { supabase } from '../lib/supabase'
 import { StageBar } from './StageBar'
 import { PaymentBadge } from './StatusBadge'
-import { daysIn } from '../constants'
+import { daysIn, isStale } from '../constants'
 import { useStages } from '../hooks/useStages'
 import { useLang } from '../context/LanguageContext'
 import { RefreshCw, ChevronRight, ChevronLeft, Search, LogOut, Wrench, Clock, Camera, X, Image, DoorOpen } from 'lucide-react'
@@ -131,6 +131,7 @@ export function WorkerView() {
           <div className="space-y-3">
             {activeJobs.map(job => {
               const overdue   = checkOverdue(job)
+              const stale     = !overdue && isStale(job)
               const days      = daysIn(job)
               const stageIdx  = stageMap[job.stage] ?? 0
               const isFirst   = stageIdx === 0
@@ -139,17 +140,30 @@ export function WorkerView() {
 
               return (
                 <div key={job.id}
-                  className={`bg-surface-card rounded-lg border overflow-hidden ${overdue ? 'border-red-200' : 'border-hairline'}`}>
+                  className={`bg-surface-card rounded-lg border overflow-hidden ${overdue ? 'border-red-200' : stale ? 'border-amber-200' : 'border-hairline'}`}>
                   {overdue && (
                     <div className="bg-red-50 border-b border-red-100 px-4 py-1.5 flex items-center gap-2">
                       <Clock className="w-3.5 h-3.5 text-red-500" />
                       <p className="text-red-600 text-xs font-semibold">{t('overdue_label')} — {days} {t('overdue_days')}</p>
                     </div>
                   )}
+                  {stale && (
+                    <div className="bg-amber-50 border-b border-amber-100 px-4 py-1.5 flex items-center gap-2">
+                      <Clock className="w-3.5 h-3.5 text-amber-500" />
+                      <p className="text-amber-700 text-xs font-semibold">{t('stale_label')}</p>
+                    </div>
+                  )}
                   <div className="p-4">
                     <div className="flex items-start justify-between gap-3 mb-3">
                       <div>
-                        <p className="font-display font-bold text-ink text-lg tracking-tight">{job.plate}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-display font-bold text-ink text-lg tracking-tight">{job.plate}</p>
+                          {days > 0 && (
+                            <span className={`text-xs flex items-center gap-0.5 font-semibold ${overdue ? 'text-red-500' : stale ? 'text-amber-600' : 'text-mute'}`}>
+                              <Clock className="w-3 h-3" />{days}{t('days_short')}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-charcoal text-sm">{job.car} — {job.owner}</p>
                         <p className="text-mute text-xs mt-0.5">{t('wv_date_in')} {formatDate(job.date_in || job.created_at)}</p>
                       </div>
