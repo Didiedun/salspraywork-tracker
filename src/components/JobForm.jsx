@@ -5,13 +5,13 @@ import { useLang } from '../context/LanguageContext'
 
 function Toggle({ checked, onToggle, label }) {
   return (
-    <label className="flex items-center gap-3 cursor-pointer select-none">
-      <button type="button" role="switch" aria-checked={checked} onClick={() => onToggle(!checked)}
-        className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${checked ? 'bg-badge-success' : 'bg-stone'}`}>
-        <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${checked ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
-      </button>
+    <div className="flex items-center gap-3 cursor-pointer select-none" onClick={() => onToggle(!checked)}>
+      <div role="switch" aria-checked={checked}
+        className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 overflow-hidden ${checked ? 'bg-badge-success' : 'bg-stone'}`}>
+        <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
+      </div>
       <span className="text-sm font-medium text-body">{label}</span>
-    </label>
+    </div>
   )
 }
 

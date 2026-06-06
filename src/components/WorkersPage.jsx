@@ -21,9 +21,7 @@ export function WorkersPage() {
   const load = async () => {
     if (!workshop) return
     const [{ data: members }, { data: pendingInvites }] = await Promise.all([
-      supabase.from('workshop_members')
-        .select('*, user:user_id(email)')
-        .eq('workshop_id', workshop.id),
+      supabase.rpc('get_workshop_members', { workshop_uuid: workshop.id }),
       supabase.from('workshop_invites')
         .select('*')
         .eq('workshop_id', workshop.id)
@@ -93,11 +91,11 @@ export function WorkersPage() {
               <div key={w.id}
                 className={`flex items-center gap-4 px-5 py-4 ${i < workers.length - 1 ? 'border-b border-hairline' : ''}`}>
                 <div className="w-9 h-9 rounded-full bg-surface-bone border border-hairline flex items-center justify-center flex-shrink-0">
-                  <span className="text-charcoal font-bold text-sm">{(w.name || w.user?.email || '?')[0].toUpperCase()}</span>
+                  <span className="text-charcoal font-bold text-sm">{(w.name || w.email || '?')[0].toUpperCase()}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-ink font-semibold text-sm">{w.name || t('wk_no_name')}</p>
-                  <p className="text-mute text-xs truncate">{w.user?.email}</p>
+                  <p className="text-ink font-semibold text-sm">{w.name || w.email?.split('@')[0] || t('wk_no_name')}</p>
+                  <p className="text-mute text-xs truncate">{w.email}</p>
                 </div>
                 <span className="text-xs bg-surface-bone border border-hairline px-2.5 py-1 rounded-full text-charcoal font-medium">
                   {w.role}

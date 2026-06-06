@@ -129,6 +129,11 @@ export function InventoryPage() {
     await deleteItem(item.id)
   }
 
+  const handleQtyChange = async (item, delta) => {
+    const newQty = Math.max(0, (Number(item.quantity) || 0) + delta)
+    await updateItem(item.id, { quantity: newQty })
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-5 space-y-4">
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -194,15 +199,25 @@ export function InventoryPage() {
                   </div>
                   {item.sku && <p className="text-ash text-xs mt-0.5">{item.sku}</p>}
                 </div>
-                <div className="text-right flex-shrink-0">
-                  <p className={`font-bold font-display ${isLow ? 'text-amber-600' : 'text-ink'}`}>
-                    {item.quantity} <span className="text-xs font-normal text-mute">{item.unit}</span>
-                  </p>
-                  {item.unit_cost && (
-                    <p className="text-ash text-xs">RM {Number(item.unit_cost).toFixed(2)}/{item.unit}</p>
-                  )}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button onClick={() => handleQtyChange(item, -1)}
+                    className="w-7 h-7 flex items-center justify-center rounded-full border border-hairline hover:bg-surface-bone text-charcoal font-bold text-base leading-none transition-colors">
+                    −
+                  </button>
+                  <div className="text-center min-w-[3rem]">
+                    <p className={`font-bold font-display text-sm leading-tight ${isLow ? 'text-amber-600' : 'text-ink'}`}>
+                      {item.quantity} <span className="text-xs font-normal text-mute">{item.unit}</span>
+                    </p>
+                    {item.unit_cost && (
+                      <p className="text-ash text-xs leading-tight">RM {Number(item.unit_cost).toFixed(2)}</p>
+                    )}
+                  </div>
+                  <button onClick={() => handleQtyChange(item, +1)}
+                    className="w-7 h-7 flex items-center justify-center rounded-full border border-hairline hover:bg-surface-bone text-charcoal font-bold text-base leading-none transition-colors">
+                    +
+                  </button>
                 </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
+                <div className="flex items-center gap-0.5 flex-shrink-0">
                   <button onClick={() => setEditing(item)}
                     className="w-8 h-8 flex items-center justify-center text-mute hover:text-ink hover:bg-canvas rounded-full transition-colors">
                     <Pencil className="w-3.5 h-3.5" />
