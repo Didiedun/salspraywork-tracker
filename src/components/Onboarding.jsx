@@ -15,7 +15,7 @@ function toSlug(str) {
 }
 
 export function Onboarding() {
-  const { createWorkshop, reloadWorkshop, signOut, user } = useApp()
+  const { createWorkshop, reloadWorkshop, signOut } = useApp()
   const { t } = useLang()
   const navigate = useNavigate()
 
@@ -49,18 +49,9 @@ export function Onboarding() {
     if (!inviteCode.trim()) return
     setSaving(true); setError('')
     try {
-      const { data: invite, error: fetchErr } = await supabase
-        .from('workshop_invites')
-        .select('*, workshops(*)')
-        .eq('code', inviteCode.trim().toUpperCase())
-        .is('used_at', null)
-        .maybeSingle()
-      if (fetchErr || !invite) throw new Error(t('ob_bad_code'))
-      const { error: memberErr } = await supabase
-        .from('workshop_members')
-        .insert([{ workshop_id: invite.workshop_id, user_id: user.id, role: 'worker' }])
-      if (memberErr && !memberErr.message.includes('unique')) throw memberErr
-      await supabase.from('workshop_invites').update({ used_at: new Date().toISOString() }).eq('id', invite.id)
+      const { data, error: rpcErr } = await supabase.rpc('join_workshop', { invite_code: inviteCode.trim() })
+      if (rpcErr) throw rpcErr
+      if (data?.error === 'invalid_code') throw new Error(t('ob_bad_code'))
       await reloadWorkshop()
       navigate('/dashboard')
     } catch (err) {
