@@ -50,7 +50,11 @@ export function WorkerView() {
     setAdvancing(a => ({ ...a, [job.id]: true }))
     try {
       const newStage = dir === 'next' ? nextStage(job.stage) : prevStage(job.stage)
-      await updateJob(job.id, { stage: newStage, updated_at: new Date().toISOString() })
+      const { error } = await supabase.rpc('worker_advance_stage', { p_job_id: job.id, p_stage: newStage })
+      if (error) throw error
+      await fetchJobs()
+    } catch (e) {
+      alert('Gagal kemaskini: ' + e.message)
     } finally {
       setAdvancing(a => ({ ...a, [job.id]: false }))
     }

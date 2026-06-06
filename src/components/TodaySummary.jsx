@@ -1,15 +1,17 @@
 import { useMemo } from 'react'
-import { isOverdue, daysIn, OVERDUE_DAYS } from '../constants'
+import { daysIn, OVERDUE_DAYS } from '../constants'
+import { useStages } from '../hooks/useStages'
 
 export function TodaySummary({ jobs, onSelectJob }) {
   const today = new Date().toDateString()
+  const { lastValue, isOverdue } = useStages()
 
   const { newToday, overdueList, readyList } = useMemo(() => {
     const newToday    = jobs.filter(j => !j.archived && new Date(j.created_at).toDateString() === today)
     const overdueList = jobs.filter(j => isOverdue(j))
-    const readyList   = jobs.filter(j => !j.archived && j.stage === 'siap')
+    const readyList   = jobs.filter(j => !j.archived && j.stage === lastValue)
     return { newToday, overdueList, readyList }
-  }, [jobs, today])
+  }, [jobs, today, lastValue, isOverdue])
 
   if (newToday.length === 0 && overdueList.length === 0 && readyList.length === 0) return null
 
