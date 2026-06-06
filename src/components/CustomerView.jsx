@@ -72,12 +72,15 @@ export function CustomerView() {
         .order('created_at', { ascending: false }).limit(1).maybeSingle()
       setActiveJob(data || null)
     } else {
-      const phone = query.trim()
+      const phone = query.trim().replace(/\D/g, '')
+      if (!phone) { setSearched(true); setLoading(false); return }
       const { data } = await supabase
         .from('jobs').select('*, job_attachments(*)')
         .eq('workshop_id', workshop.id)
         .ilike('phone', `%${phone}%`)
+        .eq('archived', false)
         .order('created_at', { ascending: false })
+        .limit(20)
       const list = data || []
       setJobs(list)
       if (list.length === 1) setActiveJob(list[0])

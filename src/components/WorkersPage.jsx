@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LanguageContext'
 import { supabase } from '../lib/supabase'
-import { Users, RefreshCw, Copy, Check, Trash2, RefreshCcw, UserPlus } from 'lucide-react'
+import { Users, RefreshCw, Copy, Check, Trash2, UserPlus, Pencil, X } from 'lucide-react'
 
 function randomCode() {
   return Math.random().toString(36).slice(2, 8).toUpperCase()
@@ -12,12 +12,15 @@ export function WorkersPage() {
   const { workshop } = useApp()
   const { t } = useLang()
 
-  const [workers, setWorkers]   = useState([])
-  const [invites, setInvites]   = useState([])
-  const [loading, setLoading]   = useState(true)
-  const [loadError, setLoadError] = useState('')
-  const [copied, setCopied]     = useState(null)
+  const [workers, setWorkers]       = useState([])
+  const [invites, setInvites]       = useState([])
+  const [loading, setLoading]       = useState(true)
+  const [loadError, setLoadError]   = useState('')
+  const [copied, setCopied]         = useState(null)
   const [generating, setGenerating] = useState(false)
+  const [editingId, setEditingId]   = useState(null)
+  const [editName, setEditName]     = useState('')
+  const [savingEdit, setSavingEdit] = useState(false)
 
   const load = async () => {
     if (!workshop) return
@@ -64,6 +67,20 @@ export function WorkersPage() {
     setInvites(prev => prev.filter(i => i.id !== invite.id))
   }
 
+  const startEdit = (w) => { setEditingId(w.id); setEditName(w.name || '') }
+
+  const saveWorkerName = async (workerId) => {
+    setSavingEdit(true)
+    try {
+      const { error } = await supabase
+        .from('workshop_members').update({ name: editName.trim() || null }).eq('id', workerId)
+      if (error) throw error
+      setWorkers(prev => prev.map(w => w.id === workerId ? { ...w, name: editName.trim() || null } : w))
+      setEditingId(null)
+    } catch (err) { alert(err.message) }
+    finally { setSavingEdit(false) }
+  }
+
   const copyCode = (code) => {
     navigator.clipboard.writeText(code)
     setCopied(code); setTimeout(() => setCopied(null), 2000)
@@ -97,21 +114,51 @@ export function WorkersPage() {
           <div className="bg-surface-card rounded-lg border border-hairline overflow-hidden">
             {workers.map((w, i) => (
               <div key={w.id}
-                className={`flex items-center gap-4 px-5 py-4 ${i < workers.length - 1 ? 'border-b border-hairline' : ''}`}>
+                className={`flex items-center gap-3 px-5 py-4 ${i < workers.length - 1 ? 'border-b border-hairline' : ''}`}>
                 <div className="w-9 h-9 rounded-full bg-surface-bone border border-hairline flex items-center justify-center flex-shrink-0">
                   <span className="text-charcoal font-bold text-sm">{(w.name || w.email || '?')[0].toUpperCase()}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-ink font-semibold text-sm">{w.name || w.email?.split('@')[0] || t('wk_no_name')}</p>
-                  <p className="text-mute text-xs truncate">{w.email}</p>
+                  {editingId === w.id ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        autoFocus
+                        type="text"
+                        value={editName}
+                        onChange={e => setEditName(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') saveWorkerName(w.id); if (e.key === 'Escape') setEditingId(null) }}
+                        placeholder={w.email?.split('@')[0]}
+                        className="flex-1 bg-canvas border border-hairline rounded-full px-3 py-1.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      />
+                      <button onClick={() => saveWorkerName(w.id)} disabled={savingEdit}
+                        className="w-7 h-7 rounded-full bg-primary flex items-center justify-center flex-shrink-0 disabled:opacity-50">
+                        <Check className="w-3.5 h-3.5 text-white" />
+                      </button>
+                      <button onClick={() => setEditingId(null)}
+                        className="w-7 h-7 rounded-full bg-canvas border border-hairline flex items-center justify-center flex-shrink-0 text-mute hover:text-ink">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 group">
+                      <p className="text-ink font-semibold text-sm">{w.name || w.email?.split('@')[0] || t('wk_no_name')}</p>
+                      <button onClick={() => startEdit(w)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity text-ash hover:text-charcoal">
+                        <Pencil className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                  <p className="text-mute text-xs truncate mt-0.5">{w.email}</p>
                 </div>
-                <span className="text-xs bg-surface-bone border border-hairline px-2.5 py-1 rounded-full text-charcoal font-medium">
+                <span className="text-xs bg-surface-bone border border-hairline px-2.5 py-1 rounded-full text-charcoal font-medium flex-shrink-0">
                   {w.role}
                 </span>
-                <button onClick={() => removeWorker(w)}
-                  className="w-8 h-8 flex items-center justify-center text-mute hover:text-red-500 hover:bg-red-50 rounded-full transition-colors">
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                {editingId !== w.id && (
+                  <button onClick={() => removeWorker(w)}
+                    className="w-8 h-8 flex items-center justify-center text-mute hover:text-red-500 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             ))}
           </div>
