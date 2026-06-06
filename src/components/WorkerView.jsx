@@ -1,18 +1,21 @@
 import { useState, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
 import { useJobs } from '../hooks/useJobs'
+import { supabase } from '../lib/supabase'
 import { StageBar } from './StageBar'
 import { PaymentBadge } from './StatusBadge'
 import { daysIn } from '../constants'
 import { useStages } from '../hooks/useStages'
 import { useLang } from '../context/LanguageContext'
-import { RefreshCw, ChevronRight, ChevronLeft, Search, LogOut, Wrench, Clock } from 'lucide-react'
+import { RefreshCw, ChevronRight, ChevronLeft, Search, LogOut, Wrench, Clock, Camera, X, Image } from 'lucide-react'
 
 export function WorkerView() {
   const { workshop, signOut } = useApp()
-  const { jobs, loading, fetchJobs, updateJob } = useJobs(workshop?.id)
+  const { jobs, loading, fetchJobs, updateJob, addAttachment } = useJobs(workshop?.id)
   const [search, setSearch]     = useState('')
   const [advancing, setAdvancing] = useState({})
+  const [uploading, setUploading] = useState({})
+  const [lightbox, setLightbox]   = useState(null)
   const { stages, stageMap, lastValue, nextStage, prevStage, isOverdue: checkOverdue } = useStages()
   const { t } = useLang()
 
@@ -36,6 +39,19 @@ export function WorkerView() {
     } finally {
       setAdvancing(a => ({ ...a, [job.id]: false }))
     }
+  }
+
+  const uploadPhoto = async (job, file) => {
+    setUploading(u => ({ ...u, [job.id]: true }))
+    try {
+      const ext  = file.name.split('.').pop()
+      const path = `photos/${job.id}/${Date.now()}.${ext}`
+      const { error: upErr } = await supabase.storage.from('attachments').upload(path, file)
+      if (upErr) throw upErr
+      const { data: { publicUrl } } = supabase.storage.from('attachments').getPublicUrl(path)
+      await addAttachment(job.id, publicUrl, 'photo', '', job.stage)
+    } catch (e) { alert('Gagal muat naik: ' + e.message) }
+    finally { setUploading(u => ({ ...u, [job.id]: false })) }
   }
 
   const formatDate = (d) => d
@@ -161,6 +177,41 @@ export function WorkerView() {
                         <p className="text-charcoal text-xs">{job.notes}</p>
                       </div>
                     )}
+
+                    {/* Photo upload */}
+                    <div className="mt-3 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-xs text-mute">
+                        <Image className="w-3.5 h-3.5" />
+                        <span>{(job.job_attachments?.filter(a => a.type === 'photo') || []).length} {t('card_photos')}</span>
+                      </div>
+                      <label className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors cursor-pointer ${
+                        uploading[job.id]
+                          ? 'bg-canvas border-hairline text-ash'
+                          : 'bg-canvas border-hairline text-charcoal hover:bg-surface-bone'
+                      }`}>
+                        <Camera className="w-3.5 h-3.5" />
+                        {uploading[job.id] ? t('uploading') : t('card_add_photo')}
+                        <input type="file" accept="image/*" capture="environment" className="hidden"
+                          disabled={!!uploading[job.id]}
+                          onChange={e => { const f = e.target.files?.[0]; if (f) uploadPhoto(job, f); e.target.value = '' }} />
+                      </label>
+                    </div>
+
+                    {/* Photo thumbnails */}
+                    {(job.job_attachments?.filter(a => a.type === 'photo') || []).length > 0 && (
+                      <div className="mt-2 grid grid-cols-4 gap-1.5">
+                        {job.job_attachments.filter(a => a.type === 'photo').map(img => (
+                          <div key={img.id} className="relative">
+                            <img src={img.url} alt={img.stage}
+                              className="w-full aspect-square object-cover rounded-md cursor-pointer"
+                              onClick={() => setLightbox(img.url)} />
+                            {img.stage && (
+                              <span className="absolute bottom-0.5 left-0.5 bg-ink/60 text-white text-xs px-1 rounded truncate max-w-[90%] text-[10px]">{img.stage}</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )
@@ -168,6 +219,16 @@ export function WorkerView() {
           </div>
         )}
       </div>
+
+      {lightbox && (
+        <div className="fixed inset-0 bg-ink/80 z-50 flex items-center justify-center p-4" onClick={() => setLightbox(null)}>
+          <img src={lightbox} alt="" className="max-w-full max-h-full rounded-md" />
+          <button className="absolute top-4 right-4 text-white bg-ink/60 hover:bg-ink/80 rounded-full w-10 h-10 flex items-center justify-center"
+            onClick={() => setLightbox(null)}>
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
     </div>
   )
 }
