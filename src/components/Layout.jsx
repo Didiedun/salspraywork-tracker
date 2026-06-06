@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LanguageContext'
 import { TutorialModal } from './TutorialModal'
+import { FeedbackWidget } from './FeedbackWidget'
 import {
   LayoutDashboard, Package, Users, LogOut, ExternalLink, Settings,
   Menu, X, Globe, HelpCircle, ChevronLeft, ChevronRight,
@@ -170,6 +171,7 @@ export function Layout({ children }) {
           {children}
         </main>
       </div>
+      <FeedbackWidget />
     </div>
   )
 }

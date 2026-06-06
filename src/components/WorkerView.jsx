@@ -8,6 +8,7 @@ import { daysIn, isStale } from '../constants'
 import { useStages } from '../hooks/useStages'
 import { useLang } from '../context/LanguageContext'
 import { RefreshCw, ChevronRight, ChevronLeft, Search, LogOut, Wrench, Clock, Camera, X, Image, DoorOpen, UserCheck, Pencil, Check } from 'lucide-react'
+import { FeedbackWidget } from './FeedbackWidget'
 
 export function WorkerView() {
   const { workshop, signOut, leaveWorkshop, member, updateMemberName } = useApp()
@@ -289,6 +290,8 @@ export function WorkerView() {
           </div>
         )}
       </div>
+
+      <FeedbackWidget />
 
       {lightbox && (
         <div className="fixed inset-0 bg-ink/80 z-50 flex items-center justify-center p-4" onClick={() => setLightbox(null)}>

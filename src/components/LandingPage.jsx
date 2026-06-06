@@ -8,6 +8,7 @@ import {
   MessageSquare, BookOpen, AlertTriangle,
 } from 'lucide-react'
 import { useState } from 'react'
+import { FeedbackWidget } from './FeedbackWidget'
 
 /* ─── helpers ─────────────────────────────────────────── */
 function scrollTo(id) {
@@ -384,6 +385,7 @@ export function LandingPage() {
               <span className="font-display font-bold text-white text-xs">DD</span>
             </div>
             <span className="font-display font-bold text-ink">Digital Depot</span>
+            <span className="text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded-full tracking-wide">BETA</span>
           </div>
           <div className="hidden sm:flex items-center gap-1">
             {[[t('land_features'),'ciri'], [t('land_how'),'cara'], [t('land_pricing'),'harga'], [t('land_faq'),'faq']].map(([label, id]) => (
@@ -405,6 +407,20 @@ export function LandingPage() {
           </div>
         </div>
       </nav>
+
+      {/* ── BETA NOTICE ── */}
+      <div className="bg-amber-50 border-b border-amber-200">
+        <div className="max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-center gap-2 text-xs text-amber-800">
+          <span className="font-bold bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded-full">BETA</span>
+          <span>Sistem ini masih dalam pembangunan awal. Mungkin ada pepijat kecil — jika jumpa sebarang masalah, sila</span>
+          <button
+            onClick={() => document.querySelector('[title="Hantar laporan / bug report"]')?.click()}
+            className="font-bold underline hover:text-amber-900 transition-colors whitespace-nowrap">
+            hantar laporan
+          </button>
+          <span>kepada kami.</span>
+        </div>
+      </div>
 
       {/* ── HERO ── */}
       <section className="max-w-5xl mx-auto px-4 pt-14 pb-10">
@@ -656,6 +672,8 @@ export function LandingPage() {
           <p className="text-on-dark/30 text-xs mt-4">Daftar dalam 30 saat · Guna Google · Tiada kad kredit</p>
         </div>
       </section>
+
+      <FeedbackWidget />
 
       {/* ── FOOTER ── */}
       <footer className="bg-surface-deep border-t border-white/5">
