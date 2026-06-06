@@ -10,7 +10,7 @@ import { useLang } from '../context/LanguageContext'
 import { useApp } from '../context/AppContext'
 import {
   Edit2, Trash2, Camera, Printer, Image,
-  ChevronDown, ChevronUp, X, ChevronRight, ChevronLeft, Clock
+  ChevronDown, ChevronUp, X, ChevronRight, ChevronLeft, Clock, UserCheck
 } from 'lucide-react'
 
 export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAttachment }) {
@@ -148,6 +148,12 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
 
           <div className="flex items-center gap-3 mt-2.5 text-xs text-mute flex-wrap">
             <span>{formatDate(job.date_in || job.created_at)}</span>
+            {job.updated_by && (
+              <span className="flex items-center gap-1">
+                <UserCheck className="w-3 h-3" />
+                {job.updated_by.split('@')[0]}
+              </span>
+            )}
             {job.est_completion && (
               <span className="text-primary font-semibold">{t('form_est')}: {formatDate(job.est_completion)}</span>
             )}

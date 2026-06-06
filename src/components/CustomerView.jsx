@@ -241,7 +241,7 @@ export function CustomerView() {
               </div>
               <div className="bg-canvas rounded-md p-4 border border-hairline">
                 <p className="text-mute text-xs mb-3 font-medium">{t('cv_stage_lbl')}</p>
-                <StageBar current={job.stage} stages={Array.isArray(workshop?.stages) && workshop.stages.length > 0 ? workshop.stages : SPRAY_STAGES} />
+                <StageBar current={job.stage} useLabel stages={Array.isArray(workshop?.stages) && workshop.stages.length > 0 ? workshop.stages : SPRAY_STAGES} />
                 {job.updated_at && (
                   <p className="text-mute text-xs mt-2 flex items-center justify-end gap-1">
                     <Clock className="w-3 h-3" />

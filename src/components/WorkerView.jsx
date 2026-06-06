@@ -7,7 +7,7 @@ import { PaymentBadge } from './StatusBadge'
 import { daysIn, isStale } from '../constants'
 import { useStages } from '../hooks/useStages'
 import { useLang } from '../context/LanguageContext'
-import { RefreshCw, ChevronRight, ChevronLeft, Search, LogOut, Wrench, Clock, Camera, X, Image, DoorOpen } from 'lucide-react'
+import { RefreshCw, ChevronRight, ChevronLeft, Search, LogOut, Wrench, Clock, Camera, X, Image, DoorOpen, UserCheck } from 'lucide-react'
 
 export function WorkerView() {
   const { workshop, signOut, leaveWorkshop } = useApp()
@@ -171,6 +171,12 @@ export function WorkerView() {
                     </div>
 
                     <StageBar current={job.stage} stages={stages} />
+                    {job.updated_by && (
+                      <p className="text-mute text-xs mt-1.5 flex items-center gap-1">
+                        <UserCheck className="w-3 h-3" />
+                        {job.updated_by.split('@')[0]}
+                      </p>
+                    )}
 
                     <div className="flex items-center gap-2 mt-3">
                       <button

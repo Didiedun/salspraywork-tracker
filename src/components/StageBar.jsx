@@ -1,8 +1,9 @@
 import { SPRAY_STAGES } from '../constants'
 
-export function StageBar({ current, compact = false, stages = SPRAY_STAGES }) {
+export function StageBar({ current, compact = false, stages = SPRAY_STAGES, useLabel = false }) {
   const idx = stages.findIndex(s => s.value === current)
   const safeIdx = idx === -1 ? 0 : idx
+  const displayName = (s) => useLabel ? (s.label || s.short) : (s.short || s.label)
 
   if (compact) {
     return (
@@ -44,7 +45,7 @@ export function StageBar({ current, compact = false, stages = SPRAY_STAGES }) {
               i === safeIdx ? 'text-primary font-semibold' :
               i < safeIdx   ? 'text-charcoal font-medium' :
               'text-stone'
-            }`}>{s.short}</p>
+            }`}>{displayName(s)}</p>
           </div>
         ))}
       </div>

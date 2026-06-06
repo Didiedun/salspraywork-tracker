@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Save, Car, User, Phone, FileText, DollarSign, Calendar, Flag } from 'lucide-react'
+import { X, Save, Car, User, Phone, FileText, DollarSign, Calendar, Flag, Mail } from 'lucide-react'
 import { useStages } from '../hooks/useStages'
 import { useLang } from '../context/LanguageContext'
 
@@ -17,6 +17,7 @@ function Toggle({ checked, onToggle, label }) {
 
 const EMPTY = {
   plate: '', owner: '', phone: '', car: '', notes: '',
+  customer_email: '',
   total_amount: '', downpayment: '', type: 'walk-in',
   stage: 'ready', paid: false, archived: false,
   date_in: '', est_completion: '',
@@ -29,6 +30,7 @@ export function JobForm({ initial, onSave, onClose, title }) {
     ...EMPTY, ...initial,
     total_amount:   initial.total_amount   ?? '',
     downpayment:    initial.downpayment    ?? '',
+    customer_email: initial.customer_email ?? '',
     date_in:        initial.date_in        ? initial.date_in.slice(0, 10)        : '',
     est_completion: initial.est_completion ? initial.est_completion.slice(0, 10) : '',
   } : { ...EMPTY, stage: stages[0]?.value || 'ready' })
@@ -48,6 +50,7 @@ export function JobForm({ initial, onSave, onClose, title }) {
         plate:          form.plate.trim().toUpperCase().replace(/\s+/g, ''),
         owner:          form.owner.trim(),
         phone:          form.phone.trim(),
+        customer_email: form.customer_email.trim() || null,
         car:            form.car.trim(),
         notes:          form.notes.trim(),
         total_amount:   form.total_amount  ? parseFloat(form.total_amount)  : null,
@@ -111,6 +114,7 @@ export function JobForm({ initial, onSave, onClose, title }) {
               { key: 'plate', label: t('form_plate'), icon: Car,   placeholder: t('form_plate_ph'), upper: true },
               { key: 'owner', label: t('form_owner'), icon: User,  placeholder: t('form_owner_ph') },
               { key: 'phone', label: t('form_phone'), icon: Phone, placeholder: t('form_phone_ph'), type: 'tel' },
+              { key: 'customer_email', label: t('form_email'), icon: Mail, placeholder: t('form_email_ph'), type: 'email' },
               { key: 'car',   label: t('form_car'),   icon: Car,   placeholder: t('form_car_ph') },
             ].map(({ key, label, icon: Icon, placeholder, upper, type }) => (
               <div key={key}>
