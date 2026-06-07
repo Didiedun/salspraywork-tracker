@@ -19,7 +19,7 @@ export function PaymentModal({ job, onSave, onClose }) {
   const [customerPays, setCustomerPays] = useState('')
   const [saving,       setSaving]       = useState(false)
 
-  const collected    = parseFloat(amount)       || 0
+  const collected    = Math.min(parseFloat(amount) || 0, balance + 0.005)  // cap at balance
   const customerPaid = parseFloat(customerPays) || 0
   const change       = customerPaid - collected
   const isFullPay    = collected >= balance - 0.005   // 0.5 sen tolerance
@@ -30,7 +30,7 @@ export function PaymentModal({ job, onSave, onClose }) {
     if (collected <= 0) return
     setSaving(true)
     try {
-      const newDeposit = deposit + collected
+      const newDeposit = Math.min(deposit + collected, total)  // never exceed total
       await onSave(job.id, {
         downpayment:    newDeposit,
         paid:           isFullPay,

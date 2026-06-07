@@ -150,8 +150,22 @@ export const translations = {
     email_subject:    'Kemas Kini Status Kenderaan',
     email_body_stage: 'Peringkat terkini',
 
-    /* dashboard export */
-    dash_export:      'Eksport CSV',
+    /* dashboard export + monthly */
+    dash_export:       'Eksport CSV',
+    dash_this_month:   'Bulan Ini',
+    dash_last_month:   'Bulan Lalu',
+    dash_month_jobs:   'kerja selesai',
+
+    /* EOD report */
+    eod_title:              'Laporan Harian',
+    eod_total_collected:    'Jumlah Dikutip',
+    eod_transactions:       'transaksi',
+    eod_txn_count:          'transaksi',
+    eod_breakdown:          'Pecahan Transaksi',
+    eod_other:              'Lain-lain',
+    eod_no_transactions:    'Tiada transaksi pada tarikh ini',
+    eod_no_transactions_sub:'Cuba pilih tarikh lain atau rekod bayaran dahulu.',
+    eod_note:               'Berdasarkan rekod yang dikemaskini pada tarikh yang dipilih.',
 
 
     /* worker view */
@@ -345,10 +359,16 @@ export const translations = {
     inv_unit:       'Unit',
     inv_qty:        'Kuantiti Semasa',
     inv_reorder:    'Had Rendah (Reorder)',
-    inv_cost:       'Kos Seunit (RM)',
-    inv_name_req:   'Nama item diperlukan.',
-    inv_edit:       'Edit Item',
-    inv_new:        'Tambah Item',
+    inv_cost:               'Kos Seunit (RM)',
+    inv_name_req:           'Nama item diperlukan.',
+    inv_edit:               'Edit Item',
+    inv_new:                'Tambah Item',
+    inv_restock:            'Tambah Stok',
+    inv_restock_qty:        'Kuantiti Ditambah',
+    inv_restock_supplier:   'Pembekal',
+    inv_restock_supplier_ph:'cth: Supplier ABC',
+    inv_restock_optional:   'pilihan',
+    inv_restock_save:       'Kemas Kini Stok',
 
     /* workers */
     wk_workers:      'Senarai Pekerja',
@@ -559,8 +579,22 @@ export const translations = {
     email_subject:    'Vehicle Status Update',
     email_body_stage: 'Current stage',
 
-    /* dashboard export */
-    dash_export:      'Export CSV',
+    /* dashboard export + monthly */
+    dash_export:       'Export CSV',
+    dash_this_month:   'This Month',
+    dash_last_month:   'Last Month',
+    dash_month_jobs:   'jobs closed',
+
+    /* EOD report */
+    eod_title:              'Daily Cash Report',
+    eod_total_collected:    'Total Collected',
+    eod_transactions:       'transactions',
+    eod_txn_count:          'transactions',
+    eod_breakdown:          'Transaction Breakdown',
+    eod_other:              'Other',
+    eod_no_transactions:    'No transactions on this date',
+    eod_no_transactions_sub:'Try another date or record a payment first.',
+    eod_note:               'Based on records updated on the selected date.',
 
 
     /* worker view */
@@ -754,10 +788,16 @@ export const translations = {
     inv_unit:       'Unit',
     inv_qty:        'Current Quantity',
     inv_reorder:    'Reorder Level',
-    inv_cost:       'Unit Cost (RM)',
-    inv_name_req:   'Item name is required.',
-    inv_edit:       'Edit Item',
-    inv_new:        'Add Item',
+    inv_cost:               'Unit Cost (RM)',
+    inv_name_req:           'Item name is required.',
+    inv_edit:               'Edit Item',
+    inv_new:                'Add Item',
+    inv_restock:            'Restock',
+    inv_restock_qty:        'Quantity to Add',
+    inv_restock_supplier:   'Supplier',
+    inv_restock_supplier_ph:'e.g. Supplier ABC',
+    inv_restock_optional:   'optional',
+    inv_restock_save:       'Update Stock',
 
     /* workers */
     wk_workers:        'Workers',

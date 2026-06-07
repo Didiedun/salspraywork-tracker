@@ -4,7 +4,7 @@ import { useLang } from '../context/LanguageContext'
 import { useInventory } from '../hooks/useInventory'
 import { useCatalog } from '../hooks/useCatalog'
 import {
-  Plus, Search, Pencil, Trash2, X, Save,
+  Plus, Search, Pencil, Trash2, X, Save, PackagePlus,
   AlertTriangle, Package, ChevronDown, ChevronRight, Layers,
 } from 'lucide-react'
 
@@ -524,12 +524,82 @@ function ItemForm({ initial, onSave, onClose }) {
   )
 }
 
+function RestockForm({ item, onSave, onClose }) {
+  const { t } = useLang()
+  const [qty,      setQty]      = useState('')
+  const [cost,     setCost]     = useState(item.unit_cost ? String(item.unit_cost) : '')
+  const [supplier, setSupplier] = useState('')
+  const [saving,   setSaving]   = useState(false)
+
+  const handle = async () => {
+    const add = parseFloat(qty)
+    if (!add || add <= 0) return
+    setSaving(true)
+    try {
+      const updates = { quantity: (Number(item.quantity) || 0) + add }
+      if (cost) updates.unit_cost = parseFloat(cost)
+      await onSave(item.id, updates)
+      onClose()
+    } catch (e) { alert(e.message) }
+    finally { setSaving(false) }
+  }
+
+  const inp = 'w-full bg-canvas border border-hairline rounded-full px-4 py-2.5 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors'
+
+  return (
+    <div className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-[60] flex items-end sm:items-center justify-center pt-16 px-0 pb-0 sm:p-4">
+      <div className="bg-surface-card rounded-t-2xl sm:rounded-2xl border border-hairline w-full sm:max-w-sm flex flex-col">
+        <div className="flex items-center justify-between p-5 border-b border-hairline">
+          <div>
+            <h3 className="font-display font-bold text-ink">{t('inv_restock')}</h3>
+            <p className="text-xs text-mute mt-0.5">{item.name} — {t('inv_qty')}: {item.quantity} {item.unit}</p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
+            <X className="w-4 h-4 text-ash" />
+          </button>
+        </div>
+        <div className="p-5 space-y-4">
+          <div>
+            <label className="text-xs font-semibold text-charcoal mb-1.5 block">{t('inv_restock_qty')} ({item.unit}) *</label>
+            <input autoFocus type="text" inputMode="decimal" value={qty} onChange={e => setQty(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handle()}
+              placeholder="0" className={inp} />
+            {qty && parseFloat(qty) > 0 && (
+              <p className="text-xs text-badge-success mt-1.5 px-1">
+                {item.quantity} → {(Number(item.quantity) || 0) + (parseFloat(qty) || 0)} {item.unit}
+              </p>
+            )}
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-charcoal mb-1.5 block">{t('inv_cost')} (RM) — {t('inv_restock_optional')}</label>
+            <input type="text" inputMode="decimal" value={cost} onChange={e => setCost(e.target.value)}
+              placeholder="0.00" className={inp} />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-charcoal mb-1.5 block">{t('inv_restock_supplier')} — {t('inv_restock_optional')}</label>
+            <input type="text" value={supplier} onChange={e => setSupplier(e.target.value)}
+              placeholder={t('inv_restock_supplier_ph')} className={inp} />
+          </div>
+        </div>
+        <div className="p-4 border-t border-hairline">
+          <button onClick={handle} disabled={saving || !qty || parseFloat(qty) <= 0}
+            className="w-full bg-primary hover:bg-primary-deep disabled:bg-stone disabled:cursor-not-allowed text-white font-semibold rounded-full py-3 flex items-center justify-center gap-2 transition-colors text-sm">
+            <PackagePlus className="w-4 h-4" />
+            {saving ? t('saving') : t('inv_restock_save')}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function StockTab({ workshopId }) {
   const { t } = useLang()
   const { items, loading, addItem, updateItem, deleteItem } = useInventory(workshopId)
-  const [search, setSearch]   = useState('')
-  const [editing, setEditing] = useState(null)
-  const [filter, setFilter]   = useState('all')
+  const [search,     setSearch]     = useState('')
+  const [editing,    setEditing]    = useState(null)
+  const [restocking, setRestocking] = useState(null)
+  const [filter,     setFilter]     = useState('all')
 
   const filtered = items.filter(i => {
     if (filter === 'low' && (i.quantity > i.reorder_level)) return false
@@ -634,6 +704,11 @@ function StockTab({ workshopId }) {
                     className="w-7 h-7 flex items-center justify-center rounded-full border border-hairline hover:bg-surface-bone text-charcoal font-bold text-base leading-none transition-colors">+</button>
                 </div>
                 <div className="flex items-center gap-0.5 flex-shrink-0">
+                  <button onClick={() => setRestocking(item)}
+                    title={t('inv_restock')}
+                    className="w-8 h-8 flex items-center justify-center text-mute hover:text-badge-success hover:bg-emerald-50 rounded-full transition-colors">
+                    <PackagePlus className="w-3.5 h-3.5" />
+                  </button>
                   <button onClick={() => setEditing(item)}
                     className="w-8 h-8 flex items-center justify-center text-mute hover:text-ink hover:bg-canvas rounded-full transition-colors">
                     <Pencil className="w-3.5 h-3.5" />
@@ -654,6 +729,13 @@ function StockTab({ workshopId }) {
           initial={editing === 'new' ? null : editing}
           onSave={handleSave}
           onClose={() => setEditing(null)}
+        />
+      )}
+      {restocking && (
+        <RestockForm
+          item={restocking}
+          onSave={updateItem}
+          onClose={() => setRestocking(null)}
         />
       )}
     </div>

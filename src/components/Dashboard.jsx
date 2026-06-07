@@ -7,10 +7,13 @@ import { JobCard } from './JobCard'
 import { JobForm } from './JobForm'
 import { TodaySummary } from './TodaySummary'
 import { RevenueChart } from './RevenueChart'
+import { EODReport } from './EODReport'
 import { paymentStatus, isStale } from '../constants'
 import { useStages } from '../hooks/useStages'
-import { Plus, Search, RefreshCw, Archive, TrendingUp, BarChart2, Copy, Check, AlertTriangle, Bell, Download } from 'lucide-react'
+import { Plus, Search, RefreshCw, Archive, TrendingUp, BarChart2, Copy, Check, AlertTriangle, Bell, Download, ClipboardList } from 'lucide-react'
 import { TutorialModal } from './TutorialModal'
+
+const parseLocalDate = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d) }
 
 export function Dashboard() {
   const { workshop } = useApp()
@@ -30,6 +33,7 @@ export function Dashboard() {
     setShowOnboarding(false)
   }
   const [showChart, setShowChart] = useState(false)
+  const [showEOD,   setShowEOD]   = useState(false)
   const [copied,    setCopied]    = useState(false)
 
   const filtered = useMemo(() => jobs.filter(j => {
@@ -52,6 +56,22 @@ export function Dashboard() {
   const deposit      = activeJobs.filter(j => paymentStatus(j) === 'deposit').length
   const paid         = activeJobs.filter(j => paymentStatus(j) === 'paid').length
   const totalRevenue = jobs.filter(j => j.paid).reduce((s, j) => s + (Number(j.total_amount) || 0), 0)
+
+  const now = new Date()
+  const thisMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+  const lastMonthKey  = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth() + 1).padStart(2, '0')}`
+
+  const monthlyStats = useMemo(() => {
+    let thisRev = 0, lastRev = 0, thisJobs = 0, lastJobs = 0
+    jobs.forEach(j => {
+      if (!j.paid || !j.total_amount) return
+      const key = (j.date_in || j.created_at || '').slice(0, 7)
+      if (key === thisMonthKey) { thisRev += Number(j.total_amount); thisJobs++ }
+      if (key === lastMonthKey) { lastRev += Number(j.total_amount); lastJobs++ }
+    })
+    return { thisRev, lastRev, thisJobs, lastJobs }
+  }, [jobs, thisMonthKey, lastMonthKey])
 
   const visitCounts = useMemo(() => {
     const m = {}
@@ -111,6 +131,7 @@ export function Dashboard() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-5 space-y-4">
       {showOnboarding && <TutorialModal onClose={closeOnboarding} />}
+      {showEOD && <EODReport jobs={jobs} workshop={workshop} onClose={() => setShowEOD(false)} />}
       {offline && (
         <div className="bg-amber-50 border border-amber-200 rounded-md px-4 py-3 flex items-center gap-3 text-sm">
           <div>
@@ -149,7 +170,7 @@ export function Dashboard() {
           </div>
           <div className="divide-y divide-hairline">
             {serviceReminders.map(j => {
-              const days  = Math.ceil((new Date(j.next_service_date) - new Date().setHours(0,0,0,0)) / 86400000)
+              const days  = Math.ceil((parseLocalDate(j.next_service_date) - new Date().setHours(0,0,0,0)) / 86400000)
               const phone = j.phone?.replace(/\D/g, '')
               const waNum = phone ? (phone.startsWith('60') ? phone : '60' + phone.replace(/^0/, '')) : null
               const waUrl = waNum ? `https://wa.me/${waNum}?text=${encodeURIComponent(t('remind_wa_msg') + ' ' + j.plate)}` : null
@@ -207,16 +228,41 @@ export function Dashboard() {
       {totalRevenue > 0 && (
         <div className="bg-primary rounded-md p-4 flex items-center gap-3 text-white">
           <TrendingUp className="w-5 h-5 opacity-80" />
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <p className="text-sm opacity-80">{t('dash_revenue')}</p>
             <p className="font-display font-bold text-xl">
               RM {totalRevenue.toLocaleString('ms-MY', { minimumFractionDigits: 2 })}
             </p>
           </div>
+          <button onClick={() => setShowEOD(true)}
+            title={t('eod_title')}
+            className="p-2 rounded-full transition-colors bg-white/10 hover:bg-white/20">
+            <ClipboardList className="w-4 h-4" />
+          </button>
           <button onClick={() => setShowChart(x => !x)}
             className={`p-2 rounded-full transition-colors ${showChart ? 'bg-white/20' : 'bg-white/10 hover:bg-white/20'}`}>
             <BarChart2 className="w-4 h-4" />
           </button>
+        </div>
+      )}
+
+      {/* Monthly comparison */}
+      {(monthlyStats.thisRev > 0 || monthlyStats.lastRev > 0) && (
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-surface-card border border-hairline rounded-md p-4">
+            <p className="text-xs text-mute font-medium mb-1">{t('dash_this_month')}</p>
+            <p className="font-display font-bold text-lg text-ink">
+              RM {monthlyStats.thisRev.toLocaleString('ms-MY', { minimumFractionDigits: 0 })}
+            </p>
+            <p className="text-xs text-mute mt-0.5">{monthlyStats.thisJobs} {t('dash_month_jobs')}</p>
+          </div>
+          <div className="bg-surface-card border border-hairline rounded-md p-4">
+            <p className="text-xs text-mute font-medium mb-1">{t('dash_last_month')}</p>
+            <p className="font-display font-bold text-lg text-charcoal">
+              RM {monthlyStats.lastRev.toLocaleString('ms-MY', { minimumFractionDigits: 0 })}
+            </p>
+            <p className="text-xs text-mute mt-0.5">{monthlyStats.lastJobs} {t('dash_month_jobs')}</p>
+          </div>
         </div>
       )}
 
