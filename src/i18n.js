@@ -288,6 +288,22 @@ export const translations = {
     st_link:         'Link Status Pelanggan',
     st_link_hint:    'Kongsi link ini supaya pelanggan boleh semak status kenderaan sendiri.',
 
+    /* payment gateway settings */
+    st_gw_title:       'Gateway Bayaran (ToyyibPay)',
+    st_gw_sub:         'Terima bayaran FPX & kad kredit terus ke akaun bank anda.',
+    st_gw_register:    'Daftar akaun ToyyibPay percuma →',
+    st_gw_key:         'User Secret Key',
+    st_gw_key_ph:      'Dapatkan dari ToyyibPay > Profil',
+    st_gw_cat:         'Category Code',
+    st_gw_cat_ph:      'Dapatkan dari ToyyibPay > Kategori',
+    st_gw_sandbox:     'Mod Ujian (Sandbox)',
+    st_gw_sandbox_sub: 'Aktifkan semasa ujian. Matikan apabila sudah bersedia untuk pembayaran sebenar.',
+    st_gw_save:        'Simpan Tetapan Gateway',
+    st_gw_saved:       '✓ Tetapan gateway disimpan. Butang "Jana Pautan Bayaran" kini aktif.',
+    st_gw_hint:        'Akaun ToyyibPay percuma. Wang terus masuk ke akaun anda — kami tidak pegang wang.',
+    st_gw_configured:  '✓ Gateway dikonfigurasi',
+    st_gw_not_set:     'Belum dikonfigurasi',
+
     /* auth */
     auth_welcome:   'Selamat Datang',
     auth_subtitle:  'Log masuk untuk teruskan ke bengkel anda',
@@ -760,6 +776,22 @@ export const translations = {
     st_tiktok_ph:    'e.g. @workshopname',
     st_link:         'Customer Status Link',
     st_link_hint:    'Share this link so customers can check their vehicle status.',
+
+    /* payment gateway settings */
+    st_gw_title:       'Payment Gateway (ToyyibPay)',
+    st_gw_sub:         'Accept FPX & credit card payments directly into your bank account.',
+    st_gw_register:    'Register a free ToyyibPay account →',
+    st_gw_key:         'User Secret Key',
+    st_gw_key_ph:      'Get from ToyyibPay > Profile',
+    st_gw_cat:         'Category Code',
+    st_gw_cat_ph:      'Get from ToyyibPay > Categories',
+    st_gw_sandbox:     'Test Mode (Sandbox)',
+    st_gw_sandbox_sub: 'Enable while testing. Turn off when ready for real payments.',
+    st_gw_save:        'Save Gateway Settings',
+    st_gw_saved:       '✓ Gateway settings saved. The "Generate Payment Link" button is now active.',
+    st_gw_hint:        'ToyyibPay is free. Money goes directly to your account — we never hold your funds.',
+    st_gw_configured:  '✓ Gateway configured',
+    st_gw_not_set:     'Not configured',
 
     /* auth */
     auth_welcome:   'Welcome',

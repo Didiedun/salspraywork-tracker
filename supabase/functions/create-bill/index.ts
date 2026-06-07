@@ -1,58 +1,27 @@
 /**
- * DEPLOYMENT GUIDE
- * ─────────────────────────────────────────────────────
- * 1. Install Supabase CLI: brew install supabase/tap/supabase
- * 2. In project root: supabase init
- * 3. Link to your project: supabase link --project-ref <your-ref>
- * 4. Set secrets:
- *      supabase secrets set TOYYIBPAY_SECRET_KEY=xxxx
- *      supabase secrets set TOYYIBPAY_CATEGORY_CODE=xxxx
- *      supabase secrets set TOYYIBPAY_SANDBOX=true        # use false in production
- *      supabase secrets set APP_URL=https://your-app.com
- * 5. Deploy: supabase functions deploy create-bill --no-verify-jwt=false
+ * DEPLOYMENT (platform admin — run once)
+ * ────────────────────────────────────────────────────────
+ * brew install supabase/tap/supabase
+ * supabase login
+ * supabase link --project-ref <your-supabase-project-ref>
+ * supabase secrets set APP_URL=https://your-deployed-app.com
+ * supabase functions deploy create-bill --no-verify-jwt=false
  *
- * Required DB tables (run in Supabase SQL editor):
- * ─────────────────────────────────────────────────────
- * CREATE TABLE IF NOT EXISTS payments (
- *   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
- *   workshop_id uuid REFERENCES workshops(id) ON DELETE CASCADE,
- *   job_id uuid REFERENCES jobs(id) ON DELETE CASCADE,
- *   amount_original numeric(10,2) NOT NULL,
- *   amount_paid numeric(10,2),
- *   currency text NOT NULL DEFAULT 'MYR',
- *   provider text NOT NULL DEFAULT 'toyyibpay',
- *   status text NOT NULL DEFAULT 'pending',
- *   gateway_ref text,
- *   gateway_status text,
- *   gateway_payload jsonb,
- *   created_at timestamptz DEFAULT now(),
- *   updated_at timestamptz DEFAULT now(),
- *   paid_at timestamptz
- * );
- * ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
- * CREATE POLICY "owners_manage_payments" ON payments
- *   FOR ALL USING (workshop_id IN (SELECT id FROM workshops WHERE owner_id = auth.uid()));
+ * Each workshop enters their OWN ToyyibPay credentials in
+ * Settings > Payment Gateway — no per-workshop CLI work needed.
  *
- * CREATE TABLE IF NOT EXISTS payment_events (
- *   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
- *   provider text NOT NULL,
- *   event_id text NOT NULL,
- *   payment_id uuid REFERENCES payments(id),
- *   payload jsonb,
- *   created_at timestamptz DEFAULT now(),
- *   UNIQUE(provider, event_id)
- * );
- * ALTER TABLE payment_events ENABLE ROW LEVEL SECURITY;
- * CREATE POLICY "service_manage_events" ON payment_events FOR ALL USING (true);
+ * Required DB columns on workshops table (run once in SQL editor):
+ * ────────────────────────────────────────────────────────
+ * ALTER TABLE workshops ADD COLUMN IF NOT EXISTS toyyibpay_secret_key    text;
+ * ALTER TABLE workshops ADD COLUMN IF NOT EXISTS toyyibpay_category_code text;
+ * ALTER TABLE workshops ADD COLUMN IF NOT EXISTS toyyibpay_sandbox        boolean DEFAULT true;
+ *
+ * Required tables (in supabase/functions/payment-callback/index.ts header)
  */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders, corsResponse } from '../_shared/cors.ts'
-
-const TOYYIBPAY_BASE = Deno.env.get('TOYYIBPAY_SANDBOX') === 'true'
-  ? 'https://dev.toyyibpay.com'
-  : 'https://toyyibpay.com'
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
@@ -70,7 +39,7 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) return corsResponse({ error: 'Unauthorized' }, 401)
 
-    const { job_id, amount } = await req.json()
+    const { job_id, amount, return_url } = await req.json()
     if (!job_id || !amount || Number(amount) <= 0) {
       return corsResponse({ error: 'job_id and amount > 0 required' }, 400)
     }
@@ -83,18 +52,29 @@ serve(async (req) => {
       .single()
     if (jobError || !job) return corsResponse({ error: 'Job not found' }, 404)
 
-    const { data: workshop } = await supabase
-      .from('workshops')
-      .select('name, slug')
-      .eq('id', job.workshop_id)
-      .single()
-
-    // Create local pending payment intent before touching the gateway
     const serviceClient = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
 
+    // Load this workshop's own ToyyibPay credentials
+    const { data: workshop } = await serviceClient
+      .from('workshops')
+      .select('name, slug, toyyibpay_secret_key, toyyibpay_category_code, toyyibpay_sandbox')
+      .eq('id', job.workshop_id)
+      .single()
+
+    const secretKey    = workshop?.toyyibpay_secret_key
+    const categoryCode = workshop?.toyyibpay_category_code
+    const isSandbox    = workshop?.toyyibpay_sandbox !== false
+
+    if (!secretKey || !categoryCode) {
+      return corsResponse({
+        error: 'Payment gateway not configured. Go to Settings → Payment Gateway and enter your ToyyibPay credentials.',
+      }, 503)
+    }
+
+    // Create local pending payment intent before touching the gateway
     const { data: payment, error: paymentError } = await serviceClient
       .from('payments')
       .insert({
@@ -112,20 +92,10 @@ serve(async (req) => {
       return corsResponse({ error: paymentError?.message || 'Failed to create payment record' }, 500)
     }
 
-    // Create ToyyibPay bill
-    const secretKey = Deno.env.get('TOYYIBPAY_SECRET_KEY')
-    const categoryCode = Deno.env.get('TOYYIBPAY_CATEGORY_CODE')
-    if (!secretKey || !categoryCode) {
-      await serviceClient.from('payments').delete().eq('id', payment.id)
-      return corsResponse({ error: 'Payment gateway not configured. Set TOYYIBPAY_SECRET_KEY and TOYYIBPAY_CATEGORY_CODE.' }, 503)
-    }
-
-    const amountCents = Math.round(Number(amount) * 100)
-    const callbackUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/payment-callback`
-    const appUrl = Deno.env.get('APP_URL') || ''
-    const returnUrl = workshop?.slug
-      ? `${appUrl}/w/${workshop.slug}?paid=1`
-      : appUrl
+    const TOYYIBPAY_BASE = isSandbox ? 'https://dev.toyyibpay.com' : 'https://toyyibpay.com'
+    const amountCents   = Math.round(Number(amount) * 100)
+    const callbackUrl   = `${Deno.env.get('SUPABASE_URL')}/functions/v1/payment-callback`
+    const returnUrl     = return_url || `${Deno.env.get('APP_URL') || ''}/w/${workshop?.slug || ''}`
 
     const billName = `${job.plate} - ${(job.owner || 'Pelanggan').substring(0, 20)}`.substring(0, 30)
     const billDesc = `Bayaran servis kenderaan ${job.plate}`.substring(0, 100)
@@ -161,7 +131,7 @@ serve(async (req) => {
 
     if (!billCode) {
       await serviceClient.from('payments').delete().eq('id', payment.id)
-      return corsResponse({ error: 'ToyyibPay rejected the request', detail: tpData }, 502)
+      return corsResponse({ error: 'ToyyibPay rejected the request. Check your Secret Key and Category Code.', detail: tpData }, 502)
     }
 
     await serviceClient

@@ -162,6 +162,11 @@ export function FinancePage() {
 
   const SQL_MIGRATION = `-- Run this once in Supabase SQL editor
 
+-- Payment gateway columns on workshops
+ALTER TABLE workshops ADD COLUMN IF NOT EXISTS toyyibpay_secret_key    text;
+ALTER TABLE workshops ADD COLUMN IF NOT EXISTS toyyibpay_category_code text;
+ALTER TABLE workshops ADD COLUMN IF NOT EXISTS toyyibpay_sandbox        boolean DEFAULT true;
+
 -- Expenses table
 CREATE TABLE IF NOT EXISTS expenses (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

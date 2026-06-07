@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { X, Banknote, CreditCard, QrCode, Globe, DollarSign, Copy, Check, ExternalLink } from 'lucide-react'
 import { useLang } from '../context/LanguageContext'
+import { useApp } from '../context/AppContext'
 import { supabase } from '../lib/supabase'
 
 const METHODS = [
@@ -12,6 +13,7 @@ const METHODS = [
 
 export function PaymentModal({ job, onSave, onClose }) {
   const { t } = useLang()
+  const { workshop } = useApp()
   const total   = Number(job.total_amount) || 0
   const deposit = Number(job.downpayment)  || 0
   const balance = total - deposit
@@ -56,8 +58,11 @@ export function PaymentModal({ job, onSave, onClose }) {
     setCreating(true)
     setOnlineError('')
     try {
+      const return_url = workshop?.slug
+        ? `${window.location.origin}/w/${workshop.slug}?paid=1`
+        : window.location.origin
       const { data, error } = await supabase.functions.invoke('create-bill', {
-        body: { job_id: job.id, amount: balance },
+        body: { job_id: job.id, amount: balance, return_url },
       })
       if (error || !data?.payment_url) {
         throw new Error(data?.error || error?.message || t('pay_online_error'))
