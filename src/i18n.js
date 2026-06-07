@@ -141,17 +141,6 @@ export const translations = {
     /* dashboard export */
     dash_export:      'Eksport CSV',
 
-    /* payroll */
-    wk_tab_workers:   'Pekerja',
-    wk_tab_payroll:   'Gaji',
-    wk_pay_rate:      'Kadar (RM/kerja)',
-    wk_pay_total:     'Jumlah Gaji',
-    wk_jobs_done:     'kerja',
-    wk_month:         'Bulan',
-    wk_unassigned:    'Tidak Ditugaskan',
-    wk_no_jobs_month: 'Tiada kerja bulan ini',
-    wk_payroll_grand: 'Jumlah Keseluruhan Gaji',
-    wk_export_pay:    'Eksport CSV Gaji',
 
     /* worker view */
     wv_your_name:     'Nama anda',
@@ -549,17 +538,6 @@ export const translations = {
     /* dashboard export */
     dash_export:      'Export CSV',
 
-    /* payroll */
-    wk_tab_workers:   'Workers',
-    wk_tab_payroll:   'Payroll',
-    wk_pay_rate:      'Rate (RM/job)',
-    wk_pay_total:     'Total Pay',
-    wk_jobs_done:     'jobs',
-    wk_month:         'Month',
-    wk_unassigned:    'Unassigned',
-    wk_no_jobs_month: 'No jobs this month',
-    wk_payroll_grand: 'Grand Total Payroll',
-    wk_export_pay:    'Export Payroll CSV',
 
     /* worker view */
     wv_your_name:     'Your name',
