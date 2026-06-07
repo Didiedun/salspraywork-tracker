@@ -79,8 +79,10 @@ export function useJobs(workshopId) {
   }
 
   const updateJob = async (id, updates) => {
-    const services = await deductStockForServices(updates.services)
-    const payload = { ...updates, services }
+    const payload = { ...updates }
+    if (updates.services !== undefined) {
+      payload.services = await deductStockForServices(updates.services)
+    }
     if (offline) {
       const next = lsLoad(workshopId).map(j => j.id === id ? { ...j, ...payload } : j)
       lsSave(workshopId, next); setJobs(next); return next.find(j => j.id === id)

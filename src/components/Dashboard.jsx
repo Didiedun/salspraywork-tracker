@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LanguageContext'
 import { useJobs } from '../hooks/useJobs'
+import { useInventory } from '../hooks/useInventory'
 import { JobCard } from './JobCard'
 import { JobForm } from './JobForm'
 import { TodaySummary } from './TodaySummary'
@@ -15,6 +16,8 @@ export function Dashboard() {
   const { workshop } = useApp()
   const { t } = useLang()
   const { jobs, loading, error, offline, fetchJobs, addJob, updateJob, deleteJob, addAttachment, deleteAttachment } = useJobs(workshop?.id)
+  const { items: stockItems } = useInventory(workshop?.id)
+  const lowStockItems = stockItems.filter(i => i.reorder_level > 0 && i.quantity <= i.reorder_level)
 
   const [tab,       setTab]       = useState('active')
   const [search,    setSearch]    = useState('')
@@ -80,6 +83,16 @@ export function Dashboard() {
           <div>
             <p className="font-semibold text-amber-800">{staleCount} {t('dash_stale_label')}</p>
             <p className="text-amber-700 text-xs mt-0.5">{t('dash_stale_sub')}</p>
+          </div>
+        </div>
+      )}
+
+      {lowStockItems.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-md px-4 py-3 flex items-center gap-3 text-sm">
+          <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+          <div>
+            <p className="font-semibold text-amber-800">{lowStockItems.length} {t('dash_low_stock_label')}</p>
+            <p className="text-amber-700 text-xs mt-0.5">{t('dash_low_stock_sub')}</p>
           </div>
         </div>
       )}

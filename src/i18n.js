@@ -274,6 +274,10 @@ export const translations = {
     cat_pick_stock_ph:'Pilih item stok...',
     cat_qty_per_svc:  'Kuantiti Digunakan',
     cat_in_stock:     'ada',
+    cat_create_new:   'Cipta item baharu...',
+    cat_new_name_lbl: 'Nama Item Stok Baharu',
+    cat_new_name_req: 'Nama item stok diperlukan.',
+    cat_new_qty_lbl:  'Kuantiti Awal',
 
     /* inventory */
     inv_types:      'Jenis Item',
@@ -332,6 +336,8 @@ export const translations = {
     stale_label:      'Belum dikemaskini',
     dash_stale_label: 'kerja belum dikemaskini',
     dash_stale_sub:   'Kemaskini peringkat kerja supaya pelanggan dapat maklumat terkini.',
+    dash_low_stock_label: 'item stok rendah',
+    dash_low_stock_sub:   'Semak tab Stok dalam halaman Katalog untuk tambah bekalan.',
 
     /* whatsapp message */
     wa_msg: 'Hi, saya ingin tanya tentang kenderaan',
@@ -630,6 +636,10 @@ export const translations = {
     cat_pick_stock_ph:'Select stock item...',
     cat_qty_per_svc:  'Qty Used per Service',
     cat_in_stock:     'in stock',
+    cat_create_new:   'Create new item...',
+    cat_new_name_lbl: 'New Stock Item Name',
+    cat_new_name_req: 'Stock item name is required.',
+    cat_new_qty_lbl:  'Starting Qty',
 
     /* inventory */
     inv_types:      'Item Types',
@@ -688,6 +698,8 @@ export const translations = {
     stale_label:      'Not recently updated',
     dash_stale_label: 'jobs not recently updated',
     dash_stale_sub:   'Update work stages so customers get the latest info.',
+    dash_low_stock_label: 'items low on stock',
+    dash_low_stock_sub:   'Check the Stock tab on the Catalog page to restock.',
 
     /* whatsapp message */
     wa_msg: 'Hello, I would like to enquire about vehicle',

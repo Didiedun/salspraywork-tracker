@@ -10,7 +10,9 @@ import {
 
 /* ─── Catalog modal (add/edit category, item, variant) ─────────────────── */
 
-function CatalogModal({ modal, onClose, onSave, stockItems = [] }) {
+const CREATE_NEW = '__create_new__'
+
+function CatalogModal({ modal, onClose, onSave, stockItems = [], addStockItem }) {
   const { t } = useLang()
   const isVariant = modal.type === 'variant'
   const isItemAdd = modal.type === 'item' && modal.mode === 'add'
@@ -21,8 +23,13 @@ function CatalogModal({ modal, onClose, onSave, stockItems = [] }) {
   const [linkStock, setLinkStock] = useState(!!(modal.data?.inventory_item_id))
   const [stockItemId, setStockItemId] = useState(modal.data?.inventory_item_id || '')
   const [qtyPerSvc, setQtyPerSvc] = useState(modal.data ? String(modal.data.qty_per_service ?? '1') : '1')
+  const [newStockName, setNewStockName] = useState('')
+  const [newStockUnit, setNewStockUnit] = useState('pcs')
+  const [newStockQty,  setNewStockQty]  = useState('')
   const [saving, setSaving]     = useState(false)
   const [err, setErr]           = useState('')
+
+  const isCreatingNew = linkStock && stockItemId === CREATE_NEW
 
   const titles = {
     'cat-add': t('cat_add_category'), 'cat-edit': t('cat_edit_category'),
@@ -33,11 +40,24 @@ function CatalogModal({ modal, onClose, onSave, stockItems = [] }) {
   const handleSave = async () => {
     if (!name.trim()) { setErr(t('cat_name_req')); return }
     if (showPrices && !sell) { setErr(t('cat_sell_req')); return }
+    if (isCreatingNew && !newStockName.trim()) { setErr(t('cat_new_name_req')); return }
     setSaving(true); setErr('')
     try {
+      let resolvedStockId = linkStock ? stockItemId || null : null
+      if (isCreatingNew && addStockItem) {
+        const newItem = await addStockItem({
+          name: newStockName.trim(),
+          unit: newStockUnit,
+          quantity: parseFloat(newStockQty) || 0,
+          unit_cost: cost ? parseFloat(cost) : null,
+          reorder_level: 0,
+          sku: null,
+        })
+        resolvedStockId = newItem.id
+      }
       const base = showPrices ? { name, cost_price: cost, sell_price: sell } : { name }
       const stockFields = isVariant
-        ? { inventory_item_id: linkStock ? stockItemId || null : null, qty_per_service: qtyPerSvc }
+        ? { inventory_item_id: resolvedStockId, qty_per_service: qtyPerSvc }
         : {}
       await onSave({ ...base, ...stockFields })
     } catch (e) { setErr(e.message) }
@@ -89,14 +109,43 @@ function CatalogModal({ modal, onClose, onSave, stockItems = [] }) {
                 <>
                   <div>
                     <label className={lbl}>{t('cat_stock_item')}</label>
-                    <select value={stockItemId} onChange={e => setStockItemId(e.target.value)}
+                    <select value={stockItemId} onChange={e => {
+                      setStockItemId(e.target.value)
+                      if (e.target.value === CREATE_NEW) setNewStockName(name)
+                    }}
                       className="w-full bg-canvas border border-hairline rounded-lg px-4 py-2.5 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                       <option value="">— {t('cat_pick_stock_ph')} —</option>
                       {stockItems.map(i => (
                         <option key={i.id} value={i.id}>{i.name} ({i.quantity} {i.unit})</option>
                       ))}
+                      <option value={CREATE_NEW}>+ {t('cat_create_new')}</option>
                     </select>
                   </div>
+                  {isCreatingNew && (
+                    <div className="bg-surface-bone border border-hairline rounded-lg p-3 space-y-2">
+                      <div>
+                        <label className={lbl}>{t('cat_new_name_lbl')} *</label>
+                        <input value={newStockName} onChange={e => setNewStockName(e.target.value)}
+                          placeholder={t('inv_name_ph')} className={inp} />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className={lbl}>{t('inv_unit')}</label>
+                          <select value={newStockUnit} onChange={e => setNewStockUnit(e.target.value)}
+                            className="w-full bg-canvas border border-hairline rounded-lg px-4 py-2.5 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                            {['pcs', 'tin', 'liter', 'kg', 'meter', 'set', 'kotak'].map(u => (
+                              <option key={u} value={u}>{u}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className={lbl}>{t('cat_new_qty_lbl')}</label>
+                          <input type="text" inputMode="decimal" value={newStockQty}
+                            onChange={e => setNewStockQty(e.target.value)} placeholder="0" className={inp} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <div>
                     <label className={lbl}>{t('cat_qty_per_svc')}</label>
                     <input type="text" inputMode="decimal" value={qtyPerSvc} onChange={e => setQtyPerSvc(e.target.value)} placeholder="1" className={inp} />
@@ -127,7 +176,7 @@ function CatalogTab({ workshopId }) {
     addItem, updateItem, deleteItem,
     addVariant, updateVariant, deleteVariant,
   } = useCatalog(workshopId)
-  const { items: stockItems } = useInventory(workshopId)
+  const { items: stockItems, addItem: addStockItem } = useInventory(workshopId)
 
   const [openCats,  setOpenCats]  = useState(new Set())
   const [openItems, setOpenItems] = useState(new Set())
@@ -267,6 +316,7 @@ function CatalogTab({ workshopId }) {
         <CatalogModal
           modal={modal}
           stockItems={stockItems}
+          addStockItem={addStockItem}
           onClose={() => setModal(null)}
           onSave={async (data) => {
             const { type, mode } = modal
