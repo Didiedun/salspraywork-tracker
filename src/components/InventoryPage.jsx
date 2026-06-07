@@ -2,7 +2,245 @@ import { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LanguageContext'
 import { useInventory } from '../hooks/useInventory'
-import { Plus, Search, Pencil, Trash2, X, Save, AlertTriangle, Package } from 'lucide-react'
+import { useCatalog } from '../hooks/useCatalog'
+import {
+  Plus, Search, Pencil, Trash2, X, Save,
+  AlertTriangle, Package, ChevronDown, ChevronRight, Layers,
+} from 'lucide-react'
+
+/* ─── Catalog modal (add/edit category, item, variant) ─────────────────── */
+
+function CatalogModal({ modal, onClose, onSave }) {
+  const { t } = useLang()
+  const isVariant = modal.type === 'variant'
+  const [name, setName]   = useState(modal.data?.name || '')
+  const [cost, setCost]   = useState(modal.data ? String(modal.data.cost_price ?? '') : '')
+  const [sell, setSell]   = useState(modal.data ? String(modal.data.sell_price ?? '') : '')
+  const [saving, setSaving] = useState(false)
+  const [err, setErr]     = useState('')
+
+  const titles = {
+    'cat-add': t('cat_add_category'), 'cat-edit': t('cat_edit_category'),
+    'item-add': t('cat_add_item'),    'item-edit': t('cat_edit_item'),
+    'variant-add': t('cat_add_variant'), 'variant-edit': t('cat_edit_variant'),
+  }
+
+  const handleSave = async () => {
+    if (!name.trim()) { setErr(t('cat_name_req')); return }
+    if (isVariant && !sell) { setErr(t('cat_sell_req')); return }
+    setSaving(true); setErr('')
+    try {
+      await onSave(isVariant ? { name, cost_price: cost, sell_price: sell } : { name })
+    } catch (e) { setErr(e.message) }
+    finally { setSaving(false) }
+  }
+
+  const inp = 'w-full bg-canvas border border-hairline rounded-full px-5 py-2.5 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm'
+  const lbl = 'text-xs font-semibold text-charcoal mb-1.5 block'
+
+  return (
+    <div className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-[60] flex items-center justify-center p-6">
+      <div className="bg-surface-card rounded-2xl border border-hairline w-full max-w-sm shadow-xl">
+        <div className="flex items-center justify-between p-5 border-b border-hairline">
+          <h3 className="font-display font-bold text-ink">{titles[`${modal.type}-${modal.mode}`]}</h3>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas">
+            <X className="w-4 h-4 text-ash" />
+          </button>
+        </div>
+        <div className="p-5 space-y-3">
+          <div>
+            <label className={lbl}>{t('cat_name_lbl')} *</label>
+            <input autoFocus value={name} onChange={e => setName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && !isVariant) handleSave() }}
+              placeholder={modal.type === 'cat' ? t('cat_cat_ph') : modal.type === 'item' ? t('cat_item_ph') : t('cat_variant_ph')}
+              className={inp} />
+          </div>
+          {isVariant && (
+            <>
+              <div>
+                <label className={lbl}>{t('cat_cost_lbl')} (RM)</label>
+                <input type="text" inputMode="decimal" value={cost} onChange={e => setCost(e.target.value)} placeholder="0.00" className={inp} />
+              </div>
+              <div>
+                <label className={lbl}>{t('cat_sell_lbl')} (RM) *</label>
+                <input type="text" inputMode="decimal" value={sell} onChange={e => setSell(e.target.value)} placeholder="0.00" className={inp} />
+              </div>
+            </>
+          )}
+          {err && <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{err}</p>}
+          <button onClick={handleSave} disabled={saving}
+            className="w-full bg-primary hover:bg-primary-deep disabled:bg-stone disabled:cursor-not-allowed text-white font-semibold rounded-full py-2.5 text-sm flex items-center justify-center gap-2 transition-colors">
+            <Save className="w-4 h-4" />
+            {saving ? t('saving') : t('save')}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ─── Catalog Tab ───────────────────────────────────────────────────────── */
+
+function CatalogTab({ workshopId }) {
+  const { t } = useLang()
+  const {
+    categories, loading,
+    addCategory, updateCategory, deleteCategory,
+    addItem, updateItem, deleteItem,
+    addVariant, updateVariant, deleteVariant,
+  } = useCatalog(workshopId)
+
+  const [openCats,  setOpenCats]  = useState(new Set())
+  const [openItems, setOpenItems] = useState(new Set())
+  const [modal, setModal] = useState(null)
+
+  const toggleCat  = (id) => setOpenCats(prev  => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s })
+  const toggleItem = (id) => setOpenItems(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s })
+
+  const fmt = (n) => `RM ${Number(n).toFixed(2)}`
+
+  if (loading) return <div className="text-center py-16 text-mute text-sm">{t('loading')}</div>
+
+  return (
+    <div className="space-y-3">
+      <button onClick={() => setModal({ type: 'cat', mode: 'add' })}
+        className="flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-deep transition-colors">
+        <Plus className="w-4 h-4" /> {t('cat_add_category')}
+      </button>
+
+      {categories.length === 0 ? (
+        <div className="text-center py-16 text-ash">
+          <Layers className="w-10 h-10 mx-auto mb-3 opacity-30" />
+          <p className="font-semibold text-charcoal">{t('cat_empty')}</p>
+          <p className="text-xs mt-1 text-mute">{t('cat_empty_sub')}</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {categories.map(cat => (
+            <div key={cat.id} className="bg-surface-card rounded-lg border border-hairline overflow-hidden">
+
+              {/* Category row */}
+              <div className="flex items-center gap-1 px-3 py-3">
+                <button onClick={() => toggleCat(cat.id)} className="flex-1 flex items-center gap-2 text-left min-w-0">
+                  {openCats.has(cat.id)
+                    ? <ChevronDown className="w-4 h-4 text-mute flex-shrink-0" />
+                    : <ChevronRight className="w-4 h-4 text-mute flex-shrink-0" />
+                  }
+                  <span className="font-semibold text-ink truncate">{cat.name}</span>
+                  <span className="text-xs text-ash flex-shrink-0">({(cat.service_items || []).length} item)</span>
+                </button>
+                <button onClick={() => setModal({ type: 'cat', mode: 'edit', data: cat })}
+                  className="w-7 h-7 flex items-center justify-center text-mute hover:text-ink hover:bg-canvas rounded-full transition-colors flex-shrink-0">
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
+                <button onClick={async () => {
+                  if (!window.confirm(`${t('delete')} "${cat.name}"?`)) return
+                  try { await deleteCategory(cat.id) } catch (e) { alert(e.message) }
+                }} className="w-7 h-7 flex items-center justify-center text-mute hover:text-red-500 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Items (expanded) */}
+              {openCats.has(cat.id) && (
+                <div className="border-t border-hairline">
+                  {(cat.service_items || []).map(item => (
+                    <div key={item.id} className="border-b border-hairline last:border-b-0">
+
+                      {/* Item row */}
+                      <div className="flex items-center gap-1 px-3 py-2.5 pl-7">
+                        <button onClick={() => toggleItem(item.id)} className="flex-1 flex items-center gap-2 text-left min-w-0">
+                          {openItems.has(item.id)
+                            ? <ChevronDown className="w-3.5 h-3.5 text-mute flex-shrink-0" />
+                            : <ChevronRight className="w-3.5 h-3.5 text-mute flex-shrink-0" />
+                          }
+                          <span className="font-medium text-charcoal text-sm truncate">{item.name}</span>
+                          <span className="text-xs text-ash flex-shrink-0">({(item.service_variants || []).length} varian)</span>
+                        </button>
+                        <button onClick={() => setModal({ type: 'item', mode: 'edit', data: item, catId: cat.id })}
+                          className="w-7 h-7 flex items-center justify-center text-mute hover:text-ink hover:bg-canvas rounded-full transition-colors flex-shrink-0">
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                        <button onClick={async () => {
+                          if (!window.confirm(`${t('delete')} "${item.name}"?`)) return
+                          try { await deleteItem(cat.id, item.id) } catch (e) { alert(e.message) }
+                        }} className="w-7 h-7 flex items-center justify-center text-mute hover:text-red-500 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+
+                      {/* Variants (expanded) */}
+                      {openItems.has(item.id) && (
+                        <div className="pl-10 pr-3 pb-3 pt-1 space-y-1.5">
+                          {(item.service_variants || []).map(v => (
+                            <div key={v.id} className="flex items-center gap-2 bg-canvas rounded-lg px-3 py-2">
+                              <div className="flex-1 min-w-0">
+                                <span className="text-sm font-medium text-ink">{v.name}</span>
+                                <span className="text-xs text-mute ml-1.5">
+                                  {t('cat_cost_lbl')}: {fmt(v.cost_price)} ·{' '}
+                                  <span className="text-badge-success font-semibold">{t('cat_sell_lbl')}: {fmt(v.sell_price)}</span>
+                                </span>
+                              </div>
+                              <button onClick={() => setModal({ type: 'variant', mode: 'edit', data: v, itemId: item.id, catId: cat.id })}
+                                className="w-6 h-6 flex items-center justify-center text-mute hover:text-ink hover:bg-surface-bone rounded-full transition-colors flex-shrink-0">
+                                <Pencil className="w-3 h-3" />
+                              </button>
+                              <button onClick={async () => {
+                                if (!window.confirm(`${t('delete')} "${v.name}"?`)) return
+                                try { await deleteVariant(cat.id, item.id, v.id) } catch (e) { alert(e.message) }
+                              }} className="w-6 h-6 flex items-center justify-center text-mute hover:text-red-500 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                          <button onClick={() => setModal({ type: 'variant', mode: 'add', itemId: item.id, catId: cat.id })}
+                            className="flex items-center gap-1 text-xs text-primary hover:text-primary-deep font-semibold mt-1 transition-colors">
+                            <Plus className="w-3 h-3" /> {t('cat_add_variant')}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Add item */}
+                  <div className="px-4 py-2.5 pl-9">
+                    <button onClick={() => setModal({ type: 'item', mode: 'add', catId: cat.id })}
+                      className="flex items-center gap-1 text-xs text-mute hover:text-charcoal font-semibold transition-colors">
+                      <Plus className="w-3.5 h-3.5" /> {t('cat_add_item')}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {modal && (
+        <CatalogModal
+          modal={modal}
+          onClose={() => setModal(null)}
+          onSave={async (data) => {
+            const { type, mode } = modal
+            if (type === 'cat') {
+              if (mode === 'add') await addCategory(data.name)
+              else await updateCategory(modal.data.id, data.name)
+            } else if (type === 'item') {
+              if (mode === 'add') await addItem(modal.catId, data.name)
+              else await updateItem(modal.catId, modal.data.id, data.name)
+            } else if (type === 'variant') {
+              if (mode === 'add') await addVariant(modal.catId, modal.itemId, data)
+              else await updateVariant(modal.catId, modal.itemId, modal.data.id, data)
+            }
+            setModal(null)
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+/* ─── Stock Tab (original inventory) ───────────────────────────────────── */
 
 const EMPTY_ITEM = { name: '', sku: '', unit: 'pcs', quantity: '', unit_cost: '', reorder_level: '' }
 
@@ -41,15 +279,14 @@ function ItemForm({ initial, onSave, onClose }) {
   const labelCls = 'text-charcoal text-xs font-semibold mb-1.5 block'
 
   return (
-    <div className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
-      <div className="bg-surface-card rounded-lg border border-hairline w-full max-w-md max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-[60] flex items-end sm:items-center justify-center pt-16 px-0 pb-0 sm:p-4">
+      <div className="bg-surface-card rounded-t-2xl sm:rounded-2xl border border-hairline w-full sm:max-w-md max-h-[calc(100dvh-4rem)] sm:max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between p-5 border-b border-hairline flex-shrink-0">
           <h2 className="font-display font-bold text-ink">{initial ? t('inv_edit') : t('inv_new')}</h2>
           <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
             <X className="w-5 h-5 text-ash" />
           </button>
         </div>
-
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
           <div className="p-5 space-y-4 overflow-y-auto flex-1">
             <div>
@@ -89,7 +326,7 @@ function ItemForm({ initial, onSave, onClose }) {
           </div>
           <div className="p-4 border-t border-hairline flex-shrink-0">
             <button type="submit" disabled={saving}
-              className="w-full bg-primary hover:bg-primary-deep disabled:bg-stone disabled:cursor-not-allowed text-white font-semibold rounded-full py-3 flex items-center justify-center gap-2 transition-colors text-sm border-2 border-primary hover:border-primary-deep disabled:border-stone">
+              className="w-full bg-primary hover:bg-primary-deep disabled:bg-stone disabled:cursor-not-allowed text-white font-semibold rounded-full py-3 flex items-center justify-center gap-2 transition-colors text-sm">
               <Save className="w-4 h-4" />
               {saving ? t('saving') : t('save')}
             </button>
@@ -100,11 +337,9 @@ function ItemForm({ initial, onSave, onClose }) {
   )
 }
 
-export function InventoryPage() {
-  const { workshop } = useApp()
+function StockTab({ workshopId }) {
   const { t } = useLang()
-  const { items, loading, addItem, updateItem, deleteItem } = useInventory(workshop?.id)
-
+  const { items, loading, addItem, updateItem, deleteItem } = useInventory(workshopId)
   const [search, setSearch]   = useState('')
   const [editing, setEditing] = useState(null)
   const [filter, setFilter]   = useState('all')
@@ -135,7 +370,7 @@ export function InventoryPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-5 space-y-4">
+    <div className="space-y-4">
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <div className="bg-surface-card rounded-md border border-hairline p-4">
           <p className="text-2xl font-bold font-display text-primary">{items.length}</p>
@@ -158,7 +393,7 @@ export function InventoryPage() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-ash w-4 h-4" />
           <input value={search} onChange={e => setSearch(e.target.value)}
             placeholder={t('inv_search_ph')}
-            className="w-full bg-surface-card border border-hairline rounded-full pl-11 pr-5 py-2.5 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors" />
+            className="w-full bg-surface-card border border-hairline rounded-full pl-11 pr-5 py-2.5 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm" />
         </div>
         <select value={filter} onChange={e => setFilter(e.target.value)}
           className="bg-surface-card border border-hairline rounded-lg px-5 py-2.5 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
@@ -176,9 +411,7 @@ export function InventoryPage() {
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 text-ash">
           <Package className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p className="font-semibold text-charcoal">
-            {items.length === 0 ? t('inv_empty') : t('inv_no_match')}
-          </p>
+          <p className="font-semibold text-charcoal">{items.length === 0 ? t('inv_empty') : t('inv_no_match')}</p>
           {items.length === 0 && (
             <button onClick={() => setEditing('new')} className="mt-3 text-primary text-sm font-semibold hover:underline">
               {t('inv_add_first')}
@@ -201,9 +434,7 @@ export function InventoryPage() {
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <button onClick={() => handleQtyChange(item, -1)}
-                    className="w-7 h-7 flex items-center justify-center rounded-full border border-hairline hover:bg-surface-bone text-charcoal font-bold text-base leading-none transition-colors">
-                    −
-                  </button>
+                    className="w-7 h-7 flex items-center justify-center rounded-full border border-hairline hover:bg-surface-bone text-charcoal font-bold text-base leading-none transition-colors">−</button>
                   <div className="text-center min-w-[3rem]">
                     <p className={`font-bold font-display text-sm leading-tight ${isLow ? 'text-amber-600' : 'text-ink'}`}>
                       {item.quantity} <span className="text-xs font-normal text-mute">{item.unit}</span>
@@ -213,9 +444,7 @@ export function InventoryPage() {
                     )}
                   </div>
                   <button onClick={() => handleQtyChange(item, +1)}
-                    className="w-7 h-7 flex items-center justify-center rounded-full border border-hairline hover:bg-surface-bone text-charcoal font-bold text-base leading-none transition-colors">
-                    +
-                  </button>
+                    className="w-7 h-7 flex items-center justify-center rounded-full border border-hairline hover:bg-surface-bone text-charcoal font-bold text-base leading-none transition-colors">+</button>
                 </div>
                 <div className="flex items-center gap-0.5 flex-shrink-0">
                   <button onClick={() => setEditing(item)}
@@ -240,6 +469,32 @@ export function InventoryPage() {
           onClose={() => setEditing(null)}
         />
       )}
+    </div>
+  )
+}
+
+/* ─── Page ──────────────────────────────────────────────────────────────── */
+
+export function InventoryPage() {
+  const { workshop } = useApp()
+  const { t } = useLang()
+  const [tab, setTab] = useState('catalog')
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-5 space-y-4">
+      <div className="flex gap-1 bg-surface-bone border border-hairline rounded-full p-1 w-fit">
+        {[['catalog', t('cat_tab_catalog')], ['stock', t('cat_tab_stock')]].map(([val, label]) => (
+          <button key={val} onClick={() => setTab(val)}
+            className={`px-5 py-1.5 rounded-full text-sm font-semibold transition-colors ${
+              tab === val ? 'bg-white shadow-sm text-ink' : 'text-mute hover:text-charcoal'
+            }`}>{label}</button>
+        ))}
+      </div>
+
+      {tab === 'catalog'
+        ? <CatalogTab workshopId={workshop?.id} />
+        : <StockTab  workshopId={workshop?.id} />
+      }
     </div>
   )
 }

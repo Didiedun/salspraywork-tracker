@@ -2,7 +2,7 @@ export const translations = {
   ms: {
     /* nav / sidebar */
     nav_dashboard: 'Dashboard',
-    nav_inventory: 'Inventori',
+    nav_inventory: 'Katalog',
     nav_workers:   'Pekerja',
     nav_settings:  'Tetapan',
     nav_portal:    'Portal Pelanggan',
@@ -245,6 +245,30 @@ export const translations = {
     rc_print:    'Print / Save PDF',
     rc_thanks:   'Terima kasih kerana mempercayai',
 
+    /* service catalog */
+    cat_tab_catalog:  'Katalog Servis',
+    cat_tab_stock:    'Stok',
+    cat_add_category: 'Tambah Kategori',
+    cat_edit_category:'Edit Kategori',
+    cat_add_item:     'Tambah Item',
+    cat_edit_item:    'Edit Item',
+    cat_add_variant:  'Tambah Varian',
+    cat_edit_variant: 'Edit Varian',
+    cat_name_lbl:     'Nama',
+    cat_name_req:     'Nama diperlukan.',
+    cat_sell_req:     'Harga jual diperlukan.',
+    cat_cost_lbl:     'Kos Beli',
+    cat_sell_lbl:     'Harga Jual',
+    cat_cat_ph:       'cth: Cat Polish',
+    cat_item_ph:      'cth: Proton Saga',
+    cat_variant_ph:   'cth: Standard',
+    cat_empty:        'Tiada kategori lagi',
+    cat_empty_sub:    'Tambah kategori untuk mulakan katalog servis anda.',
+    cat_pick_title:   'Pilih dari Katalog',
+    cat_pick_search:  'Cari item...',
+    cat_pick_empty:   'Tiada item dalam katalog',
+    cat_pick_add:     'Katalog',
+
     /* inventory */
     inv_types:      'Jenis Item',
     inv_low:        'Stok Rendah',
@@ -328,7 +352,7 @@ export const translations = {
   en: {
     /* nav / sidebar */
     nav_dashboard: 'Dashboard',
-    nav_inventory: 'Inventory',
+    nav_inventory: 'Catalog',
     nav_workers:   'Workers',
     nav_settings:  'Settings',
     nav_portal:    'Customer Portal',
@@ -570,6 +594,30 @@ export const translations = {
     rc_payment:  'Payment Status',
     rc_print:    'Print / Save PDF',
     rc_thanks:   'Thank you for trusting',
+
+    /* service catalog */
+    cat_tab_catalog:  'Service Catalog',
+    cat_tab_stock:    'Stock',
+    cat_add_category: 'Add Category',
+    cat_edit_category:'Edit Category',
+    cat_add_item:     'Add Item',
+    cat_edit_item:    'Edit Item',
+    cat_add_variant:  'Add Variant',
+    cat_edit_variant: 'Edit Variant',
+    cat_name_lbl:     'Name',
+    cat_name_req:     'Name is required.',
+    cat_sell_req:     'Sell price is required.',
+    cat_cost_lbl:     'Cost Price',
+    cat_sell_lbl:     'Sell Price',
+    cat_cat_ph:       'e.g. Car Polish',
+    cat_item_ph:      'e.g. Proton Saga',
+    cat_variant_ph:   'e.g. Standard',
+    cat_empty:        'No categories yet',
+    cat_empty_sub:    'Add a category to start building your service catalog.',
+    cat_pick_title:   'Pick from Catalog',
+    cat_pick_search:  'Search items...',
+    cat_pick_empty:   'No items in catalog',
+    cat_pick_add:     'Catalog',
 
     /* inventory */
     inv_types:      'Item Types',

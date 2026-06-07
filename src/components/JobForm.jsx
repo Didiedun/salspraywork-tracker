@@ -1,7 +1,9 @@
 import { useState } from 'react'
-import { X, Save, Car, User, Phone, FileText, DollarSign, Calendar, Flag, Mail, Plus, Trash2 } from 'lucide-react'
+import { X, Save, Car, User, Phone, FileText, DollarSign, Calendar, Flag, Mail, Plus, Trash2, Tag } from 'lucide-react'
 import { useStages } from '../hooks/useStages'
 import { useLang } from '../context/LanguageContext'
+import { useApp } from '../context/AppContext'
+import { CatalogPicker } from './CatalogPicker'
 
 function Toggle({ checked, onToggle, label }) {
   return (
@@ -27,6 +29,8 @@ const EMPTY = {
 export function JobForm({ initial, onSave, onClose, title }) {
   const { stages } = useStages()
   const { t } = useLang()
+  const { workshop } = useApp()
+  const [showCatalog, setShowCatalog] = useState(false)
   const [form, setForm] = useState(initial ? {
     ...EMPTY, ...initial,
     total_amount:   initial.total_amount   ?? '',
@@ -99,6 +103,7 @@ export function JobForm({ initial, onSave, onClose, title }) {
   const labelCls  = 'flex items-center gap-1.5 text-charcoal text-xs font-semibold mb-1.5'
 
   return (
+    <>
     <div className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-[60] flex items-end sm:items-center justify-center pt-16 px-0 pb-0 sm:p-4">
       <div className="bg-surface-card rounded-t-2xl sm:rounded-2xl border border-hairline w-full sm:max-w-lg max-h-[calc(100dvh-4rem)] sm:max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between p-5 border-b border-hairline flex-shrink-0">
@@ -162,10 +167,16 @@ export function JobForm({ initial, onSave, onClose, title }) {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className={labelCls}><DollarSign className="w-3.5 h-3.5" /> {t('form_services')}</label>
-                <button type="button" onClick={addService}
-                  className="flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary-deep transition-colors">
-                  <Plus className="w-3.5 h-3.5" /> {t('form_add_service')}
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button type="button" onClick={() => setShowCatalog(true)}
+                    className="flex items-center gap-1 text-xs font-semibold text-charcoal hover:text-ink bg-surface-bone hover:bg-surface-card border border-hairline px-2.5 py-1 rounded-full transition-colors">
+                    <Tag className="w-3 h-3" /> {t('cat_pick_add')}
+                  </button>
+                  <button type="button" onClick={addService}
+                    className="flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary-deep transition-colors">
+                    <Plus className="w-3.5 h-3.5" /> {t('form_add_service')}
+                  </button>
+                </div>
               </div>
               {form.services.length > 0 && (
                 <div className="space-y-2 mb-2">
@@ -239,5 +250,21 @@ export function JobForm({ initial, onSave, onClose, title }) {
         </form>
       </div>
     </div>
+
+    {showCatalog && (
+      <CatalogPicker
+        workshopId={workshop?.id}
+        onClose={() => setShowCatalog(false)}
+        onSelect={(description, amount) => {
+          setForm(f => {
+            const services = [...f.services, { description, amount }]
+            const total = recalcTotal(services)
+            return { ...f, services, total_amount: String(total.toFixed(2)) }
+          })
+          setShowCatalog(false)
+        }}
+      />
+    )}
+    </>
   )
 }
