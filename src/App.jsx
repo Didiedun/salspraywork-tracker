@@ -11,7 +11,10 @@ import { WorkerView }        from './components/WorkerView'
 import { CustomerView }      from './components/CustomerView'
 import { LandingPage }       from './components/LandingPage'
 import { WorkshopSettings }  from './components/WorkshopSettings'
+import { MaintenancePage }   from './components/MaintenancePage'
 import { RefreshCw }     from 'lucide-react'
+
+const MAINTENANCE = import.meta.env.VITE_MAINTENANCE === 'true'
 
 function Spinner() {
   return (
@@ -68,6 +71,7 @@ function AppRoutes() {
 }
 
 export default function App() {
+  if (MAINTENANCE) return <MaintenancePage />
   return (
     <BrowserRouter>
       <LanguageProvider>
