@@ -97,6 +97,8 @@ export const translations = {
     form_returning:     'Pelanggan Kembali',
     form_next_service:  'Tarikh Servis Seterusnya',
     form_next_svc_hint: 'Peringatan akan muncul di dashboard apabila hampir tiba',
+    form_assign:        'Ditugaskan Kepada',
+    form_assign_none:   'Tiada (tidak ditugaskan)',
 
     /* job card */
     card_advance:    'Maju',
@@ -127,8 +129,29 @@ export const translations = {
     /* service reminders */
     remind_title:     'Peringatan Servis',
     remind_due:       'Dijangka servis',
-    remind_wa:        'Hantar Peringatan WA',
+    remind_wa:        'Hantar WA',
     remind_wa_msg:    'Hi, sudah tiba masa untuk servis kenderaan anda',
+
+    /* email notification */
+    email_prompt:     'Hantar update status kepada pelanggan?',
+    email_send:       'Hantar Email',
+    email_subject:    'Kemas Kini Status Kenderaan',
+    email_body_stage: 'Peringkat terkini',
+
+    /* dashboard export */
+    dash_export:      'Eksport CSV',
+
+    /* payroll */
+    wk_tab_workers:   'Pekerja',
+    wk_tab_payroll:   'Gaji',
+    wk_pay_rate:      'Kadar (RM/kerja)',
+    wk_pay_total:     'Jumlah Gaji',
+    wk_jobs_done:     'kerja',
+    wk_month:         'Bulan',
+    wk_unassigned:    'Tidak Ditugaskan',
+    wk_no_jobs_month: 'Tiada kerja bulan ini',
+    wk_payroll_grand: 'Jumlah Keseluruhan Gaji',
+    wk_export_pay:    'Eksport CSV Gaji',
 
     /* worker view */
     wv_your_name:     'Nama anda',
@@ -482,6 +505,8 @@ export const translations = {
     form_returning:     'Returning Customer',
     form_next_service:  'Next Service Date',
     form_next_svc_hint: 'A reminder will appear on the dashboard when the date approaches',
+    form_assign:        'Assigned To',
+    form_assign_none:   'None (unassigned)',
 
     /* job card */
     card_advance:    'Advance',
@@ -512,8 +537,29 @@ export const translations = {
     /* service reminders */
     remind_title:     'Service Reminders',
     remind_due:       'Service due',
-    remind_wa:        'Send WA Reminder',
+    remind_wa:        'Send WA',
     remind_wa_msg:    'Hi, it\'s time to service your vehicle',
+
+    /* email notification */
+    email_prompt:     'Send a status update to the customer?',
+    email_send:       'Send Email',
+    email_subject:    'Vehicle Status Update',
+    email_body_stage: 'Current stage',
+
+    /* dashboard export */
+    dash_export:      'Export CSV',
+
+    /* payroll */
+    wk_tab_workers:   'Workers',
+    wk_tab_payroll:   'Payroll',
+    wk_pay_rate:      'Rate (RM/job)',
+    wk_pay_total:     'Total Pay',
+    wk_jobs_done:     'jobs',
+    wk_month:         'Month',
+    wk_unassigned:    'Unassigned',
+    wk_no_jobs_month: 'No jobs this month',
+    wk_payroll_grand: 'Grand Total Payroll',
+    wk_export_pay:    'Export Payroll CSV',
 
     /* worker view */
     wv_your_name:     'Your name',

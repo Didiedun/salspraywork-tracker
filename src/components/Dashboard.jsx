@@ -9,7 +9,7 @@ import { TodaySummary } from './TodaySummary'
 import { RevenueChart } from './RevenueChart'
 import { paymentStatus, isStale } from '../constants'
 import { useStages } from '../hooks/useStages'
-import { Plus, Search, RefreshCw, Archive, TrendingUp, BarChart2, Copy, Check, AlertTriangle, Bell } from 'lucide-react'
+import { Plus, Search, RefreshCw, Archive, TrendingUp, BarChart2, Copy, Check, AlertTriangle, Bell, Download } from 'lucide-react'
 import { TutorialModal } from './TutorialModal'
 
 export function Dashboard() {
@@ -77,6 +77,28 @@ export function Dashboard() {
   const scrollToJob = (job) => {
     setSearch(job.plate)
     setTab(job.archived ? 'archived' : 'active')
+  }
+
+  const exportCSV = () => {
+    const headers = ['Plate', 'Owner', 'Car', 'Phone', 'Stage', 'Payment', 'Total (RM)', 'Downpayment (RM)', 'Date In', 'Assigned To', 'Next Service']
+    const rows = filtered.map(j => [
+      j.plate, j.owner, j.car || '', j.phone || '',
+      j.stage, paymentStatus(j),
+      j.total_amount != null ? Number(j.total_amount).toFixed(2) : '',
+      j.downpayment  != null ? Number(j.downpayment).toFixed(2)  : '',
+      (j.date_in || j.created_at || '').slice(0, 10),
+      j.assigned_to      || '',
+      j.next_service_date || '',
+    ])
+    const csv = [headers, ...rows]
+      .map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
+      .join('\n')
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href = url
+    a.download = `jobs_${new Date().toISOString().slice(0, 10)}.csv`
+    a.click(); URL.revokeObjectURL(url)
   }
 
   const customerUrl = workshop?.slug ? `${window.location.origin}/w/${workshop.slug}` : ''
@@ -213,6 +235,10 @@ export function Dashboard() {
           <option value="deposit">{t('pay_deposit')}</option>
           <option value="paid">{t('pay_paid')}</option>
         </select>
+        <button onClick={exportCSV}
+          className="flex items-center gap-2 bg-canvas border border-hairline hover:bg-surface-bone text-charcoal font-semibold rounded-full px-4 py-2.5 text-sm transition-colors">
+          <Download className="w-4 h-4" /> {t('dash_export')}
+        </button>
         <button onClick={() => setAdding(true)}
           className="flex items-center gap-2 bg-primary hover:bg-primary-deep text-white font-semibold rounded-full px-5 py-2.5 text-sm transition-colors">
           <Plus className="w-4 h-4" /> {t('dash_new_job')}

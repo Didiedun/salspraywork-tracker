@@ -4,6 +4,7 @@ import { useStages } from '../hooks/useStages'
 import { useLang } from '../context/LanguageContext'
 import { useApp } from '../context/AppContext'
 import { CatalogPicker } from './CatalogPicker'
+import { useWorkers } from '../hooks/useWorkers'
 
 function Toggle({ checked, onToggle, label }) {
   return (
@@ -23,6 +24,7 @@ const EMPTY = {
   total_amount: '', downpayment: '', type: 'walk-in',
   stage: 'ready', paid: false, archived: false,
   date_in: '', est_completion: '', next_service_date: '',
+  assigned_to: '',
   services: [],
 }
 
@@ -30,6 +32,7 @@ export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
   const { stages } = useStages()
   const { t } = useLang()
   const { workshop } = useApp()
+  const { workers } = useWorkers(workshop?.id)
   const [showCatalog, setShowCatalog] = useState(false)
   const [form, setForm] = useState(initial ? {
     ...EMPTY, ...initial,
@@ -39,6 +42,7 @@ export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
     date_in:           initial.date_in           ? initial.date_in.slice(0, 10)           : '',
     est_completion:    initial.est_completion    ? initial.est_completion.slice(0, 10)    : '',
     next_service_date: initial.next_service_date ? initial.next_service_date.slice(0, 10) : '',
+    assigned_to:       initial.assigned_to       ?? '',
     services: (initial.services || []).map(s => ({
       ...s,
       qty:          s.qty          ?? 1,
@@ -133,6 +137,7 @@ export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
         date_in:           form.date_in           || null,
         est_completion:    form.est_completion    || null,
         next_service_date: form.next_service_date || null,
+        assigned_to:       form.assigned_to       || null,
         services:          cleanServices,
       })
       onClose()
@@ -309,6 +314,20 @@ export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
                 {stages.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
             </div>
+
+            {/* Assigned worker */}
+            {workers.length > 0 && (
+              <div>
+                <label className={labelCls}><User className="w-3.5 h-3.5" /> {t('form_assign')}</label>
+                <select value={form.assigned_to || ''} onChange={set('assigned_to')} className={selectCls}>
+                  <option value="">{t('form_assign_none')}</option>
+                  {workers.map(w => {
+                    const name = w.name || w.email?.split('@')[0] || '?'
+                    return <option key={w.id} value={name}>{name}</option>
+                  })}
+                </select>
+              </div>
+            )}
 
             {/* Toggle switches */}
             <div className="flex items-center gap-6 pt-1">
