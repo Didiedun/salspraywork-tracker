@@ -53,10 +53,10 @@ export const translations = {
     dash_filter_all:   'Semua Bayaran',
     dash_new_job:      'Kerja Baru',
     dash_tab_active:   'Aktif',
-    dash_tab_archived: 'Arkib',
+    dash_tab_archived: 'Selesai',
     dash_loading:      'Memuatkan...',
     dash_empty_active: 'Tiada kerja aktif',
-    dash_empty_arch:   'Tiada rekod dalam arkib',
+    dash_empty_arch:   'Tiada kerja yang telah selesai',
     dash_add_first:    '+ Tambah kerja baru',
     dash_offline_title: 'Mod Luar Talian — Data disimpan dalam peranti ini sahaja',
     dash_offline_sub:   'Aktifkan semula projek di supabase.com untuk simpan ke cloud.',
@@ -86,7 +86,7 @@ export const translations = {
     form_deposit:    'Deposit (RM)',
     form_stage:      'Peringkat Kerja',
     form_paid:       'Lunas',
-    form_archive:    'Arkib',
+    form_archive:    'Tandakan Selesai',
     form_required:   'Sila isi plat, nama & model kenderaan.',
     form_services:      'Perkhidmatan',
     form_add_service:   '+ Tambah Servis',
@@ -94,6 +94,9 @@ export const translations = {
     form_svc_total_auto: 'Jumlah dikira dari senarai servis',
     form_svc_linked:    'Stok dikaitkan · akan ditolak auto',
     form_autofill:      'Isi automatik',
+    form_returning:     'Pelanggan Kembali',
+    form_next_service:  'Tarikh Servis Seterusnya',
+    form_next_svc_hint: 'Peringatan akan muncul di dashboard apabila hampir tiba',
 
     /* job card */
     card_advance:    'Maju',
@@ -120,6 +123,12 @@ export const translations = {
     hist_empty:       'Tiada rekod terdahulu',
     hist_jobs_count:  'kunjungan',
     hist_current:     'Semasa',
+
+    /* service reminders */
+    remind_title:     'Peringatan Servis',
+    remind_due:       'Dijangka servis',
+    remind_wa:        'Hantar Peringatan WA',
+    remind_wa_msg:    'Hi, sudah tiba masa untuk servis kenderaan anda',
 
     /* worker view */
     wv_your_name:     'Nama anda',
@@ -429,10 +438,10 @@ export const translations = {
     dash_filter_all:   'All Payments',
     dash_new_job:      'New Job',
     dash_tab_active:   'Active',
-    dash_tab_archived: 'Archived',
+    dash_tab_archived: 'Done',
     dash_loading:      'Loading...',
     dash_empty_active: 'No active jobs',
-    dash_empty_arch:   'No archived records',
+    dash_empty_arch:   'No completed jobs',
     dash_add_first:    '+ Add new job',
     dash_offline_title: 'Offline Mode — Data saved on this device only',
     dash_offline_sub:   'Re-activate your project at supabase.com to sync to cloud.',
@@ -462,7 +471,7 @@ export const translations = {
     form_deposit:    'Deposit (RM)',
     form_stage:      'Work Stage',
     form_paid:       'Paid',
-    form_archive:    'Archive',
+    form_archive:    'Mark as Done',
     form_required:   'Please fill in plate, owner name & vehicle model.',
     form_services:      'Services',
     form_add_service:   '+ Add Service',
@@ -470,6 +479,9 @@ export const translations = {
     form_svc_total_auto: 'Total calculated from service list',
     form_svc_linked:    'Stock linked · will auto-deduct',
     form_autofill:      'Autofill',
+    form_returning:     'Returning Customer',
+    form_next_service:  'Next Service Date',
+    form_next_svc_hint: 'A reminder will appear on the dashboard when the date approaches',
 
     /* job card */
     card_advance:    'Advance',
@@ -496,6 +508,12 @@ export const translations = {
     hist_empty:       'No previous records',
     hist_jobs_count:  'visits',
     hist_current:     'Current',
+
+    /* service reminders */
+    remind_title:     'Service Reminders',
+    remind_due:       'Service due',
+    remind_wa:        'Send WA Reminder',
+    remind_wa_msg:    'Hi, it\'s time to service your vehicle',
 
     /* worker view */
     wv_your_name:     'Your name',

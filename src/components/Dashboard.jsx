@@ -9,7 +9,7 @@ import { TodaySummary } from './TodaySummary'
 import { RevenueChart } from './RevenueChart'
 import { paymentStatus, isStale } from '../constants'
 import { useStages } from '../hooks/useStages'
-import { Plus, Search, RefreshCw, Archive, TrendingUp, BarChart2, Copy, Check, AlertTriangle } from 'lucide-react'
+import { Plus, Search, RefreshCw, Archive, TrendingUp, BarChart2, Copy, Check, AlertTriangle, Bell } from 'lucide-react'
 import { TutorialModal } from './TutorialModal'
 
 export function Dashboard() {
@@ -53,6 +53,27 @@ export function Dashboard() {
   const paid         = activeJobs.filter(j => paymentStatus(j) === 'paid').length
   const totalRevenue = jobs.filter(j => j.paid).reduce((s, j) => s + (Number(j.total_amount) || 0), 0)
 
+  const visitCounts = useMemo(() => {
+    const m = {}
+    jobs.forEach(j => {
+      const p = j.plate.replace(/\s/g, '').toUpperCase()
+      m[p] = (m[p] || 0) + 1
+    })
+    return m
+  }, [jobs])
+
+  const serviceReminders = useMemo(() => {
+    const today = new Date(); today.setHours(0, 0, 0, 0)
+    const in30  = new Date(today); in30.setDate(in30.getDate() + 30)
+    return jobs
+      .filter(j => {
+        if (!j.next_service_date) return false
+        const d = new Date(j.next_service_date)
+        return d >= today && d <= in30
+      })
+      .sort((a, b) => new Date(a.next_service_date) - new Date(b.next_service_date))
+  }, [jobs])
+
   const scrollToJob = (job) => {
     setSearch(job.plate)
     setTab(job.archived ? 'archived' : 'active')
@@ -93,6 +114,40 @@ export function Dashboard() {
           <div>
             <p className="font-semibold text-amber-800">{lowStockItems.length} {t('dash_low_stock_label')}</p>
             <p className="text-amber-700 text-xs mt-0.5">{t('dash_low_stock_sub')}</p>
+          </div>
+        </div>
+      )}
+
+      {serviceReminders.length > 0 && (
+        <div className="bg-surface-card border border-hairline rounded-md overflow-hidden">
+          <div className="px-4 py-2.5 border-b border-hairline flex items-center gap-2 bg-canvas">
+            <Bell className="w-3.5 h-3.5 text-primary" />
+            <p className="text-xs font-semibold text-ink">{t('remind_title')} ({serviceReminders.length})</p>
+          </div>
+          <div className="divide-y divide-hairline">
+            {serviceReminders.map(j => {
+              const days  = Math.ceil((new Date(j.next_service_date) - new Date().setHours(0,0,0,0)) / 86400000)
+              const phone = j.phone?.replace(/\D/g, '')
+              const waNum = phone ? (phone.startsWith('60') ? phone : '60' + phone.replace(/^0/, '')) : null
+              const waUrl = waNum ? `https://wa.me/${waNum}?text=${encodeURIComponent(t('remind_wa_msg') + ' ' + j.plate)}` : null
+              return (
+                <div key={j.id} className="px-4 py-2.5 flex items-center gap-3 text-sm">
+                  <div className="flex-1 min-w-0">
+                    <span className="font-semibold text-ink font-mono">{j.plate}</span>
+                    <span className="text-mute ml-2">{j.owner}</span>
+                    <span className={`ml-2 text-xs font-medium ${days <= 3 ? 'text-red-500' : days <= 7 ? 'text-amber-600' : 'text-charcoal'}`}>
+                      · {t('remind_due')} {days === 0 ? 'hari ini' : `${days}h`}
+                    </span>
+                  </div>
+                  {waUrl && (
+                    <a href={waUrl} target="_blank" rel="noreferrer"
+                      className="flex-shrink-0 text-xs font-semibold text-badge-success hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-full transition-colors whitespace-nowrap">
+                      {t('remind_wa')}
+                    </a>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
@@ -205,6 +260,7 @@ export function Dashboard() {
         <div className="grid gap-3 sm:grid-cols-2">
           {filtered.map(job => (
             <JobCard key={job.id} job={job}
+              visitCount={visitCounts[job.plate.replace(/\s/g, '').toUpperCase()] || 1}
               onUpdate={updateJob} onDelete={deleteJob}
               onAddAttachment={addAttachment} onDeleteAttachment={deleteAttachment} />
           ))}

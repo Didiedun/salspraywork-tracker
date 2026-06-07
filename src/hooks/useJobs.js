@@ -34,11 +34,16 @@ async function deductStockForServices(services) {
   return result
 }
 
+const OPTIONAL_COLS = ['est_completion', 'next_service_date']
+
+function stripOptional(payload) {
+  return Object.fromEntries(Object.entries(payload).filter(([k]) => !OPTIONAL_COLS.includes(k)))
+}
+
 async function safeInsert(payload) {
   let { data, error } = await supabase.from('jobs').insert([payload]).select('*, job_attachments(*)').single()
-  if (error?.message?.includes('est_completion')) {
-    const { est_completion, ...rest } = payload
-    ;({ data, error } = await supabase.from('jobs').insert([rest]).select('*, job_attachments(*)').single())
+  if (error && OPTIONAL_COLS.some(c => error.message?.includes(c))) {
+    ;({ data, error } = await supabase.from('jobs').insert([stripOptional(payload)]).select('*, job_attachments(*)').single())
   }
   if (error) throw error
   return data
@@ -46,9 +51,8 @@ async function safeInsert(payload) {
 
 async function safeUpdate(id, payload) {
   let { data, error } = await supabase.from('jobs').update(payload).eq('id', id).select('*, job_attachments(*)').single()
-  if (error?.message?.includes('est_completion')) {
-    const { est_completion, ...rest } = payload
-    ;({ data, error } = await supabase.from('jobs').update(rest).eq('id', id).select('*, job_attachments(*)').single())
+  if (error && OPTIONAL_COLS.some(c => error.message?.includes(c))) {
+    ;({ data, error } = await supabase.from('jobs').update(stripOptional(payload)).eq('id', id).select('*, job_attachments(*)').single())
   }
   if (error) throw error
   return data

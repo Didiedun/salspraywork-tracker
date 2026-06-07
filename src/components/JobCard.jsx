@@ -11,7 +11,7 @@ import { useLang } from '../context/LanguageContext'
 import { useApp } from '../context/AppContext'
 import {
   Edit2, Trash2, Camera, Printer, Image,
-  ChevronDown, ChevronUp, X, ChevronRight, ChevronLeft, Clock, UserCheck, History
+  ChevronDown, ChevronUp, X, ChevronRight, ChevronLeft, Clock, UserCheck
 } from 'lucide-react'
 
 function timeAgo(dateStr, lang) {
@@ -24,7 +24,7 @@ function timeAgo(dateStr, lang) {
   return lang === 'ms' ? `${d} hari lalu` : `${d}d ago`
 }
 
-export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAttachment }) {
+export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachment, onDeleteAttachment }) {
   const [expanded, setExpanded]       = useState(false)
   const [editing, setEditing]         = useState(false)
   const [uploading, setUploading]     = useState(null)
@@ -124,6 +124,12 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-display font-bold text-ink text-lg tracking-tight">{job.plate}</span>
                 <TypeBadge type={job.type} />
+                {visitCount > 1 && (
+                  <button onClick={() => setShowHistory(true)}
+                    className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-semibold hover:bg-primary/20 transition-colors">
+                    {visitCount}×
+                  </button>
+                )}
                 {!overdue && days > 0 && (
                   <span className="text-xs text-mute flex items-center gap-1">
                     <Clock className="w-3 h-3" />{days}{t('days_short')}
@@ -244,9 +250,6 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
         <div className="flex border-t border-hairline">
           <button onClick={() => setEditing(true)} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs text-mute hover:bg-canvas hover:text-ink transition-colors font-semibold">
             <Edit2 className="w-3.5 h-3.5" /> {t('edit')}
-          </button>
-          <button onClick={() => setShowHistory(true)} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs text-mute hover:bg-canvas hover:text-ink transition-colors border-l border-hairline font-semibold">
-            <History className="w-3.5 h-3.5" /> {t('card_history')}
           </button>
           <button onClick={() => setShowReceipt(true)} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs text-mute hover:bg-canvas hover:text-ink transition-colors border-x border-hairline font-semibold">
             <Printer className="w-3.5 h-3.5" /> {t('card_invoice')}

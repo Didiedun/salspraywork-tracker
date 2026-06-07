@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { X, Save, Car, User, Phone, FileText, DollarSign, Calendar, Flag, Mail, Plus, Trash2 } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { X, Save, Car, User, Phone, FileText, DollarSign, Calendar, Flag, Mail, Plus, Trash2, UserCheck, Bell } from 'lucide-react'
 import { useStages } from '../hooks/useStages'
 import { useLang } from '../context/LanguageContext'
 import { useApp } from '../context/AppContext'
@@ -22,7 +22,7 @@ const EMPTY = {
   customer_email: '',
   total_amount: '', downpayment: '', type: 'walk-in',
   stage: 'ready', paid: false, archived: false,
-  date_in: '', est_completion: '',
+  date_in: '', est_completion: '', next_service_date: '',
   services: [],
 }
 
@@ -33,11 +33,12 @@ export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
   const [showCatalog, setShowCatalog] = useState(false)
   const [form, setForm] = useState(initial ? {
     ...EMPTY, ...initial,
-    total_amount:   initial.total_amount   ?? '',
-    downpayment:    initial.downpayment    ?? '',
-    customer_email: initial.customer_email ?? '',
-    date_in:        initial.date_in        ? initial.date_in.slice(0, 10)        : '',
-    est_completion: initial.est_completion ? initial.est_completion.slice(0, 10) : '',
+    total_amount:      initial.total_amount      ?? '',
+    downpayment:       initial.downpayment       ?? '',
+    customer_email:    initial.customer_email    ?? '',
+    date_in:           initial.date_in           ? initial.date_in.slice(0, 10)           : '',
+    est_completion:    initial.est_completion    ? initial.est_completion.slice(0, 10)    : '',
+    next_service_date: initial.next_service_date ? initial.next_service_date.slice(0, 10) : '',
     services: (initial.services || []).map(s => ({
       ...s,
       qty:          s.qty          ?? 1,
@@ -45,34 +46,33 @@ export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
       qty_deducted: s.qty_deducted ?? null,
     })),
   } : { ...EMPTY, stage: stages[0]?.value || 'ready' })
-  const [saving, setSaving]     = useState(false)
-  const [err, setErr]           = useState('')
-  const [suggestion, setSugg]   = useState(null) // { job, by: 'plate'|'phone' }
+  const [saving, setSaving]         = useState(false)
+  const [err, setErr]               = useState('')
+  const [returnInfo, setReturnInfo] = useState(null) // { job, by: 'plate'|'phone' }
+  const lastFilledPlate             = useRef('')
 
   useEffect(() => {
-    if (initial || !jobs.length) { setSugg(null); return }
+    if (initial || !jobs.length) return
     const cleanPlate = form.plate.replace(/\s/g, '').toUpperCase()
     if (cleanPlate.length >= 4) {
       const m = jobs.find(j => j.plate.replace(/\s/g, '').toUpperCase() === cleanPlate)
-      if (m) { setSugg({ job: m, by: 'plate' }); return }
+      if (m) {
+        setReturnInfo({ job: m, by: 'plate' })
+        if (lastFilledPlate.current !== cleanPlate) {
+          lastFilledPlate.current = cleanPlate
+          setForm(f => ({
+            ...f,
+            owner: f.owner || m.owner,
+            car:   f.car   || m.car,
+            phone: f.phone || m.phone || '',
+          }))
+        }
+        return
+      }
     }
-    const cleanPhone = form.phone.replace(/\D/g, '')
-    if (cleanPhone.length >= 8) {
-      const m = jobs.find(j => j.phone && j.phone.replace(/\D/g, '') === cleanPhone)
-      if (m) { setSugg({ job: m, by: 'phone' }); return }
-    }
-    setSugg(null)
-  }, [form.plate, form.phone, jobs, initial])
-
-  const applyAutofill = () => {
-    setForm(f => ({
-      ...f,
-      owner: suggestion.job.owner,
-      car:   suggestion.job.car,
-      phone: suggestion.by === 'plate' ? (suggestion.job.phone || f.phone) : f.phone,
-    }))
-    setSugg(null)
-  }
+    setReturnInfo(null)
+    lastFilledPlate.current = ''
+  }, [form.plate, jobs, initial])
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
 
@@ -130,9 +130,10 @@ export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
         stage:          form.stage,
         paid:           form.paid,
         archived:       form.archived,
-        date_in:        form.date_in        || null,
-        est_completion: form.est_completion || null,
-        services:       cleanServices,
+        date_in:           form.date_in           || null,
+        est_completion:    form.est_completion    || null,
+        next_service_date: form.next_service_date || null,
+        services:          cleanServices,
       })
       onClose()
     } catch (e) { setErr(e.message) }
@@ -159,6 +160,20 @@ export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
           <div className="p-5 space-y-4 overflow-y-auto flex-1">
 
+            {/* Returning customer banner */}
+            {returnInfo && (
+              <div className="bg-primary/8 border border-primary/20 rounded-xl px-4 py-3 flex items-center gap-3">
+                <UserCheck className="w-4 h-4 text-primary flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-primary">{t('form_returning')}</p>
+                  <p className="text-xs text-body truncate">{returnInfo.job.owner} · {returnInfo.job.car}</p>
+                </div>
+                <button type="button" onClick={() => setReturnInfo(null)} className="text-ash hover:text-ink transition-colors">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
             {/* Walk-in / Booking toggle */}
             <div className="flex gap-1 bg-surface-bone border border-hairline rounded-full p-1">
               {[['walk-in', t('form_walkin')], ['booking', t('form_booking')]].map(([val, label]) => (
@@ -170,7 +185,7 @@ export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
               ))}
             </div>
 
-            {/* Dates — stacked on mobile, side-by-side on sm+ */}
+            {/* Dates */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className={labelCls}><Calendar className="w-3.5 h-3.5" /> {t('form_date_in')}</label>
@@ -180,6 +195,11 @@ export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
                 <label className={labelCls}><Flag className="w-3.5 h-3.5" /> {t('form_est')}</label>
                 <input type="date" value={form.est_completion} onChange={set('est_completion')} className={dateCls} />
               </div>
+            </div>
+            <div>
+              <label className={labelCls}><Bell className="w-3.5 h-3.5" /> {t('form_next_service')}</label>
+              <input type="date" value={form.next_service_date || ''} onChange={set('next_service_date')} className={dateCls} />
+              <p className="text-xs text-ash mt-1 px-1">{t('form_next_svc_hint')}</p>
             </div>
 
             {/* Text fields */}
@@ -196,16 +216,6 @@ export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
                   onChange={e => setForm(f => ({ ...f, [key]: upper ? e.target.value.toUpperCase() : e.target.value }))}
                   placeholder={placeholder}
                   className={inputCls} />
-                {suggestion && ((key === 'plate' && suggestion.by === 'plate') || (key === 'phone' && suggestion.by === 'phone')) && (
-                  <button type="button" onClick={applyAutofill}
-                    className="mt-1.5 w-full flex items-center gap-2 text-xs bg-primary/5 border border-primary/20 rounded-full px-3 py-2 text-primary hover:bg-primary/10 transition-colors text-left">
-                    <User className="w-3.5 h-3.5 flex-shrink-0" />
-                    <span className="flex-1 min-w-0 truncate font-medium">
-                      {suggestion.job.owner} · {suggestion.job.car}
-                    </span>
-                    <span className="flex-shrink-0 opacity-60">{t('form_autofill')} →</span>
-                  </button>
-                )}
               </div>
             ))}
 
