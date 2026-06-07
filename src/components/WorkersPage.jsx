@@ -58,12 +58,14 @@ export function WorkersPage() {
 
   const removeWorker = async (member) => {
     if (!window.confirm(t('wk_remove'))) return
-    await supabase.from('workshop_members').delete().eq('id', member.id)
+    const { error } = await supabase.from('workshop_members').delete().eq('id', member.id)
+    if (error) { alert(error.message); return }
     setWorkers(prev => prev.filter(w => w.id !== member.id))
   }
 
   const revokeInvite = async (invite) => {
-    await supabase.from('workshop_invites').delete().eq('id', invite.id)
+    const { error } = await supabase.from('workshop_invites').delete().eq('id', invite.id)
+    if (error) { alert(error.message); return }
     setInvites(prev => prev.filter(i => i.id !== invite.id))
   }
 
