@@ -4,13 +4,14 @@ import { PaymentBadge, TypeBadge } from './StatusBadge'
 import { StageBar } from './StageBar'
 import { JobForm } from './JobForm'
 import { ReceiptModal } from './ReceiptModal'
+import { CustomerHistoryModal } from './CustomerHistoryModal'
 import { daysIn, isStale } from '../constants'
 import { useStages } from '../hooks/useStages'
 import { useLang } from '../context/LanguageContext'
 import { useApp } from '../context/AppContext'
 import {
   Edit2, Trash2, Camera, Printer, Image,
-  ChevronDown, ChevronUp, X, ChevronRight, ChevronLeft, Clock, UserCheck
+  ChevronDown, ChevronUp, X, ChevronRight, ChevronLeft, Clock, UserCheck, History
 } from 'lucide-react'
 
 function timeAgo(dateStr, lang) {
@@ -29,7 +30,8 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
   const [uploading, setUploading]     = useState(null)
   const [lightbox, setLightbox]       = useState(null)
   const [advancing, setAdvancing]     = useState(false)
-  const [showReceipt, setShowReceipt] = useState(false)
+  const [showReceipt, setShowReceipt]   = useState(false)
+  const [showHistory, setShowHistory]   = useState(false)
   const photoRef = useRef()
 
   const { stages, stageMap, lastValue, nextStage, prevStage, isOverdue: checkOverdue } = useStages()
@@ -87,6 +89,9 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
       )}
       {showReceipt && (
         <ReceiptModal job={job} workshop={workshop} onClose={() => setShowReceipt(false)} />
+      )}
+      {showHistory && (
+        <CustomerHistoryModal plate={job.plate} onClose={() => setShowHistory(false)} />
       )}
       {lightbox && (
         <div className="fixed inset-0 bg-ink/80 z-50 flex items-center justify-center p-4" onClick={() => setLightbox(null)}>
@@ -239,6 +244,9 @@ export function JobCard({ job, onUpdate, onDelete, onAddAttachment, onDeleteAtta
         <div className="flex border-t border-hairline">
           <button onClick={() => setEditing(true)} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs text-mute hover:bg-canvas hover:text-ink transition-colors font-semibold">
             <Edit2 className="w-3.5 h-3.5" /> {t('edit')}
+          </button>
+          <button onClick={() => setShowHistory(true)} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs text-mute hover:bg-canvas hover:text-ink transition-colors border-l border-hairline font-semibold">
+            <History className="w-3.5 h-3.5" /> {t('card_history')}
           </button>
           <button onClick={() => setShowReceipt(true)} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs text-mute hover:bg-canvas hover:text-ink transition-colors border-x border-hairline font-semibold">
             <Printer className="w-3.5 h-3.5" /> {t('card_invoice')}

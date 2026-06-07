@@ -112,7 +112,14 @@ export const translations = {
     card_complete:   'Siap',
     card_confirm_delete: 'Padam kerja',
     card_overdue:    'hari dalam bengkel',
+    card_history:    'Sejarah',
     days_short:      'h',
+
+    /* customer history modal */
+    hist_title:       'Sejarah Kenderaan',
+    hist_empty:       'Tiada rekod terdahulu',
+    hist_jobs_count:  'kunjungan',
+    hist_current:     'Semasa',
 
     /* worker view */
     wv_your_name:     'Nama anda',
@@ -481,7 +488,14 @@ export const translations = {
     card_complete:   'Done',
     card_confirm_delete: 'Delete job',
     card_overdue:    'days in workshop',
+    card_history:    'History',
     days_short:      'd',
+
+    /* customer history modal */
+    hist_title:       'Vehicle History',
+    hist_empty:       'No previous records',
+    hist_jobs_count:  'visits',
+    hist_current:     'Current',
 
     /* worker view */
     wv_your_name:     'Your name',
