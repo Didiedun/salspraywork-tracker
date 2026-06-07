@@ -138,6 +138,7 @@ export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
             amount:             up * qty,
             inventory_item_id:  s.inventory_item_id  || null,
             qty_per_service:    s.qty_per_service     || 1,
+            category_name:      s.category_name       || null,
             stock_deducted:     s.stock_deducted      || false,
             qty_deducted:       s.qty_deducted        ?? null,
           }
@@ -384,6 +385,7 @@ export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
               qty: 1,
               inventory_item_id: stockInfo?.inventory_item_id || null,
               qty_per_service:   stockInfo?.qty_per_service   || 1,
+              category_name:     stockInfo?.category_name     || null,
               stock_deducted: false,
             }]
             const total = recalcTotal(services)

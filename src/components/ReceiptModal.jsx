@@ -83,6 +83,9 @@ function InvoiceBody({ job, workshop, t }) {
             {job.services.map((svc, i) => (
               <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr auto', paddingBottom: 10, marginBottom: 10, borderBottom: '1px solid #f3f4f6' }}>
                 <div>
+                  {svc.category_name && (
+                    <p style={{ color: '#9ca3af', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>{svc.category_name}</p>
+                  )}
                   <p style={{ fontWeight: 500, fontSize: 14 }}>{svc.description}</p>
                   {(parseFloat(svc.qty) || 1) > 1 && (
                     <p style={{ color: '#9ca3af', fontSize: 11, marginTop: 2 }}>

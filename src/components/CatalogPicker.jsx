@@ -42,10 +42,11 @@ export function CatalogPicker({ workshopId, onSelect, onClose }) {
 
   const fmt = (n) => `RM ${Number(n).toFixed(2)}`
 
-  const handleSelect = (description, amount, variant) => {
+  const handleSelect = (description, amount, variant, categoryName) => {
     onSelect(description, amount, {
       inventory_item_id: variant.inventory_item_id || null,
-      qty_per_service: variant.qty_per_service || 1,
+      qty_per_service:   variant.qty_per_service   || 1,
+      category_name:     categoryName              || null,
     })
   }
 
@@ -109,7 +110,7 @@ export function CatalogPicker({ workshopId, onSelect, onClose }) {
                     const outOfStock = v.inventory_item && (v.inventory_item.quantity || 0) <= 0
                     return (
                       <button key={item.id}
-                        onClick={() => !outOfStock && handleSelect(item.name, String(v.sell_price), v)}
+                        onClick={() => !outOfStock && handleSelect(item.name, String(v.sell_price), v, cat.name)}
                         disabled={outOfStock}
                         className={`w-full flex items-center justify-between px-4 py-3 pl-9 border-b border-hairline text-left transition-colors ${outOfStock ? 'opacity-50 cursor-not-allowed' : 'hover:bg-surface-bone'}`}>
                         <div className="min-w-0">
@@ -131,7 +132,7 @@ export function CatalogPicker({ workshopId, onSelect, onClose }) {
                         const outOfStock = v.inventory_item && (v.inventory_item.quantity || 0) <= 0
                         return (
                           <button key={v.id}
-                            onClick={() => !outOfStock && handleSelect(`${item.name} (${v.name})`, String(v.sell_price), v)}
+                            onClick={() => !outOfStock && handleSelect(`${item.name} (${v.name})`, String(v.sell_price), v, cat.name)}
                             disabled={outOfStock}
                             className={`w-full flex items-center justify-between px-4 py-2.5 pl-12 border-b border-hairline/50 last:border-b-0 text-left transition-colors ${outOfStock ? 'opacity-50 cursor-not-allowed' : 'hover:bg-surface-bone'}`}>
                             <div className="min-w-0">

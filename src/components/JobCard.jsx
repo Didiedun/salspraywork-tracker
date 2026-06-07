@@ -5,12 +5,13 @@ import { StageBar } from './StageBar'
 import { JobForm } from './JobForm'
 import { ReceiptModal } from './ReceiptModal'
 import { CustomerHistoryModal } from './CustomerHistoryModal'
+import { PaymentModal } from './PaymentModal'
 import { daysIn, isStale } from '../constants'
 import { useStages } from '../hooks/useStages'
 import { useLang } from '../context/LanguageContext'
 import { useApp } from '../context/AppContext'
 import {
-  Edit2, Trash2, Camera, Printer, Image,
+  Edit2, Trash2, Camera, Printer, Image, DollarSign,
   ChevronDown, ChevronUp, X, ChevronRight, ChevronLeft, Clock, UserCheck, Mail
 } from 'lucide-react'
 
@@ -54,6 +55,7 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
   const [advancing, setAdvancing]     = useState(false)
   const [showReceipt, setShowReceipt]   = useState(false)
   const [showHistory, setShowHistory]   = useState(false)
+  const [showPayment, setShowPayment]   = useState(false)
   const [emailPrompt, setEmailPrompt]   = useState(false)
   const photoRef = useRef()
 
@@ -116,6 +118,9 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
       )}
       {showHistory && (
         <CustomerHistoryModal plate={job.plate} onClose={() => setShowHistory(false)} />
+      )}
+      {showPayment && (
+        <PaymentModal job={job} onSave={onUpdate} onClose={() => setShowPayment(false)} />
       )}
       {emailPrompt && <EmailToast job={job} workshop={workshop} t={t} onClose={() => setEmailPrompt(false)} />}
       {lightbox && (
@@ -207,7 +212,13 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
             {job.total_amount != null && (
               <span className="font-semibold text-charcoal">
                 {formatMoney(job.total_amount)}
-                {!job.paid && balance > 0 && <span className="text-amber-600"> · {t('pay_balance').split(' ')[0]} {formatMoney(balance)}</span>}
+                {!job.paid && balance > 0 && (
+                  <button
+                    onClick={() => setShowPayment(true)}
+                    className="ml-1 text-amber-600 hover:text-amber-700 font-semibold underline underline-offset-2 transition-colors">
+                    · {t('pay_balance').split(' ')[0]} {formatMoney(balance)}
+                  </button>
+                )}
               </span>
             )}
             {job.phone && (
@@ -276,9 +287,15 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
           <button onClick={() => setEditing(true)} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs text-mute hover:bg-canvas hover:text-ink transition-colors font-semibold">
             <Edit2 className="w-3.5 h-3.5" /> {t('edit')}
           </button>
-          <button onClick={() => setShowReceipt(true)} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs text-mute hover:bg-canvas hover:text-ink transition-colors border-x border-hairline font-semibold">
-            <Printer className="w-3.5 h-3.5" /> {t('card_invoice')}
-          </button>
+          {!job.paid && balance > 0 ? (
+            <button onClick={() => setShowPayment(true)} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs text-white bg-primary hover:bg-primary-deep transition-colors font-semibold border-x border-primary">
+              <DollarSign className="w-3.5 h-3.5" /> {t('pay_collect')}
+            </button>
+          ) : (
+            <button onClick={() => setShowReceipt(true)} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs text-mute hover:bg-canvas hover:text-ink transition-colors border-x border-hairline font-semibold">
+              <Printer className="w-3.5 h-3.5" /> {t('card_invoice')}
+            </button>
+          )}
           <button onClick={handleDelete} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs text-red-500 hover:bg-red-50 transition-colors font-semibold">
             <Trash2 className="w-3.5 h-3.5" /> {t('delete')}
           </button>
