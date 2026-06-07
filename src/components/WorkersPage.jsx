@@ -28,14 +28,25 @@ function PayrollTab({ workshop, workers }) {
   useEffect(() => {
     if (!workshop?.id || !month) return
     setLoading(true)
-    const start = new Date(month + '-01').toISOString()
-    const end   = new Date(new Date(month + '-01').setMonth(new Date(month + '-01').getMonth() + 1)).toISOString()
+    const [y, mo] = month.split('-').map(Number)
+    // Fetch a 3-month window to catch jobs where date_in differs from created_at
+    const bufferStart = new Date(y, mo - 2, 1).toISOString()
+    const bufferEnd   = new Date(y, mo + 1, 1).toISOString()
     supabase.from('jobs')
       .select('id, plate, owner, assigned_to, total_amount, date_in, created_at')
       .eq('workshop_id', workshop.id)
-      .gte('created_at', start).lt('created_at', end)
+      .gte('created_at', bufferStart)
+      .lt('created_at', bufferEnd)
       .order('created_at', { ascending: false })
-      .then(({ data }) => { setJobs(data || []); setLoading(false) })
+      .then(({ data }) => {
+        // Attribute each job to the month it actually came in (date_in preferred)
+        const inMonth = (data || []).filter(j => {
+          const ref = j.date_in ? j.date_in.slice(0, 7) : j.created_at.slice(0, 7)
+          return ref === month
+        })
+        setJobs(inMonth)
+        setLoading(false)
+      })
   }, [workshop?.id, month])
 
   const updateRate = (wid, mid, val) => {
@@ -57,11 +68,13 @@ function PayrollTab({ workshop, workers }) {
     return Object.values(groups)
   }, [workers, jobs])
 
-  const unassigned = jobs.filter(j => !j.assigned_to || !workers.some(w => (w.name || w.email?.split('@')[0]) === j.assigned_to))
+  const unassigned = useMemo(() =>
+    jobs.filter(j => !j.assigned_to || !workers.some(w => (w.name || w.email?.split('@')[0]) === j.assigned_to))
+  , [jobs, workers])
 
-  const grandTotal = workerGroups.reduce((sum, { worker, jobs: wjobs }) => {
-    return sum + wjobs.length * (rates[worker.id] || 0)
-  }, 0)
+  const grandTotal = useMemo(() =>
+    workerGroups.reduce((sum, { worker, jobs: wjobs }) => sum + wjobs.length * (rates[worker.id] || 0), 0)
+  , [workerGroups, rates])
 
   const exportPayroll = () => {
     const headers = ['Worker', 'Jobs Done', 'Rate (RM/job)', 'Total Pay (RM)']

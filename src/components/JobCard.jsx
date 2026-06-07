@@ -14,6 +14,28 @@ import {
   ChevronDown, ChevronUp, X, ChevronRight, ChevronLeft, Clock, UserCheck, Mail
 } from 'lucide-react'
 
+function EmailToast({ job, workshop, t, onClose }) {
+  const statusUrl = workshop?.slug ? `${window.location.origin}/w/${workshop.slug}` : ''
+  const body = `Hi ${job.owner},\n\n${t('email_body_stage')}: ${job.stage.toUpperCase()}\n\n${statusUrl ? `Semak status: ${statusUrl}\n\n` : ''}${workshop?.name || 'Workshop'}`
+  const href = `mailto:${job.customer_email}?subject=${encodeURIComponent(t('email_subject') + ' — ' + job.plate)}&body=${encodeURIComponent(body)}`
+  return (
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-surface-dark text-on-dark rounded-2xl shadow-2xl px-4 py-3 flex items-center gap-3 text-sm w-[calc(100vw-2rem)] max-w-sm">
+      <Mail className="w-4 h-4 flex-shrink-0 opacity-70" />
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-xs">{t('email_prompt')}</p>
+        <p className="text-on-dark/50 text-xs truncate">{job.customer_email}</p>
+      </div>
+      <a href={href} onClick={onClose} target="_blank" rel="noreferrer"
+        className="flex-shrink-0 text-xs font-semibold bg-primary hover:bg-primary-deep px-3 py-1.5 rounded-full transition-colors whitespace-nowrap">
+        {t('email_send')}
+      </a>
+      <button onClick={onClose} className="text-on-dark/40 hover:text-on-dark transition-colors flex-shrink-0">
+        <X className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  )
+}
+
 function timeAgo(dateStr, lang) {
   if (!dateStr) return null
   const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000)
@@ -95,27 +117,7 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
       {showHistory && (
         <CustomerHistoryModal plate={job.plate} onClose={() => setShowHistory(false)} />
       )}
-      {emailPrompt && (() => {
-        const statusUrl = workshop?.slug ? `${window.location.origin}/w/${workshop.slug}` : ''
-        const body = `Hi ${job.owner},\n\n${t('email_body_stage')}: ${job.stage.toUpperCase()}\n\n${statusUrl ? `Semak status: ${statusUrl}\n\n` : ''}${workshop?.name || 'Workshop'}`
-        const href = `mailto:${job.customer_email}?subject=${encodeURIComponent(t('email_subject') + ' — ' + job.plate)}&body=${encodeURIComponent(body)}`
-        return (
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-surface-dark text-on-dark rounded-2xl shadow-2xl px-4 py-3 flex items-center gap-3 text-sm w-[calc(100vw-2rem)] max-w-sm">
-            <Mail className="w-4 h-4 flex-shrink-0 opacity-70" />
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-xs">{t('email_prompt')}</p>
-              <p className="text-on-dark/50 text-xs truncate">{job.customer_email}</p>
-            </div>
-            <a href={href} onClick={() => setEmailPrompt(false)} target="_blank" rel="noreferrer"
-              className="flex-shrink-0 text-xs font-semibold bg-primary hover:bg-primary-deep px-3 py-1.5 rounded-full transition-colors whitespace-nowrap">
-              {t('email_send')}
-            </a>
-            <button onClick={() => setEmailPrompt(false)} className="text-on-dark/40 hover:text-on-dark transition-colors flex-shrink-0">
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )
-      })()}
+      {emailPrompt && <EmailToast job={job} workshop={workshop} t={t} onClose={() => setEmailPrompt(false)} />}
       {lightbox && (
         <div className="fixed inset-0 bg-ink/80 z-50 flex items-center justify-center p-4" onClick={() => setLightbox(null)}>
           <img src={lightbox} alt="" className="max-w-full max-h-full rounded-md" />

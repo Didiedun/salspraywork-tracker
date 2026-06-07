@@ -54,9 +54,11 @@ export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
   const [err, setErr]               = useState('')
   const [returnInfo, setReturnInfo] = useState(null) // { job, by: 'plate'|'phone' }
   const lastFilledPlate             = useRef('')
+  const lastFilledPhone             = useRef('')
 
   useEffect(() => {
     if (initial || !jobs.length) return
+
     const cleanPlate = form.plate.replace(/\s/g, '').toUpperCase()
     if (cleanPlate.length >= 4) {
       const m = jobs.find(j => j.plate.replace(/\s/g, '').toUpperCase() === cleanPlate)
@@ -74,9 +76,28 @@ export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
         return
       }
     }
+
+    const cleanPhone = form.phone.replace(/\D/g, '')
+    if (cleanPhone.length >= 8) {
+      const m = jobs.find(j => j.phone && j.phone.replace(/\D/g, '') === cleanPhone)
+      if (m) {
+        setReturnInfo({ job: m, by: 'phone' })
+        if (lastFilledPhone.current !== cleanPhone) {
+          lastFilledPhone.current = cleanPhone
+          setForm(f => ({
+            ...f,
+            owner: f.owner || m.owner,
+            car:   f.car   || m.car,
+          }))
+        }
+        return
+      }
+    }
+
     setReturnInfo(null)
     lastFilledPlate.current = ''
-  }, [form.plate, jobs, initial])
+    lastFilledPhone.current = ''
+  }, [form.plate, form.phone, jobs, initial])
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
 

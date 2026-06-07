@@ -65,13 +65,14 @@ export function Dashboard() {
   const serviceReminders = useMemo(() => {
     const today = new Date(); today.setHours(0, 0, 0, 0)
     const in30  = new Date(today); in30.setDate(in30.getDate() + 30)
+    const parseLocalDate = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d) }
     return jobs
       .filter(j => {
         if (!j.next_service_date) return false
-        const d = new Date(j.next_service_date)
+        const d = parseLocalDate(j.next_service_date)
         return d >= today && d <= in30
       })
-      .sort((a, b) => new Date(a.next_service_date) - new Date(b.next_service_date))
+      .sort((a, b) => parseLocalDate(a.next_service_date) - parseLocalDate(b.next_service_date))
   }, [jobs])
 
   const scrollToJob = (job) => {
