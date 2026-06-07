@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { X, Banknote, CreditCard, QrCode, DollarSign } from 'lucide-react'
+import { X, Banknote, CreditCard, QrCode, Globe, DollarSign } from 'lucide-react'
 import { useLang } from '../context/LanguageContext'
 
 const METHODS = [
-  { key: 'cash',    labelKey: 'pay_cash',    Icon: Banknote },
+  { key: 'cash',    labelKey: 'pay_cash',    Icon: Banknote  },
   { key: 'card',    labelKey: 'pay_card',    Icon: CreditCard },
-  { key: 'duitnow', labelKey: 'pay_duitnow', Icon: QrCode },
+  { key: 'duitnow', labelKey: 'pay_duitnow', Icon: QrCode    },
+  { key: 'online',  labelKey: 'pay_online',  Icon: Globe     },
 ]
 
 export function PaymentModal({ job, onSave, onClose }) {
@@ -15,14 +16,17 @@ export function PaymentModal({ job, onSave, onClose }) {
   const balance = total - deposit
 
   const [method,       setMethod]       = useState('cash')
-  const [amount,       setAmount]       = useState(balance > 0 ? balance.toFixed(2) : '')
+  const [amount,       setAmount]       = useState('')      // intentionally empty — user must enter or tap quick-fill
   const [customerPays, setCustomerPays] = useState('')
   const [saving,       setSaving]       = useState(false)
 
-  const collected    = Math.min(parseFloat(amount) || 0, balance + 0.005)  // cap at balance
+  const raw       = parseFloat(amount) || 0
+  const collected = Math.min(raw, balance + 0.005)         // cap at balance
   const customerPaid = parseFloat(customerPays) || 0
   const change       = customerPaid - collected
-  const isFullPay    = collected >= balance - 0.005   // 0.5 sen tolerance
+  const isFullPay    = collected >= balance - 0.005
+  const isPartial    = collected > 0 && !isFullPay
+  const isOnline     = method === 'online'
 
   const fmt = (v) => `RM ${Number(v).toFixed(2)}`
 
@@ -30,7 +34,7 @@ export function PaymentModal({ job, onSave, onClose }) {
     if (collected <= 0) return
     setSaving(true)
     try {
-      const newDeposit = Math.min(deposit + collected, total)  // never exceed total
+      const newDeposit = Math.min(deposit + collected, total)
       await onSave(job.id, {
         downpayment:    newDeposit,
         paid:           isFullPay,
@@ -39,6 +43,14 @@ export function PaymentModal({ job, onSave, onClose }) {
       onClose()
     } catch (e) { alert(e.message) }
     finally { setSaving(false) }
+  }
+
+  const whatsappShare = () => {
+    const phone = job.phone?.replace(/\D/g, '')
+    if (!phone) return
+    const num  = phone.startsWith('60') ? phone : '60' + phone.replace(/^0/, '')
+    const msg  = `Hi ${job.owner}, baki bayaran untuk kenderaan *${job.plate}* adalah *${fmt(balance)}*. Sila hubungi kami untuk membuat bayaran. Terima kasih, ${job.workshop_name || 'bengkel'}.`
+    window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
   return (
@@ -79,77 +91,107 @@ export function PaymentModal({ job, onSave, onClose }) {
           {/* Payment method */}
           <div>
             <p className="text-xs font-semibold text-charcoal mb-2">{t('pay_method')}</p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-4 gap-2">
               {METHODS.map(({ key, labelKey, Icon }) => (
                 <button key={key} type="button"
                   onClick={() => setMethod(key)}
-                  className={`flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 text-xs font-semibold transition-all ${
+                  className={`flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 text-[10px] font-semibold transition-all ${
                     method === key
                       ? 'border-primary bg-primary/5 text-primary'
                       : 'border-hairline bg-canvas text-mute hover:border-primary/30 hover:text-charcoal'
                   }`}>
-                  <Icon className="w-5 h-5" />
+                  <Icon className="w-4 h-4" />
                   {t(labelKey)}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Amount to collect */}
-          <div>
-            <p className="text-xs font-semibold text-charcoal mb-2">{t('pay_amount')}</p>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-mute pointer-events-none">RM</span>
-              <input
-                type="text" inputMode="decimal"
-                value={amount}
-                onChange={e => setAmount(e.target.value)}
-                className="w-full bg-canvas border border-hairline rounded-full pl-12 pr-4 py-3 text-ink text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-              />
+          {/* Online banking placeholder */}
+          {isOnline ? (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3">
+              <p className="text-xs font-semibold text-amber-800">{t('pay_online_title')}</p>
+              <p className="text-xs text-amber-700 leading-relaxed">{t('pay_online_info')}</p>
+              {job.phone && (
+                <button onClick={whatsappShare}
+                  className="w-full flex items-center justify-center gap-2 bg-badge-success text-white text-xs font-semibold rounded-full py-2.5 hover:bg-emerald-600 transition-colors">
+                  {t('pay_wa_notify')}
+                </button>
+              )}
+              <p className="text-[10px] text-amber-600">{t('pay_online_coming')}</p>
             </div>
-            {collected > 0 && (
-              isFullPay
-                ? <p className="text-xs text-badge-success mt-1.5 px-1 font-semibold">✓ {t('pay_full_balance')}</p>
-                : <p className="text-xs text-amber-600 mt-1.5 px-1">{t('pay_partial')} — {t('pay_balance')} {fmt(balance - collected)}</p>
-            )}
-          </div>
-
-          {/* Change calculator — cash only */}
-          {method === 'cash' && (
-            <div>
-              <p className="text-xs font-semibold text-charcoal mb-2">{t('pay_customer_pays')}</p>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-mute pointer-events-none">RM</span>
-                <input
-                  type="text" inputMode="decimal"
-                  value={customerPays}
-                  onChange={e => setCustomerPays(e.target.value)}
-                  placeholder="0.00"
-                  className="w-full bg-canvas border border-hairline rounded-full pl-12 pr-4 py-3 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                />
+          ) : (
+            <>
+              {/* Amount to collect */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-semibold text-charcoal">{t('pay_amount')}</p>
+                  <button type="button"
+                    onClick={() => setAmount(balance.toFixed(2))}
+                    className="text-xs text-primary font-semibold bg-primary/8 hover:bg-primary/15 px-2.5 py-1 rounded-full transition-colors">
+                    {t('pay_quick_full')}: {fmt(balance)}
+                  </button>
+                </div>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-mute pointer-events-none">RM</span>
+                  <input
+                    autoFocus
+                    type="text" inputMode="decimal"
+                    value={amount}
+                    onChange={e => setAmount(e.target.value)}
+                    placeholder="0.00"
+                    className="w-full bg-canvas border border-hairline rounded-full pl-12 pr-4 py-3 text-ink text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  />
+                </div>
+                {collected > 0 && (
+                  <div className={`mt-2 px-3 py-2 rounded-lg text-xs font-semibold ${isFullPay ? 'bg-badge-success/10 text-badge-success' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                    {isFullPay
+                      ? `✓ ${t('pay_full_balance')} — ${t('job_marked_paid')}`
+                      : `${t('pay_partial')} — ${t('pay_balance')} ${fmt(balance - collected)}`}
+                  </div>
+                )}
               </div>
-              {customerPaid > 0 && (
-                <div className={`mt-2 px-4 py-2.5 rounded-xl text-sm font-bold text-center ${
-                  change >= 0 ? 'bg-badge-success/10 text-badge-success' : 'bg-red-50 text-red-600'
-                }`}>
-                  {change >= 0
-                    ? `${t('pay_change')}: RM ${change.toFixed(2)}`
-                    : `⚠ ${t('pay_short')} RM ${Math.abs(change).toFixed(2)}`}
+
+              {/* Change calculator — cash only */}
+              {method === 'cash' && (
+                <div>
+                  <p className="text-xs font-semibold text-charcoal mb-2">{t('pay_customer_pays')}</p>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-mute pointer-events-none">RM</span>
+                    <input
+                      type="text" inputMode="decimal"
+                      value={customerPays}
+                      onChange={e => setCustomerPays(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full bg-canvas border border-hairline rounded-full pl-12 pr-4 py-3 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    />
+                  </div>
+                  {customerPaid > 0 && (
+                    <div className={`mt-2 px-4 py-2.5 rounded-xl text-sm font-bold text-center ${
+                      change >= 0 ? 'bg-badge-success/10 text-badge-success' : 'bg-red-50 text-red-600'
+                    }`}>
+                      {change >= 0
+                        ? `${t('pay_change')}: RM ${change.toFixed(2)}`
+                        : `⚠ ${t('pay_short')} RM ${Math.abs(change).toFixed(2)}`}
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
+            </>
           )}
         </div>
 
-        <div className="px-5 pb-5 pt-3 border-t border-hairline flex-shrink-0">
-          <button
-            onClick={handleCollect}
-            disabled={saving || collected <= 0}
-            className="w-full bg-primary hover:bg-primary-deep disabled:bg-stone disabled:cursor-not-allowed text-white font-semibold rounded-full py-3.5 flex items-center justify-center gap-2 transition-colors text-sm">
-            <DollarSign className="w-4 h-4" />
-            {saving ? t('saving') : t('pay_record')}
-          </button>
-        </div>
+        {!isOnline && (
+          <div className="px-5 pb-5 pt-3 border-t border-hairline flex-shrink-0">
+            <button
+              onClick={handleCollect}
+              disabled={saving || collected <= 0}
+              className="w-full bg-primary hover:bg-primary-deep disabled:bg-stone disabled:cursor-not-allowed text-white font-semibold rounded-full py-3.5 flex items-center justify-center gap-2 transition-colors text-sm">
+              <DollarSign className="w-4 h-4" />
+              {saving ? t('saving') : collected <= 0 ? t('pay_enter_amount') : t('pay_record')}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

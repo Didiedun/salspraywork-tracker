@@ -5,7 +5,7 @@ import { useLang } from '../context/LanguageContext'
 import { TutorialModal } from './TutorialModal'
 import { FeedbackWidget } from './FeedbackWidget'
 import {
-  LayoutDashboard, Package, Users, LogOut, ExternalLink, Settings,
+  LayoutDashboard, Package, Users, LogOut, ExternalLink, Settings, Wallet,
   Menu, X, Globe, HelpCircle, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 
@@ -16,6 +16,7 @@ function Sidebar({ workshop, signOut, onClose, collapsed, onToggleCollapsed }) {
   const navItems = [
     { to: '/dashboard', label: t('nav_dashboard'), icon: LayoutDashboard },
     { to: '/inventory', label: t('nav_inventory'), icon: Package },
+    { to: '/finance',   label: t('nav_finance'),   icon: Wallet },
     { to: '/workers',   label: t('nav_workers'),   icon: Users },
     { to: '/settings',  label: t('nav_settings'),  icon: Settings },
   ]
