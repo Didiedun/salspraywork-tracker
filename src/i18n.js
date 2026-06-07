@@ -268,6 +268,7 @@ export const translations = {
     cat_pick_search:  'Cari item...',
     cat_pick_empty:   'Tiada item dalam katalog',
     cat_pick_add:     'Katalog',
+    cat_no_price:     'Tiada harga',
 
     /* inventory */
     inv_types:      'Jenis Item',
@@ -618,6 +619,7 @@ export const translations = {
     cat_pick_search:  'Search items...',
     cat_pick_empty:   'No items in catalog',
     cat_pick_add:     'Catalog',
+    cat_no_price:     'No price set',
 
     /* inventory */
     inv_types:      'Item Types',

@@ -75,7 +75,14 @@ export function CatalogPicker({ workshopId, onSelect, onClose }) {
 
                 {(openCats.has(cat.id) || !!q) && (cat.service_items || []).map(item => {
                   const variants = item.service_variants || []
-                  if (variants.length === 0) return null
+                  if (variants.length === 0) {
+                    return (
+                      <div key={item.id} className="flex items-center justify-between px-4 py-3 pl-9 border-b border-hairline opacity-40">
+                        <span className="text-sm text-charcoal">{item.name}</span>
+                        <span className="text-xs text-ash">{t('cat_no_price')}</span>
+                      </div>
+                    )
+                  }
                   if (variants.length === 1) {
                     const v = variants[0]
                     return (

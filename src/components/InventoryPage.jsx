@@ -13,6 +13,8 @@ import {
 function CatalogModal({ modal, onClose, onSave }) {
   const { t } = useLang()
   const isVariant = modal.type === 'variant'
+  const isItemAdd = modal.type === 'item' && modal.mode === 'add'
+  const showPrices = isVariant || isItemAdd
   const [name, setName]   = useState(modal.data?.name || '')
   const [cost, setCost]   = useState(modal.data ? String(modal.data.cost_price ?? '') : '')
   const [sell, setSell]   = useState(modal.data ? String(modal.data.sell_price ?? '') : '')
@@ -27,10 +29,10 @@ function CatalogModal({ modal, onClose, onSave }) {
 
   const handleSave = async () => {
     if (!name.trim()) { setErr(t('cat_name_req')); return }
-    if (isVariant && !sell) { setErr(t('cat_sell_req')); return }
+    if (showPrices && !sell) { setErr(t('cat_sell_req')); return }
     setSaving(true); setErr('')
     try {
-      await onSave(isVariant ? { name, cost_price: cost, sell_price: sell } : { name })
+      await onSave(showPrices ? { name, cost_price: cost, sell_price: sell } : { name })
     } catch (e) { setErr(e.message) }
     finally { setSaving(false) }
   }
@@ -51,11 +53,11 @@ function CatalogModal({ modal, onClose, onSave }) {
           <div>
             <label className={lbl}>{t('cat_name_lbl')} *</label>
             <input autoFocus value={name} onChange={e => setName(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && !isVariant) handleSave() }}
+              onKeyDown={e => { if (e.key === 'Enter' && !showPrices) handleSave() }}
               placeholder={modal.type === 'cat' ? t('cat_cat_ph') : modal.type === 'item' ? t('cat_item_ph') : t('cat_variant_ph')}
               className={inp} />
           </div>
-          {isVariant && (
+          {showPrices && (
             <>
               <div>
                 <label className={lbl}>{t('cat_cost_lbl')} (RM)</label>
@@ -226,8 +228,12 @@ function CatalogTab({ workshopId }) {
               if (mode === 'add') await addCategory(data.name)
               else await updateCategory(modal.data.id, data.name)
             } else if (type === 'item') {
-              if (mode === 'add') await addItem(modal.catId, data.name)
-              else await updateItem(modal.catId, modal.data.id, data.name)
+              if (mode === 'add') {
+                const item = await addItem(modal.catId, data.name)
+                if (data.sell_price && item?.id) {
+                  await addVariant(modal.catId, item.id, { name: 'Standard', cost_price: data.cost_price || 0, sell_price: data.sell_price })
+                }
+              } else await updateItem(modal.catId, modal.data.id, data.name)
             } else if (type === 'variant') {
               if (mode === 'add') await addVariant(modal.catId, modal.itemId, data)
               else await updateVariant(modal.catId, modal.itemId, modal.data.id, data)

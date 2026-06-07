@@ -51,9 +51,11 @@ export function useCatalog(workshopId) {
       .insert([{ name: name.trim(), category_id: categoryId, workshop_id: workshopId, sort_order: (cat?.service_items || []).length }])
       .select().single()
     if (error) throw error
+    const newItem = { ...data, service_variants: [] }
     setCategories(prev => prev.map(c => c.id === categoryId
-      ? { ...c, service_items: [...(c.service_items || []), { ...data, service_variants: [] }] }
+      ? { ...c, service_items: [...(c.service_items || []), newItem] }
       : c))
+    return newItem
   }
 
   const updateItem = async (categoryId, itemId, name) => {
