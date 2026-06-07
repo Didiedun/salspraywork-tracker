@@ -12,12 +12,23 @@ async function deductStockForServices(services) {
   if (!services?.length) return services
   const result = services.map(s => ({ ...s }))
   for (const svc of result) {
-    if (!svc.inventory_item_id || svc.stock_deducted) continue
+    if (!svc.inventory_item_id) continue
+    const newTotal = (parseFloat(svc.qty) || 1) * (parseFloat(svc.qty_per_service) || 1)
+    // already = what was previously deducted from stock for this line
+    const already = svc.qty_deducted != null
+      ? parseFloat(svc.qty_deducted)
+      : svc.stock_deducted
+        ? parseFloat(svc.qty_per_service) || 1   // old record before qty was added
+        : 0
+    const delta = newTotal - already
+    if (Math.abs(delta) < 0.001) continue        // nothing changed
     const { data: item } = await supabase.from('inventory').select('quantity').eq('id', svc.inventory_item_id).single()
     if (item) {
-      const qty = (parseFloat(svc.qty) || 1) * (parseFloat(svc.qty_per_service) || 1)
-      await supabase.from('inventory').update({ quantity: Math.max(0, (item.quantity || 0) - qty) }).eq('id', svc.inventory_item_id)
+      await supabase.from('inventory').update({
+        quantity: Math.max(0, (item.quantity || 0) - delta),
+      }).eq('id', svc.inventory_item_id)
     }
+    svc.qty_deducted  = newTotal
     svc.stock_deducted = true
   }
   return result

@@ -40,8 +40,9 @@ export function JobForm({ initial, onSave, onClose, title }) {
     est_completion: initial.est_completion ? initial.est_completion.slice(0, 10) : '',
     services: (initial.services || []).map(s => ({
       ...s,
-      qty:        s.qty        ?? 1,
-      unit_price: s.unit_price ?? s.amount ?? '',
+      qty:          s.qty          ?? 1,
+      unit_price:   s.unit_price   ?? s.amount ?? '',
+      qty_deducted: s.qty_deducted ?? null,
     })),
   } : { ...EMPTY, stage: stages[0]?.value || 'ready' })
   const [saving, setSaving] = useState(false)
@@ -87,6 +88,7 @@ export function JobForm({ initial, onSave, onClose, title }) {
             inventory_item_id:  s.inventory_item_id  || null,
             qty_per_service:    s.qty_per_service     || 1,
             stock_deducted:     s.stock_deducted      || false,
+            qty_deducted:       s.qty_deducted        ?? null,
           }
         })
       await onSave({
