@@ -15,7 +15,7 @@ async function deductStockForServices(services) {
     if (!svc.inventory_item_id || svc.stock_deducted) continue
     const { data: item } = await supabase.from('inventory').select('quantity').eq('id', svc.inventory_item_id).single()
     if (item) {
-      const qty = parseFloat(svc.qty_per_service) || 1
+      const qty = (parseFloat(svc.qty) || 1) * (parseFloat(svc.qty_per_service) || 1)
       await supabase.from('inventory').update({ quantity: Math.max(0, (item.quantity || 0) - qty) }).eq('id', svc.inventory_item_id)
     }
     svc.stock_deducted = true

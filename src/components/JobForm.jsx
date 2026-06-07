@@ -38,15 +38,21 @@ export function JobForm({ initial, onSave, onClose, title }) {
     customer_email: initial.customer_email ?? '',
     date_in:        initial.date_in        ? initial.date_in.slice(0, 10)        : '',
     est_completion: initial.est_completion ? initial.est_completion.slice(0, 10) : '',
-    services:       initial.services       || [],
+    services: (initial.services || []).map(s => ({
+      ...s,
+      qty:        s.qty        ?? 1,
+      unit_price: s.unit_price ?? s.amount ?? '',
+    })),
   } : { ...EMPTY, stage: stages[0]?.value || 'ready' })
   const [saving, setSaving] = useState(false)
   const [err, setErr]       = useState('')
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
 
+  const lineTotal = (s) => (parseFloat(s.unit_price) || parseFloat(s.amount) || 0) * (parseFloat(s.qty) || 1)
+
   const recalcTotal = (services) =>
-    services.reduce((sum, s) => sum + (parseFloat(s.amount) || 0), 0)
+    services.reduce((sum, s) => sum + lineTotal(s), 0)
 
   const removeService = (i) =>
     setForm(f => {
@@ -70,13 +76,19 @@ export function JobForm({ initial, onSave, onClose, title }) {
     setSaving(true); setErr('')
     try {
       const cleanServices = form.services.filter(s => s.description.trim())
-        .map(s => ({
-          description:        s.description.trim(),
-          amount:             parseFloat(s.amount) || 0,
-          inventory_item_id:  s.inventory_item_id  || null,
-          qty_per_service:    s.qty_per_service     || 1,
-          stock_deducted:     s.stock_deducted      || false,
-        }))
+        .map(s => {
+          const up  = parseFloat(s.unit_price) || parseFloat(s.amount) || 0
+          const qty = parseFloat(s.qty) || 1
+          return {
+            description:        s.description.trim(),
+            unit_price:         up,
+            qty,
+            amount:             up * qty,
+            inventory_item_id:  s.inventory_item_id  || null,
+            qty_per_service:    s.qty_per_service     || 1,
+            stock_deducted:     s.stock_deducted      || false,
+          }
+        })
       await onSave({
         plate:          form.plate.trim().toUpperCase().replace(/\s+/g, ''),
         owner:          form.owner.trim(),
@@ -177,35 +189,52 @@ export function JobForm({ initial, onSave, onClose, title }) {
               </div>
               {form.services.length > 0 && (
                 <div className="space-y-2 mb-2">
-                  {form.services.map((svc, i) => (
-                    <div key={i} className="flex flex-col gap-0.5">
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={svc.description}
-                          onChange={e => updateService(i, 'description', e.target.value)}
-                          placeholder={t('form_svc_desc_ph')}
-                          className="flex-1 bg-canvas border border-hairline rounded-full px-4 py-2.5 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors"
-                        />
-                        <input
-                          type="text" inputMode="decimal"
-                          value={svc.amount}
-                          onChange={e => updateService(i, 'amount', e.target.value)}
-                          placeholder="0.00"
-                          className="w-24 bg-canvas border border-hairline rounded-full px-4 py-2.5 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors text-right"
-                        />
-                        <button type="button" onClick={() => removeService(i)}
-                          className="w-8 h-8 flex items-center justify-center rounded-full text-mute hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                  {form.services.map((svc, i) => {
+                    const qty   = parseFloat(svc.qty) || 1
+                    const up    = parseFloat(svc.unit_price) || parseFloat(svc.amount) || 0
+                    const total = qty * up
+                    return (
+                      <div key={i} className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="text"
+                            value={svc.description}
+                            onChange={e => updateService(i, 'description', e.target.value)}
+                            placeholder={t('form_svc_desc_ph')}
+                            className="flex-1 min-w-0 bg-canvas border border-hairline rounded-full px-4 py-2.5 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors"
+                          />
+                          <div className="flex items-center bg-canvas border border-hairline rounded-full px-2.5 py-2.5 gap-1 flex-shrink-0">
+                            <span className="text-xs text-mute select-none">×</span>
+                            <input
+                              type="text" inputMode="decimal"
+                              value={svc.qty ?? 1}
+                              onChange={e => updateService(i, 'qty', e.target.value)}
+                              className="w-7 text-sm text-ink text-center focus:outline-none bg-transparent"
+                            />
+                          </div>
+                          <input
+                            type="text" inputMode="decimal"
+                            value={svc.unit_price ?? svc.amount ?? ''}
+                            onChange={e => updateService(i, 'unit_price', e.target.value)}
+                            placeholder="0.00"
+                            className="w-20 bg-canvas border border-hairline rounded-full px-3 py-2.5 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors text-right"
+                          />
+                          <button type="button" onClick={() => removeService(i)}
+                            className="w-8 h-8 flex items-center justify-center rounded-full text-mute hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-2 pl-3">
+                          {qty > 1 && (
+                            <span className="text-[11px] text-mute">= RM {total.toFixed(2)}</span>
+                          )}
+                          {svc.inventory_item_id && (
+                            <span className="text-[11px] text-badge-success flex items-center gap-0.5">📦 {t('form_svc_linked')}</span>
+                          )}
+                        </div>
                       </div>
-                      {svc.inventory_item_id && (
-                        <p className="text-[11px] text-badge-success pl-4 flex items-center gap-1">
-                          📦 {t('form_svc_linked')}
-                        </p>
-                      )}
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>
@@ -259,12 +288,14 @@ export function JobForm({ initial, onSave, onClose, title }) {
       <CatalogPicker
         workshopId={workshop?.id}
         onClose={() => setShowCatalog(false)}
-        onSelect={(description, amount, stockInfo) => {
+        onSelect={(description, unitPrice, stockInfo) => {
           setForm(f => {
             const services = [...f.services, {
-              description, amount,
+              description,
+              unit_price: unitPrice,
+              qty: 1,
               inventory_item_id: stockInfo?.inventory_item_id || null,
-              qty_per_service: stockInfo?.qty_per_service || 1,
+              qty_per_service:   stockInfo?.qty_per_service   || 1,
               stock_deducted: false,
             }]
             const total = recalcTotal(services)
