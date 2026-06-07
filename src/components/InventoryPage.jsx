@@ -12,6 +12,76 @@ import {
 
 const CREATE_NEW = '__create_new__'
 
+/* ─── Inline stock link editor on variant rows ──────────────────────────── */
+
+function VariantStockRow({ variant, catId, itemId, stockItems, onUpdate }) {
+  const { t } = useLang()
+  const [editing, setEditing]     = useState(false)
+  const [stockItemId, setStockId] = useState(variant.inventory_item_id || '')
+  const [qty, setQty]             = useState(String(variant.qty_per_service ?? 1))
+  const [saving, setSaving]       = useState(false)
+
+  const inv = variant.inventory_item
+
+  const save = async () => {
+    setSaving(true)
+    try {
+      await onUpdate(catId, itemId, variant.id, {
+        name:              variant.name,
+        cost_price:        variant.cost_price,
+        sell_price:        variant.sell_price,
+        inventory_item_id: stockItemId || null,
+        qty_per_service:   parseFloat(qty) || 1,
+      })
+      setEditing(false)
+    } catch (e) { alert(e.message) }
+    finally { setSaving(false) }
+  }
+
+  if (!editing) {
+    return (
+      <button onClick={() => setEditing(true)}
+        className="text-xs mt-0.5 text-left hover:opacity-75 transition-opacity block">
+        {inv ? (
+          <span className="text-primary flex items-center gap-1 flex-wrap">
+            📦 {inv.name} × {variant.qty_per_service} {inv.unit}
+            <span className={`font-semibold ${inv.quantity <= 0 ? 'text-red-500' : inv.quantity <= (inv.reorder_level || 0) ? 'text-amber-600' : 'text-badge-success'}`}>
+              ({inv.quantity} {t('cat_in_stock')})
+            </span>
+          </span>
+        ) : (
+          <span className="text-ash flex items-center gap-1">
+            <Package className="w-3 h-3" /> {t('cat_link_stock')}
+          </span>
+        )}
+      </button>
+    )
+  }
+
+  return (
+    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+      <select value={stockItemId} onChange={e => setStockId(e.target.value)}
+        className="flex-1 min-w-0 bg-canvas border border-hairline rounded-lg px-3 py-1.5 text-ink text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+        <option value="">— {t('cat_pick_stock_ph')} —</option>
+        {stockItems.map(i => (
+          <option key={i.id} value={i.id}>{i.name} ({i.quantity} {i.unit})</option>
+        ))}
+      </select>
+      <input type="text" inputMode="decimal" value={qty} onChange={e => setQty(e.target.value)}
+        placeholder="1"
+        className="w-14 bg-canvas border border-hairline rounded-lg px-2 py-1.5 text-xs text-ink text-center focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+      <button onClick={save} disabled={saving}
+        className="w-7 h-7 bg-primary disabled:bg-stone text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 transition-colors">
+        {saving ? '…' : '✓'}
+      </button>
+      <button onClick={() => { setEditing(false); setStockId(variant.inventory_item_id || ''); setQty(String(variant.qty_per_service ?? 1)) }}
+        className="w-7 h-7 border border-hairline rounded-full flex items-center justify-center text-xs text-charcoal hover:bg-canvas flex-shrink-0 transition-colors">
+        ✕
+      </button>
+    </div>
+  )
+}
+
 function CatalogModal({ modal, onClose, onSave, stockItems = [], addStockItem }) {
   const { t } = useLang()
   const isVariant  = modal.type === 'variant'
@@ -271,19 +341,20 @@ function CatalogTab({ workshopId }) {
                           {(item.service_variants || []).map(v => (
                             <div key={v.id} className="flex items-center gap-2 bg-canvas rounded-lg px-3 py-2">
                               <div className="flex-1 min-w-0">
-                                <span className="text-sm font-medium text-ink">{v.name}</span>
-                                <span className="text-xs text-mute ml-1.5">
-                                  {t('cat_cost_lbl')}: {fmt(v.cost_price)} ·{' '}
-                                  <span className="text-badge-success font-semibold">{t('cat_sell_lbl')}: {fmt(v.sell_price)}</span>
-                                </span>
-                                {v.inventory_item && (
-                                  <p className="text-xs text-primary mt-0.5">
-                                    📦 {v.inventory_item.name} × {v.qty_per_service} {v.inventory_item.unit}
-                                    <span className={`ml-1.5 font-semibold ${v.inventory_item.quantity <= 0 ? 'text-red-500' : v.inventory_item.quantity <= (v.inventory_item.reorder_level || 0) ? 'text-amber-600' : 'text-badge-success'}`}>
-                                      ({v.inventory_item.quantity} {t('cat_in_stock')})
-                                    </span>
-                                  </p>
-                                )}
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-sm font-medium text-ink">{v.name}</span>
+                                  <span className="text-xs text-mute">
+                                    {t('cat_cost_lbl')}: {fmt(v.cost_price)} ·{' '}
+                                    <span className="text-badge-success font-semibold">{t('cat_sell_lbl')}: {fmt(v.sell_price)}</span>
+                                  </span>
+                                </div>
+                                <VariantStockRow
+                                  variant={v}
+                                  catId={cat.id}
+                                  itemId={item.id}
+                                  stockItems={stockItems}
+                                  onUpdate={updateVariant}
+                                />
                               </div>
                               <button onClick={() => setModal({ type: 'variant', mode: 'edit', data: v, itemId: item.id, catId: cat.id })}
                                 className="w-6 h-6 flex items-center justify-center text-mute hover:text-ink hover:bg-surface-bone rounded-full transition-colors flex-shrink-0">

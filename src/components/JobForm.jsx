@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Save, Car, User, Phone, FileText, DollarSign, Calendar, Flag, Mail, Plus, Trash2, Tag } from 'lucide-react'
+import { X, Save, Car, User, Phone, FileText, DollarSign, Calendar, Flag, Mail, Plus, Trash2 } from 'lucide-react'
 import { useStages } from '../hooks/useStages'
 import { useLang } from '../context/LanguageContext'
 import { useApp } from '../context/AppContext'
@@ -48,9 +48,6 @@ export function JobForm({ initial, onSave, onClose, title }) {
   const recalcTotal = (services) =>
     services.reduce((sum, s) => sum + (parseFloat(s.amount) || 0), 0)
 
-  const addService = () =>
-    setForm(f => ({ ...f, services: [...f.services, { description: '', amount: '' }] }))
-
   const removeService = (i) =>
     setForm(f => {
       const services = f.services.filter((_, idx) => idx !== i)
@@ -73,7 +70,13 @@ export function JobForm({ initial, onSave, onClose, title }) {
     setSaving(true); setErr('')
     try {
       const cleanServices = form.services.filter(s => s.description.trim())
-        .map(s => ({ description: s.description.trim(), amount: parseFloat(s.amount) || 0 }))
+        .map(s => ({
+          description:        s.description.trim(),
+          amount:             parseFloat(s.amount) || 0,
+          inventory_item_id:  s.inventory_item_id  || null,
+          qty_per_service:    s.qty_per_service     || 1,
+          stock_deducted:     s.stock_deducted      || false,
+        }))
       await onSave({
         plate:          form.plate.trim().toUpperCase().replace(/\s+/g, ''),
         owner:          form.owner.trim(),
@@ -167,39 +170,40 @@ export function JobForm({ initial, onSave, onClose, title }) {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className={labelCls}><DollarSign className="w-3.5 h-3.5" /> {t('form_services')}</label>
-                <div className="flex items-center gap-1.5">
-                  <button type="button" onClick={() => setShowCatalog(true)}
-                    className="flex items-center gap-1 text-xs font-semibold text-charcoal hover:text-ink bg-surface-bone hover:bg-surface-card border border-hairline px-2.5 py-1 rounded-full transition-colors">
-                    <Tag className="w-3 h-3" /> {t('cat_pick_add')}
-                  </button>
-                  <button type="button" onClick={addService}
-                    className="flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary-deep transition-colors">
-                    <Plus className="w-3.5 h-3.5" /> {t('form_add_service')}
-                  </button>
-                </div>
+                <button type="button" onClick={() => setShowCatalog(true)}
+                  className="flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary-deep transition-colors">
+                  <Plus className="w-3.5 h-3.5" /> {t('form_add_service')}
+                </button>
               </div>
               {form.services.length > 0 && (
                 <div className="space-y-2 mb-2">
                   {form.services.map((svc, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={svc.description}
-                        onChange={e => updateService(i, 'description', e.target.value)}
-                        placeholder={t('form_svc_desc_ph')}
-                        className="flex-1 bg-canvas border border-hairline rounded-full px-4 py-2.5 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors"
-                      />
-                      <input
-                        type="text" inputMode="decimal"
-                        value={svc.amount}
-                        onChange={e => updateService(i, 'amount', e.target.value)}
-                        placeholder="0.00"
-                        className="w-24 bg-canvas border border-hairline rounded-full px-4 py-2.5 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors text-right"
-                      />
-                      <button type="button" onClick={() => removeService(i)}
-                        className="w-8 h-8 flex items-center justify-center rounded-full text-mute hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                    <div key={i} className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={svc.description}
+                          onChange={e => updateService(i, 'description', e.target.value)}
+                          placeholder={t('form_svc_desc_ph')}
+                          className="flex-1 bg-canvas border border-hairline rounded-full px-4 py-2.5 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors"
+                        />
+                        <input
+                          type="text" inputMode="decimal"
+                          value={svc.amount}
+                          onChange={e => updateService(i, 'amount', e.target.value)}
+                          placeholder="0.00"
+                          className="w-24 bg-canvas border border-hairline rounded-full px-4 py-2.5 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors text-right"
+                        />
+                        <button type="button" onClick={() => removeService(i)}
+                          className="w-8 h-8 flex items-center justify-center rounded-full text-mute hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      {svc.inventory_item_id && (
+                        <p className="text-[11px] text-badge-success pl-4 flex items-center gap-1">
+                          📦 {t('form_svc_linked')}
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>

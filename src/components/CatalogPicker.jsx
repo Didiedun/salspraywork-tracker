@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Search, ChevronDown, ChevronRight, Tag } from 'lucide-react'
+import { X, Search, ChevronDown, ChevronRight, Tag, Plus, Pencil } from 'lucide-react'
 import { useCatalog } from '../hooks/useCatalog'
 import { useLang } from '../context/LanguageContext'
 
@@ -19,6 +19,9 @@ export function CatalogPicker({ workshopId, onSelect, onClose }) {
   const { categories, loading } = useCatalog(workshopId)
   const [search, setSearch] = useState('')
   const [openCats, setOpenCats] = useState(new Set())
+  const [showManual, setShowManual] = useState(false)
+  const [manualDesc, setManualDesc] = useState('')
+  const [manualAmt,  setManualAmt]  = useState('')
 
   const toggleCat = (id) => setOpenCats(prev => {
     const s = new Set(prev)
@@ -146,6 +149,53 @@ export function CatalogPicker({ workshopId, onSelect, onClose }) {
                 })}
               </div>
             ))
+          )}
+
+          {/* Manual / custom service entry */}
+          {!loading && !q && (
+            <div className="border-t-2 border-hairline">
+              {!showManual ? (
+                <button onClick={() => setShowManual(true)}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-surface-bone transition-colors">
+                  <div className="w-8 h-8 rounded-full border border-dashed border-ash flex items-center justify-center flex-shrink-0">
+                    <Pencil className="w-3.5 h-3.5 text-ash" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-charcoal">{t('cat_pick_custom')}</p>
+                    <p className="text-xs text-ash">{t('cat_pick_custom_sub')}</p>
+                  </div>
+                </button>
+              ) : (
+                <div className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-ink">{t('cat_pick_custom')}</p>
+                    <button onClick={() => { setShowManual(false); setManualDesc(''); setManualAmt('') }}
+                      className="text-xs text-mute hover:text-charcoal transition-colors">{t('cat_pick_cancel')}</button>
+                  </div>
+                  <input value={manualDesc} onChange={e => setManualDesc(e.target.value)}
+                    autoFocus
+                    placeholder={t('form_svc_desc_ph')}
+                    className="w-full bg-canvas border border-hairline rounded-full px-4 py-2.5 text-sm text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-mute font-medium pointer-events-none">RM</span>
+                      <input value={manualAmt} onChange={e => setManualAmt(e.target.value)}
+                        placeholder="0.00" type="text" inputMode="decimal"
+                        className="w-full bg-canvas border border-hairline rounded-full pl-11 pr-4 py-2.5 text-sm text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (!manualDesc.trim()) return
+                        onSelect(manualDesc.trim(), manualAmt || '0', null)
+                      }}
+                      disabled={!manualDesc.trim()}
+                      className="bg-primary hover:bg-primary-deep disabled:bg-stone disabled:cursor-not-allowed text-white rounded-full px-5 py-2.5 text-sm font-semibold flex items-center gap-1.5 transition-colors flex-shrink-0">
+                      <Plus className="w-3.5 h-3.5" /> {t('add')}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
