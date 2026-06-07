@@ -37,5 +37,14 @@ export function useInventory(workshopId) {
     setItems(prev => prev.filter(i => i.id !== id))
   }
 
-  return { items, loading, fetchItems, addItem, updateItem, deleteItem }
+  const deductStock = async (itemId, qty) => {
+    const { data: current } = await supabase.from('inventory').select('quantity').eq('id', itemId).single()
+    if (!current) return
+    const newQty = Math.max(0, (current.quantity || 0) - qty)
+    const { error } = await supabase.from('inventory').update({ quantity: newQty }).eq('id', itemId)
+    if (error) throw error
+    setItems(prev => prev.map(i => i.id === itemId ? { ...i, quantity: newQty } : i))
+  }
+
+  return { items, loading, fetchItems, addItem, updateItem, deleteItem, deductStock }
 }

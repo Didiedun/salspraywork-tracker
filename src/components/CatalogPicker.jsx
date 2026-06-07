@@ -3,6 +3,17 @@ import { X, Search, ChevronDown, ChevronRight, Tag } from 'lucide-react'
 import { useCatalog } from '../hooks/useCatalog'
 import { useLang } from '../context/LanguageContext'
 
+function StockBadge({ item }) {
+  if (!item) return null
+  const qty = item.quantity || 0
+  const reorder = item.reorder_level || 0
+  if (qty <= 0)
+    return <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-600">{qty} {item.unit}</span>
+  if (reorder > 0 && qty <= reorder)
+    return <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700">{qty} {item.unit}</span>
+  return <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700">{qty} {item.unit}</span>
+}
+
 export function CatalogPicker({ workshopId, onSelect, onClose }) {
   const { t } = useLang()
   const { categories, loading } = useCatalog(workshopId)
@@ -27,6 +38,13 @@ export function CatalogPicker({ workshopId, onSelect, onClose }) {
     : categories
 
   const fmt = (n) => `RM ${Number(n).toFixed(2)}`
+
+  const handleSelect = (description, amount, variant) => {
+    onSelect(description, amount, {
+      inventory_item_id: variant.inventory_item_id || null,
+      qty_per_service: variant.qty_per_service || 1,
+    })
+  }
 
   return (
     <div className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-[70] flex items-end sm:items-center justify-center pt-16 px-0 pb-0 sm:p-4">
@@ -85,12 +103,19 @@ export function CatalogPicker({ workshopId, onSelect, onClose }) {
                   }
                   if (variants.length === 1) {
                     const v = variants[0]
+                    const outOfStock = v.inventory_item && (v.inventory_item.quantity || 0) <= 0
                     return (
                       <button key={item.id}
-                        onClick={() => onSelect(item.name, String(v.sell_price))}
-                        className="w-full flex items-center justify-between px-4 py-3 pl-9 border-b border-hairline hover:bg-surface-bone transition-colors text-left">
-                        <span className="text-sm text-ink">{item.name}</span>
-                        <span className="text-sm font-bold text-primary">{fmt(v.sell_price)}</span>
+                        onClick={() => !outOfStock && handleSelect(item.name, String(v.sell_price), v)}
+                        disabled={outOfStock}
+                        className={`w-full flex items-center justify-between px-4 py-3 pl-9 border-b border-hairline text-left transition-colors ${outOfStock ? 'opacity-50 cursor-not-allowed' : 'hover:bg-surface-bone'}`}>
+                        <div className="min-w-0">
+                          <span className="text-sm text-ink">{item.name}</span>
+                          {v.inventory_item && (
+                            <div className="mt-0.5"><StockBadge item={v.inventory_item} /></div>
+                          )}
+                        </div>
+                        <span className="text-sm font-bold text-primary ml-2 flex-shrink-0">{fmt(v.sell_price)}</span>
                       </button>
                     )
                   }
@@ -99,14 +124,23 @@ export function CatalogPicker({ workshopId, onSelect, onClose }) {
                       <div className="px-4 py-2 pl-9 bg-canvas/50">
                         <span className="text-sm font-semibold text-charcoal">{item.name}</span>
                       </div>
-                      {variants.map(v => (
-                        <button key={v.id}
-                          onClick={() => onSelect(`${item.name} (${v.name})`, String(v.sell_price))}
-                          className="w-full flex items-center justify-between px-4 py-2.5 pl-12 border-b border-hairline/50 last:border-b-0 hover:bg-surface-bone transition-colors text-left">
-                          <span className="text-sm text-charcoal">{v.name}</span>
-                          <span className="text-sm font-bold text-primary">{fmt(v.sell_price)}</span>
-                        </button>
-                      ))}
+                      {variants.map(v => {
+                        const outOfStock = v.inventory_item && (v.inventory_item.quantity || 0) <= 0
+                        return (
+                          <button key={v.id}
+                            onClick={() => !outOfStock && handleSelect(`${item.name} (${v.name})`, String(v.sell_price), v)}
+                            disabled={outOfStock}
+                            className={`w-full flex items-center justify-between px-4 py-2.5 pl-12 border-b border-hairline/50 last:border-b-0 text-left transition-colors ${outOfStock ? 'opacity-50 cursor-not-allowed' : 'hover:bg-surface-bone'}`}>
+                            <div className="min-w-0">
+                              <span className="text-sm text-charcoal">{v.name}</span>
+                              {v.inventory_item && (
+                                <div className="mt-0.5"><StockBadge item={v.inventory_item} /></div>
+                              )}
+                            </div>
+                            <span className="text-sm font-bold text-primary ml-2 flex-shrink-0">{fmt(v.sell_price)}</span>
+                          </button>
+                        )
+                      })}
                     </div>
                   )
                 })}

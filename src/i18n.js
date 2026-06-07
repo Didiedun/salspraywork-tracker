@@ -269,6 +269,11 @@ export const translations = {
     cat_pick_empty:   'Tiada item dalam katalog',
     cat_pick_add:     'Katalog',
     cat_no_price:     'Tiada harga',
+    cat_link_stock:   'Pakai dari Stok?',
+    cat_stock_item:   'Item Stok',
+    cat_pick_stock_ph:'Pilih item stok...',
+    cat_qty_per_svc:  'Kuantiti Digunakan',
+    cat_in_stock:     'ada',
 
     /* inventory */
     inv_types:      'Jenis Item',
@@ -620,6 +625,11 @@ export const translations = {
     cat_pick_empty:   'No items in catalog',
     cat_pick_add:     'Catalog',
     cat_no_price:     'No price set',
+    cat_link_stock:   'Use from Stock?',
+    cat_stock_item:   'Stock Item',
+    cat_pick_stock_ph:'Select stock item...',
+    cat_qty_per_svc:  'Qty Used per Service',
+    cat_in_stock:     'in stock',
 
     /* inventory */
     inv_types:      'Item Types',

@@ -10,16 +10,19 @@ import {
 
 /* ─── Catalog modal (add/edit category, item, variant) ─────────────────── */
 
-function CatalogModal({ modal, onClose, onSave }) {
+function CatalogModal({ modal, onClose, onSave, stockItems = [] }) {
   const { t } = useLang()
   const isVariant = modal.type === 'variant'
   const isItemAdd = modal.type === 'item' && modal.mode === 'add'
   const showPrices = isVariant || isItemAdd
-  const [name, setName]   = useState(modal.data?.name || '')
-  const [cost, setCost]   = useState(modal.data ? String(modal.data.cost_price ?? '') : '')
-  const [sell, setSell]   = useState(modal.data ? String(modal.data.sell_price ?? '') : '')
-  const [saving, setSaving] = useState(false)
-  const [err, setErr]     = useState('')
+  const [name, setName]         = useState(modal.data?.name || '')
+  const [cost, setCost]         = useState(modal.data ? String(modal.data.cost_price ?? '') : '')
+  const [sell, setSell]         = useState(modal.data ? String(modal.data.sell_price ?? '') : '')
+  const [linkStock, setLinkStock] = useState(!!(modal.data?.inventory_item_id))
+  const [stockItemId, setStockItemId] = useState(modal.data?.inventory_item_id || '')
+  const [qtyPerSvc, setQtyPerSvc] = useState(modal.data ? String(modal.data.qty_per_service ?? '1') : '1')
+  const [saving, setSaving]     = useState(false)
+  const [err, setErr]           = useState('')
 
   const titles = {
     'cat-add': t('cat_add_category'), 'cat-edit': t('cat_edit_category'),
@@ -32,7 +35,11 @@ function CatalogModal({ modal, onClose, onSave }) {
     if (showPrices && !sell) { setErr(t('cat_sell_req')); return }
     setSaving(true); setErr('')
     try {
-      await onSave(showPrices ? { name, cost_price: cost, sell_price: sell } : { name })
+      const base = showPrices ? { name, cost_price: cost, sell_price: sell } : { name }
+      const stockFields = isVariant
+        ? { inventory_item_id: linkStock ? stockItemId || null : null, qty_per_service: qtyPerSvc }
+        : {}
+      await onSave({ ...base, ...stockFields })
     } catch (e) { setErr(e.message) }
     finally { setSaving(false) }
   }
@@ -69,6 +76,35 @@ function CatalogModal({ modal, onClose, onSave }) {
               </div>
             </>
           )}
+          {isVariant && (
+            <div className="border-t border-hairline pt-3 space-y-3">
+              <button type="button" onClick={() => setLinkStock(v => !v)}
+                className="flex items-center gap-2 text-xs font-semibold text-charcoal hover:text-ink transition-colors">
+                <div className={`w-8 h-4 rounded-full transition-colors relative ${linkStock ? 'bg-primary' : 'bg-stone'}`}>
+                  <span className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow-sm transition-transform ${linkStock ? 'left-4.5 translate-x-0.5' : 'left-0.5'}`} />
+                </div>
+                {t('cat_link_stock')}
+              </button>
+              {linkStock && (
+                <>
+                  <div>
+                    <label className={lbl}>{t('cat_stock_item')}</label>
+                    <select value={stockItemId} onChange={e => setStockItemId(e.target.value)}
+                      className="w-full bg-canvas border border-hairline rounded-lg px-4 py-2.5 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                      <option value="">— {t('cat_pick_stock_ph')} —</option>
+                      {stockItems.map(i => (
+                        <option key={i.id} value={i.id}>{i.name} ({i.quantity} {i.unit})</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={lbl}>{t('cat_qty_per_svc')}</label>
+                    <input type="text" inputMode="decimal" value={qtyPerSvc} onChange={e => setQtyPerSvc(e.target.value)} placeholder="1" className={inp} />
+                  </div>
+                </>
+              )}
+            </div>
+          )}
           {err && <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{err}</p>}
           <button onClick={handleSave} disabled={saving}
             className="w-full bg-primary hover:bg-primary-deep disabled:bg-stone disabled:cursor-not-allowed text-white font-semibold rounded-full py-2.5 text-sm flex items-center justify-center gap-2 transition-colors">
@@ -91,6 +127,7 @@ function CatalogTab({ workshopId }) {
     addItem, updateItem, deleteItem,
     addVariant, updateVariant, deleteVariant,
   } = useCatalog(workshopId)
+  const { items: stockItems } = useInventory(workshopId)
 
   const [openCats,  setOpenCats]  = useState(new Set())
   const [openItems, setOpenItems] = useState(new Set())
@@ -182,6 +219,14 @@ function CatalogTab({ workshopId }) {
                                   {t('cat_cost_lbl')}: {fmt(v.cost_price)} ·{' '}
                                   <span className="text-badge-success font-semibold">{t('cat_sell_lbl')}: {fmt(v.sell_price)}</span>
                                 </span>
+                                {v.inventory_item && (
+                                  <p className="text-xs text-primary mt-0.5">
+                                    📦 {v.inventory_item.name} × {v.qty_per_service} {v.inventory_item.unit}
+                                    <span className={`ml-1.5 font-semibold ${v.inventory_item.quantity <= 0 ? 'text-red-500' : v.inventory_item.quantity <= (v.inventory_item.reorder_level || 0) ? 'text-amber-600' : 'text-badge-success'}`}>
+                                      ({v.inventory_item.quantity} {t('cat_in_stock')})
+                                    </span>
+                                  </p>
+                                )}
                               </div>
                               <button onClick={() => setModal({ type: 'variant', mode: 'edit', data: v, itemId: item.id, catId: cat.id })}
                                 className="w-6 h-6 flex items-center justify-center text-mute hover:text-ink hover:bg-surface-bone rounded-full transition-colors flex-shrink-0">
@@ -221,6 +266,7 @@ function CatalogTab({ workshopId }) {
       {modal && (
         <CatalogModal
           modal={modal}
+          stockItems={stockItems}
           onClose={() => setModal(null)}
           onSave={async (data) => {
             const { type, mode } = modal

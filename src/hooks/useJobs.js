@@ -8,6 +8,21 @@ function lsLoad(wid) {
 function lsSave(wid, jobs) { localStorage.setItem(lsKey(wid), JSON.stringify(jobs)) }
 function uid() { return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}` }
 
+async function deductStockForServices(services) {
+  if (!services?.length) return services
+  const result = services.map(s => ({ ...s }))
+  for (const svc of result) {
+    if (!svc.inventory_item_id || svc.stock_deducted) continue
+    const { data: item } = await supabase.from('inventory').select('quantity').eq('id', svc.inventory_item_id).single()
+    if (item) {
+      const qty = parseFloat(svc.qty_per_service) || 1
+      await supabase.from('inventory').update({ quantity: Math.max(0, (item.quantity || 0) - qty) }).eq('id', svc.inventory_item_id)
+    }
+    svc.stock_deducted = true
+  }
+  return result
+}
+
 async function safeInsert(payload) {
   let { data, error } = await supabase.from('jobs').insert([payload]).select('*, job_attachments(*)').single()
   if (error?.message?.includes('est_completion')) {
@@ -53,7 +68,8 @@ export function useJobs(workshopId) {
   useEffect(() => { fetchJobs() }, [fetchJobs])
 
   const addJob = async (jobData) => {
-    const payload = { ...jobData, workshop_id: workshopId }
+    const services = await deductStockForServices(jobData.services)
+    const payload = { ...jobData, services, workshop_id: workshopId }
     if (offline) {
       const j = { ...payload, id: uid(), created_at: new Date().toISOString(), job_attachments: [] }
       const next = [j, ...lsLoad(workshopId)]; lsSave(workshopId, next); setJobs(next); return j
@@ -63,11 +79,13 @@ export function useJobs(workshopId) {
   }
 
   const updateJob = async (id, updates) => {
+    const services = await deductStockForServices(updates.services)
+    const payload = { ...updates, services }
     if (offline) {
-      const next = lsLoad(workshopId).map(j => j.id === id ? { ...j, ...updates } : j)
+      const next = lsLoad(workshopId).map(j => j.id === id ? { ...j, ...payload } : j)
       lsSave(workshopId, next); setJobs(next); return next.find(j => j.id === id)
     }
-    const data = await safeUpdate(id, updates)
+    const data = await safeUpdate(id, payload)
     const next = jobs.map(j => j.id === id ? data : j); setJobs(next); lsSave(workshopId, next); return data
   }
 

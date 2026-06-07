@@ -255,9 +255,14 @@ export function JobForm({ initial, onSave, onClose, title }) {
       <CatalogPicker
         workshopId={workshop?.id}
         onClose={() => setShowCatalog(false)}
-        onSelect={(description, amount) => {
+        onSelect={(description, amount, stockInfo) => {
           setForm(f => {
-            const services = [...f.services, { description, amount }]
+            const services = [...f.services, {
+              description, amount,
+              inventory_item_id: stockInfo?.inventory_item_id || null,
+              qty_per_service: stockInfo?.qty_per_service || 1,
+              stock_deducted: false,
+            }]
             const total = recalcTotal(services)
             return { ...f, services, total_amount: String(total.toFixed(2)) }
           })

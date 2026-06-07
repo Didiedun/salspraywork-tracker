@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 
+const VARIANT_SELECT = '*, inventory_item:inventory_item_id(id, name, quantity, unit, reorder_level)'
+
 export function useCatalog(workshopId) {
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
@@ -9,7 +11,7 @@ export function useCatalog(workshopId) {
     if (!workshopId) { setLoading(false); return }
     const { data } = await supabase
       .from('service_categories')
-      .select('*, service_items(*, service_variants(*))')
+      .select(`*, service_items(*, service_variants(${VARIANT_SELECT}))`)
       .eq('workshop_id', workshopId)
       .order('sort_order')
     const sorted = (data || []).map(c => ({
@@ -75,11 +77,17 @@ export function useCatalog(workshopId) {
       : c))
   }
 
-  const addVariant = async (categoryId, itemId, { name, cost_price, sell_price }) => {
+  const addVariant = async (categoryId, itemId, { name, cost_price, sell_price, inventory_item_id, qty_per_service }) => {
     const { data, error } = await supabase
       .from('service_variants')
-      .insert([{ name: name.trim(), item_id: itemId, cost_price: parseFloat(cost_price) || 0, sell_price: parseFloat(sell_price) || 0 }])
-      .select().single()
+      .insert([{
+        name: name.trim(), item_id: itemId,
+        cost_price: parseFloat(cost_price) || 0,
+        sell_price: parseFloat(sell_price) || 0,
+        inventory_item_id: inventory_item_id || null,
+        qty_per_service: parseFloat(qty_per_service) || 1,
+      }])
+      .select(VARIANT_SELECT).single()
     if (error) throw error
     setCategories(prev => prev.map(c => c.id === categoryId
       ? { ...c, service_items: c.service_items.map(i => i.id === itemId
@@ -88,14 +96,21 @@ export function useCatalog(workshopId) {
       : c))
   }
 
-  const updateVariant = async (categoryId, itemId, variantId, { name, cost_price, sell_price }) => {
-    const clean = { name: name.trim(), cost_price: parseFloat(cost_price) || 0, sell_price: parseFloat(sell_price) || 0 }
-    const { error } = await supabase
+  const updateVariant = async (categoryId, itemId, variantId, { name, cost_price, sell_price, inventory_item_id, qty_per_service }) => {
+    const clean = {
+      name: name.trim(),
+      cost_price: parseFloat(cost_price) || 0,
+      sell_price: parseFloat(sell_price) || 0,
+      inventory_item_id: inventory_item_id || null,
+      qty_per_service: parseFloat(qty_per_service) || 1,
+    }
+    const { data, error } = await supabase
       .from('service_variants').update(clean).eq('id', variantId)
+      .select(VARIANT_SELECT).single()
     if (error) throw error
     setCategories(prev => prev.map(c => c.id === categoryId
       ? { ...c, service_items: c.service_items.map(i => i.id === itemId
-          ? { ...i, service_variants: i.service_variants.map(v => v.id === variantId ? { ...v, ...clean } : v) }
+          ? { ...i, service_variants: i.service_variants.map(v => v.id === variantId ? data : v) }
           : i) }
       : c))
   }
