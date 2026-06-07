@@ -93,6 +93,7 @@ export const translations = {
     form_svc_desc_ph:   'cth: Cat Bumbung',
     form_svc_total_auto: 'Jumlah dikira dari senarai servis',
     form_svc_linked:    'Stok dikaitkan · akan ditolak auto',
+    form_autofill:      'Isi automatik',
 
     /* job card */
     card_advance:    'Maju',
@@ -461,6 +462,7 @@ export const translations = {
     form_svc_desc_ph:   'e.g. Roof Painting',
     form_svc_total_auto: 'Total calculated from service list',
     form_svc_linked:    'Stock linked · will auto-deduct',
+    form_autofill:      'Autofill',
 
     /* job card */
     card_advance:    'Advance',

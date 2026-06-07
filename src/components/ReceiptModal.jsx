@@ -82,7 +82,14 @@ function InvoiceBody({ job, workshop, t }) {
           <>
             {job.services.map((svc, i) => (
               <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr auto', paddingBottom: 10, marginBottom: 10, borderBottom: '1px solid #f3f4f6' }}>
-                <p style={{ fontWeight: 500, fontSize: 14 }}>{svc.description}</p>
+                <div>
+                  <p style={{ fontWeight: 500, fontSize: 14 }}>{svc.description}</p>
+                  {(parseFloat(svc.qty) || 1) > 1 && (
+                    <p style={{ color: '#9ca3af', fontSize: 11, marginTop: 2 }}>
+                      {svc.qty} × RM {Number(svc.unit_price || 0).toFixed(2)}
+                    </p>
+                  )}
+                </div>
                 <p style={{ fontWeight: 600, fontSize: 14, textAlign: 'right' }}>{fmt(svc.amount)}</p>
               </div>
             ))}

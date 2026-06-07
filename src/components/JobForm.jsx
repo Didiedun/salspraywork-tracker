@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, Save, Car, User, Phone, FileText, DollarSign, Calendar, Flag, Mail, Plus, Trash2 } from 'lucide-react'
 import { useStages } from '../hooks/useStages'
 import { useLang } from '../context/LanguageContext'
@@ -26,7 +26,7 @@ const EMPTY = {
   services: [],
 }
 
-export function JobForm({ initial, onSave, onClose, title }) {
+export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
   const { stages } = useStages()
   const { t } = useLang()
   const { workshop } = useApp()
@@ -45,8 +45,34 @@ export function JobForm({ initial, onSave, onClose, title }) {
       qty_deducted: s.qty_deducted ?? null,
     })),
   } : { ...EMPTY, stage: stages[0]?.value || 'ready' })
-  const [saving, setSaving] = useState(false)
-  const [err, setErr]       = useState('')
+  const [saving, setSaving]     = useState(false)
+  const [err, setErr]           = useState('')
+  const [suggestion, setSugg]   = useState(null) // { job, by: 'plate'|'phone' }
+
+  useEffect(() => {
+    if (initial || !jobs.length) { setSugg(null); return }
+    const cleanPlate = form.plate.replace(/\s/g, '').toUpperCase()
+    if (cleanPlate.length >= 4) {
+      const m = jobs.find(j => j.plate.replace(/\s/g, '').toUpperCase() === cleanPlate)
+      if (m) { setSugg({ job: m, by: 'plate' }); return }
+    }
+    const cleanPhone = form.phone.replace(/\D/g, '')
+    if (cleanPhone.length >= 8) {
+      const m = jobs.find(j => j.phone && j.phone.replace(/\D/g, '') === cleanPhone)
+      if (m) { setSugg({ job: m, by: 'phone' }); return }
+    }
+    setSugg(null)
+  }, [form.plate, form.phone, jobs, initial])
+
+  const applyAutofill = () => {
+    setForm(f => ({
+      ...f,
+      owner: suggestion.job.owner,
+      car:   suggestion.job.car,
+      phone: suggestion.by === 'plate' ? (suggestion.job.phone || f.phone) : f.phone,
+    }))
+    setSugg(null)
+  }
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
 
@@ -170,6 +196,16 @@ export function JobForm({ initial, onSave, onClose, title }) {
                   onChange={e => setForm(f => ({ ...f, [key]: upper ? e.target.value.toUpperCase() : e.target.value }))}
                   placeholder={placeholder}
                   className={inputCls} />
+                {suggestion && ((key === 'plate' && suggestion.by === 'plate') || (key === 'phone' && suggestion.by === 'phone')) && (
+                  <button type="button" onClick={applyAutofill}
+                    className="mt-1.5 w-full flex items-center gap-2 text-xs bg-primary/5 border border-primary/20 rounded-full px-3 py-2 text-primary hover:bg-primary/10 transition-colors text-left">
+                    <User className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span className="flex-1 min-w-0 truncate font-medium">
+                      {suggestion.job.owner} · {suggestion.job.car}
+                    </span>
+                    <span className="flex-shrink-0 opacity-60">{t('form_autofill')} →</span>
+                  </button>
+                )}
               </div>
             ))}
 

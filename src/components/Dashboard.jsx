@@ -211,7 +211,7 @@ export function Dashboard() {
         </div>
       )}
 
-      {adding && <JobForm onSave={addJob} onClose={() => setAdding(false)} />}
+      {adding && <JobForm onSave={addJob} onClose={() => setAdding(false)} jobs={jobs} />}
     </div>
   )
 }
