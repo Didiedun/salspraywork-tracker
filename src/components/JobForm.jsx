@@ -99,8 +99,8 @@ export function JobForm({ initial, onSave, onClose, title }) {
   const labelCls  = 'flex items-center gap-1.5 text-charcoal text-xs font-semibold mb-1.5'
 
   return (
-    <div className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
-      <div className="bg-surface-card rounded-2xl border border-hairline w-full max-w-lg max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-[60] flex items-end sm:items-center justify-center pt-16 px-0 pb-0 sm:p-4">
+      <div className="bg-surface-card rounded-t-2xl sm:rounded-2xl border border-hairline w-full sm:max-w-lg max-h-[calc(100dvh-4rem)] sm:max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between p-5 border-b border-hairline flex-shrink-0">
           <h2 className="font-display font-bold text-ink text-lg">{title || (initial ? t('form_edit_title') : t('form_new_title'))}</h2>
           <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
