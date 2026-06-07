@@ -274,10 +274,12 @@ export const translations = {
     cat_pick_stock_ph:'Pilih item stok...',
     cat_qty_per_svc:  'Kuantiti Digunakan',
     cat_in_stock:     'ada',
-    cat_create_new:   'Cipta item baharu...',
-    cat_new_name_lbl: 'Nama Item Stok Baharu',
-    cat_new_name_req: 'Nama item stok diperlukan.',
-    cat_new_qty_lbl:  'Kuantiti Awal',
+    cat_create_new:        'Cipta item baharu...',
+    cat_new_name_lbl:      'Nama Item Stok Baharu',
+    cat_new_name_req:      'Nama item stok diperlukan.',
+    cat_new_qty_lbl:       'Kuantiti Awal',
+    cat_item_add_hint:     'Nama, harga & stok dalam satu langkah',
+    cat_creating_stock_for:'Cipta item stok untuk',
 
     /* inventory */
     inv_types:      'Jenis Item',
@@ -636,10 +638,12 @@ export const translations = {
     cat_pick_stock_ph:'Select stock item...',
     cat_qty_per_svc:  'Qty Used per Service',
     cat_in_stock:     'in stock',
-    cat_create_new:   'Create new item...',
-    cat_new_name_lbl: 'New Stock Item Name',
-    cat_new_name_req: 'Stock item name is required.',
-    cat_new_qty_lbl:  'Starting Qty',
+    cat_create_new:        'Create new item...',
+    cat_new_name_lbl:      'New Stock Item Name',
+    cat_new_name_req:      'Stock item name is required.',
+    cat_new_qty_lbl:       'Starting Qty',
+    cat_item_add_hint:     'Name, price & stock in one step',
+    cat_creating_stock_for:'Creating stock entry for',
 
     /* inventory */
     inv_types:      'Item Types',

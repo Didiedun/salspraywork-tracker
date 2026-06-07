@@ -14,20 +14,21 @@ const CREATE_NEW = '__create_new__'
 
 function CatalogModal({ modal, onClose, onSave, stockItems = [], addStockItem }) {
   const { t } = useLang()
-  const isVariant = modal.type === 'variant'
-  const isItemAdd = modal.type === 'item' && modal.mode === 'add'
+  const isVariant  = modal.type === 'variant'
+  const isItemAdd  = modal.type === 'item' && modal.mode === 'add'
   const showPrices = isVariant || isItemAdd
-  const [name, setName]         = useState(modal.data?.name || '')
-  const [cost, setCost]         = useState(modal.data ? String(modal.data.cost_price ?? '') : '')
-  const [sell, setSell]         = useState(modal.data ? String(modal.data.sell_price ?? '') : '')
-  const [linkStock, setLinkStock] = useState(!!(modal.data?.inventory_item_id))
-  const [stockItemId, setStockItemId] = useState(modal.data?.inventory_item_id || '')
-  const [qtyPerSvc, setQtyPerSvc] = useState(modal.data ? String(modal.data.qty_per_service ?? '1') : '1')
-  const [newStockName, setNewStockName] = useState('')
+  const showStock  = isVariant || isItemAdd
+
+  const [name,       setName]       = useState(modal.data?.name || '')
+  const [cost,       setCost]       = useState(modal.data ? String(modal.data.cost_price ?? '') : '')
+  const [sell,       setSell]       = useState(modal.data ? String(modal.data.sell_price ?? '') : '')
+  const [linkStock,  setLinkStock]  = useState(isItemAdd ? true : !!(modal.data?.inventory_item_id))
+  const [stockItemId,setStockItemId]= useState(isItemAdd ? CREATE_NEW : (modal.data?.inventory_item_id || ''))
+  const [qtyPerSvc,  setQtyPerSvc]  = useState(modal.data ? String(modal.data.qty_per_service ?? '1') : '1')
   const [newStockUnit, setNewStockUnit] = useState('pcs')
   const [newStockQty,  setNewStockQty]  = useState('')
-  const [saving, setSaving]     = useState(false)
-  const [err, setErr]           = useState('')
+  const [saving, setSaving] = useState(false)
+  const [err,    setErr]    = useState('')
 
   const isCreatingNew = linkStock && stockItemId === CREATE_NEW
 
@@ -40,13 +41,12 @@ function CatalogModal({ modal, onClose, onSave, stockItems = [], addStockItem })
   const handleSave = async () => {
     if (!name.trim()) { setErr(t('cat_name_req')); return }
     if (showPrices && !sell) { setErr(t('cat_sell_req')); return }
-    if (isCreatingNew && !newStockName.trim()) { setErr(t('cat_new_name_req')); return }
     setSaving(true); setErr('')
     try {
       let resolvedStockId = linkStock ? stockItemId || null : null
       if (isCreatingNew && addStockItem) {
         const newItem = await addStockItem({
-          name: newStockName.trim(),
+          name: name.trim(),
           unit: newStockUnit,
           quantity: parseFloat(newStockQty) || 0,
           unit_cost: cost ? parseFloat(cost) : null,
@@ -56,7 +56,7 @@ function CatalogModal({ modal, onClose, onSave, stockItems = [], addStockItem })
         resolvedStockId = newItem.id
       }
       const base = showPrices ? { name, cost_price: cost, sell_price: sell } : { name }
-      const stockFields = isVariant
+      const stockFields = showStock
         ? { inventory_item_id: resolvedStockId, qty_per_service: qtyPerSvc }
         : {}
       await onSave({ ...base, ...stockFields })
@@ -66,17 +66,23 @@ function CatalogModal({ modal, onClose, onSave, stockItems = [], addStockItem })
 
   const inp = 'w-full bg-canvas border border-hairline rounded-full px-5 py-2.5 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm'
   const lbl = 'text-xs font-semibold text-charcoal mb-1.5 block'
+  const selCls = 'w-full bg-canvas border border-hairline rounded-lg px-4 py-2.5 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary'
 
   return (
-    <div className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-[60] flex items-center justify-center p-6">
-      <div className="bg-surface-card rounded-2xl border border-hairline w-full max-w-sm shadow-xl">
-        <div className="flex items-center justify-between p-5 border-b border-hairline">
-          <h3 className="font-display font-bold text-ink">{titles[`${modal.type}-${modal.mode}`]}</h3>
+    <div className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-[60] flex items-end sm:items-center justify-center pt-16 px-0 pb-0 sm:p-6">
+      <div className="bg-surface-card rounded-t-2xl sm:rounded-2xl border border-hairline w-full sm:max-w-sm max-h-[calc(100dvh-4rem)] sm:max-h-[90vh] flex flex-col shadow-xl">
+        <div className="flex items-center justify-between p-5 border-b border-hairline flex-shrink-0">
+          <div>
+            <h3 className="font-display font-bold text-ink">{titles[`${modal.type}-${modal.mode}`]}</h3>
+            {isItemAdd && <p className="text-xs text-mute mt-0.5">{t('cat_item_add_hint')}</p>}
+          </div>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas">
             <X className="w-4 h-4 text-ash" />
           </button>
         </div>
-        <div className="p-5 space-y-3">
+
+        <div className="p-5 space-y-3 overflow-y-auto flex-1">
+          {/* Name */}
           <div>
             <label className={lbl}>{t('cat_name_lbl')} *</label>
             <input autoFocus value={name} onChange={e => setName(e.target.value)}
@@ -84,8 +90,10 @@ function CatalogModal({ modal, onClose, onSave, stockItems = [], addStockItem })
               placeholder={modal.type === 'cat' ? t('cat_cat_ph') : modal.type === 'item' ? t('cat_item_ph') : t('cat_variant_ph')}
               className={inp} />
           </div>
+
+          {/* Prices */}
           {showPrices && (
-            <>
+            <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className={lbl}>{t('cat_cost_lbl')} (RM)</label>
                 <input type="text" inputMode="decimal" value={cost} onChange={e => setCost(e.target.value)} placeholder="0.00" className={inp} />
@@ -94,26 +102,25 @@ function CatalogModal({ modal, onClose, onSave, stockItems = [], addStockItem })
                 <label className={lbl}>{t('cat_sell_lbl')} (RM) *</label>
                 <input type="text" inputMode="decimal" value={sell} onChange={e => setSell(e.target.value)} placeholder="0.00" className={inp} />
               </div>
-            </>
+            </div>
           )}
-          {isVariant && (
+
+          {/* Stock link */}
+          {showStock && (
             <div className="border-t border-hairline pt-3 space-y-3">
               <button type="button" onClick={() => setLinkStock(v => !v)}
                 className="flex items-center gap-2 text-xs font-semibold text-charcoal hover:text-ink transition-colors">
-                <div className={`w-8 h-4 rounded-full transition-colors relative ${linkStock ? 'bg-primary' : 'bg-stone'}`}>
+                <div className={`w-8 h-4 rounded-full transition-colors relative flex-shrink-0 ${linkStock ? 'bg-primary' : 'bg-stone'}`}>
                   <span className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow-sm transition-transform ${linkStock ? 'left-4.5 translate-x-0.5' : 'left-0.5'}`} />
                 </div>
                 {t('cat_link_stock')}
               </button>
+
               {linkStock && (
                 <>
                   <div>
                     <label className={lbl}>{t('cat_stock_item')}</label>
-                    <select value={stockItemId} onChange={e => {
-                      setStockItemId(e.target.value)
-                      if (e.target.value === CREATE_NEW) setNewStockName(name)
-                    }}
-                      className="w-full bg-canvas border border-hairline rounded-lg px-4 py-2.5 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                    <select value={stockItemId} onChange={e => setStockItemId(e.target.value)} className={selCls}>
                       <option value="">— {t('cat_pick_stock_ph')} —</option>
                       {stockItems.map(i => (
                         <option key={i.id} value={i.id}>{i.name} ({i.quantity} {i.unit})</option>
@@ -121,18 +128,14 @@ function CatalogModal({ modal, onClose, onSave, stockItems = [], addStockItem })
                       <option value={CREATE_NEW}>+ {t('cat_create_new')}</option>
                     </select>
                   </div>
+
                   {isCreatingNew && (
-                    <div className="bg-surface-bone border border-hairline rounded-lg p-3 space-y-2">
-                      <div>
-                        <label className={lbl}>{t('cat_new_name_lbl')} *</label>
-                        <input value={newStockName} onChange={e => setNewStockName(e.target.value)}
-                          placeholder={t('inv_name_ph')} className={inp} />
-                      </div>
+                    <div className="bg-surface-bone border border-hairline rounded-lg px-3 py-2.5 space-y-2">
+                      <p className="text-xs text-mute">{t('cat_creating_stock_for')} <span className="font-semibold text-charcoal">"{name || '...'}"</span></p>
                       <div className="grid grid-cols-2 gap-2">
                         <div>
                           <label className={lbl}>{t('inv_unit')}</label>
-                          <select value={newStockUnit} onChange={e => setNewStockUnit(e.target.value)}
-                            className="w-full bg-canvas border border-hairline rounded-lg px-4 py-2.5 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                          <select value={newStockUnit} onChange={e => setNewStockUnit(e.target.value)} className={selCls}>
                             {['pcs', 'tin', 'liter', 'kg', 'meter', 'set', 'kotak'].map(u => (
                               <option key={u} value={u}>{u}</option>
                             ))}
@@ -146,6 +149,7 @@ function CatalogModal({ modal, onClose, onSave, stockItems = [], addStockItem })
                       </div>
                     </div>
                   )}
+
                   <div>
                     <label className={lbl}>{t('cat_qty_per_svc')}</label>
                     <input type="text" inputMode="decimal" value={qtyPerSvc} onChange={e => setQtyPerSvc(e.target.value)} placeholder="1" className={inp} />
@@ -154,7 +158,11 @@ function CatalogModal({ modal, onClose, onSave, stockItems = [], addStockItem })
               )}
             </div>
           )}
+
           {err && <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{err}</p>}
+        </div>
+
+        <div className="p-4 border-t border-hairline flex-shrink-0">
           <button onClick={handleSave} disabled={saving}
             className="w-full bg-primary hover:bg-primary-deep disabled:bg-stone disabled:cursor-not-allowed text-white font-semibold rounded-full py-2.5 text-sm flex items-center justify-center gap-2 transition-colors">
             <Save className="w-4 h-4" />
@@ -327,7 +335,13 @@ function CatalogTab({ workshopId }) {
               if (mode === 'add') {
                 const item = await addItem(modal.catId, data.name)
                 if (data.sell_price && item?.id) {
-                  await addVariant(modal.catId, item.id, { name: 'Standard', cost_price: data.cost_price || 0, sell_price: data.sell_price })
+                  await addVariant(modal.catId, item.id, {
+                    name: 'Standard',
+                    cost_price: data.cost_price || 0,
+                    sell_price: data.sell_price,
+                    inventory_item_id: data.inventory_item_id || null,
+                    qty_per_service: data.qty_per_service || 1,
+                  })
                 }
               } else await updateItem(modal.catId, modal.data.id, data.name)
             } else if (type === 'variant') {
