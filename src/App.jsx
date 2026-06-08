@@ -12,6 +12,7 @@ import { CustomerView }      from './components/CustomerView'
 import { LandingPage }       from './components/LandingPage'
 import { WorkshopSettings }  from './components/WorkshopSettings'
 import { FinancePage }       from './components/FinancePage'
+import { PayrollPage }       from './components/PayrollPage'
 import { MaintenancePage }   from './components/MaintenancePage'
 import { RefreshCw }     from 'lucide-react'
 
@@ -64,6 +65,7 @@ function AppRoutes() {
           <Route path="/inventory" element={<Layout><InventoryPage /></Layout>} />
           <Route path="/finance"   element={<Layout><FinancePage /></Layout>} />
           <Route path="/workers"   element={<Layout><WorkersPage /></Layout>} />
+          <Route path="/payroll"   element={<Layout><PayrollPage /></Layout>} />
           <Route path="/settings"  element={<Layout><WorkshopSettings /></Layout>} />
           <Route path="*"          element={<Navigate to="/dashboard" replace />} />
         </>
