@@ -3,10 +3,10 @@ export const translations = {
     /* nav / sidebar */
     nav_dashboard: 'Dashboard',
     nav_inventory: 'Katalog',
-    nav_workers:   'Pekerja',
+    nav_workers:   'Pekerja',  /* kept for backward compat */
     nav_settings:  'Tetapan',
     nav_finance:   'Kewangan',
-    nav_payroll:   'Gaji',
+    nav_payroll:   'Pekerja',
     nav_portal:    'Portal Pelanggan',
     nav_logout:    'Log Keluar',
     lang_other:    'English',
@@ -290,9 +290,13 @@ export const translations = {
     st_link_hint:    'Kongsi link ini supaya pelanggan boleh semak status kenderaan sendiri.',
 
     /* payroll */
-    pr_title:            'Gaji & HR',
-    pr_tab_emp:          'Pekerja',
+    pr_title:            'Pengurusan Pekerja',
+    pr_tab_emp:          'Profil Staf',
     pr_tab_pay:          'Gaji Bulanan',
+    pr_tab_access:       'Akses App',
+    pr_access_hint:      'Pekerja yang ada akaun Digital Depot boleh log masuk dan lihat kerja yang ditugaskan kepada mereka.',
+    pr_access_members:   'Pengguna Aktif',
+    pr_access_invites:   'Kod Jemputan',
     pr_add_emp:          'Tambah Pekerja',
     pr_edit_emp:         'Edit Pekerja',
     pr_no_emp:           'Tiada pekerja ditambah',
@@ -546,7 +550,7 @@ export const translations = {
     nav_workers:   'Workers',
     nav_settings:  'Settings',
     nav_finance:   'Finance',
-    nav_payroll:   'Payroll',
+    nav_payroll:   'Staff',
     nav_portal:    'Customer Portal',
     nav_logout:    'Sign Out',
     lang_other:    'Bahasa',
@@ -830,9 +834,13 @@ export const translations = {
     st_link_hint:    'Share this link so customers can check their vehicle status.',
 
     /* payroll */
-    pr_title:            'Payroll & HR',
-    pr_tab_emp:          'Employees',
+    pr_title:            'Staff Management',
+    pr_tab_emp:          'Staff Profiles',
     pr_tab_pay:          'Monthly Payroll',
+    pr_tab_access:       'App Access',
+    pr_access_hint:      'Staff with a Digital Depot account can log in and view jobs assigned to them.',
+    pr_access_members:   'Active Users',
+    pr_access_invites:   'Invite Codes',
     pr_add_emp:          'Add Employee',
     pr_edit_emp:         'Edit Employee',
     pr_no_emp:           'No employees added',

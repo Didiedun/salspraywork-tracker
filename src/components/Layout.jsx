@@ -6,7 +6,7 @@ import { TutorialModal } from './TutorialModal'
 import { FeedbackWidget } from './FeedbackWidget'
 import {
   LayoutDashboard, Package, Users, LogOut, ExternalLink, Settings, Wallet,
-  Menu, X, Globe, HelpCircle, ChevronLeft, ChevronRight, Receipt,
+  Menu, X, Globe, HelpCircle, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 
 function Sidebar({ workshop, signOut, onClose, collapsed, onToggleCollapsed }) {
@@ -17,8 +17,7 @@ function Sidebar({ workshop, signOut, onClose, collapsed, onToggleCollapsed }) {
     { to: '/dashboard', label: t('nav_dashboard'), icon: LayoutDashboard },
     { to: '/inventory', label: t('nav_inventory'), icon: Package },
     { to: '/finance',   label: t('nav_finance'),   icon: Wallet },
-    { to: '/workers',   label: t('nav_workers'),   icon: Users    },
-    { to: '/payroll',   label: t('nav_payroll'),   icon: Receipt  },
+    { to: '/payroll',   label: t('nav_payroll'),   icon: Users    },
     { to: '/settings',  label: t('nav_settings'),  icon: Settings },
   ]
 

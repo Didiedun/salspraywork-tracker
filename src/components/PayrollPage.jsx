@@ -1,11 +1,13 @@
-import { useState, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LanguageContext'
 import { useEmployees } from '../hooks/useEmployees'
 import { usePayroll } from '../hooks/usePayroll'
+import { supabase } from '../lib/supabase'
 import {
   Users, Plus, Pencil, Trash2, Save, X, Loader, AlertTriangle,
   ChevronLeft, ChevronRight, Printer, Download, Lock, RotateCcw,
+  Copy, Check, UserPlus, RefreshCw, Shield,
 } from 'lucide-react'
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -708,6 +710,190 @@ function PayrollTab({ workshopId }) {
   )
 }
 
+// ─── App access tab (formerly WorkersPage) ───────────────────────────────────
+function AppAccessTab({ workshopId }) {
+  const { t } = useLang()
+  const [members,    setMembers]    = useState([])
+  const [invites,    setInvites]    = useState([])
+  const [loading,    setLoading]    = useState(true)
+  const [generating, setGenerating] = useState(false)
+  const [copied,     setCopied]     = useState(null)
+  const [editingId,  setEditingId]  = useState(null)
+  const [editName,   setEditName]   = useState('')
+  const [savingName, setSavingName] = useState(false)
+
+  const load = async () => {
+    if (!workshopId) return
+    setLoading(true)
+    const [mem, inv] = await Promise.all([
+      supabase.rpc('get_workshop_members', { workshop_uuid: workshopId }),
+      supabase.from('workshop_invites').select('*')
+        .eq('workshop_id', workshopId).is('used_at', null).order('created_at', { ascending: false }),
+    ])
+    setMembers(mem.data || [])
+    setInvites(inv.data || [])
+    setLoading(false)
+  }
+
+  useEffect(() => { load() }, [workshopId])
+
+  const generateInvite = async () => {
+    setGenerating(true)
+    try {
+      const code = Math.random().toString(36).slice(2, 8).toUpperCase()
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+      const { data, error } = await supabase.from('workshop_invites')
+        .insert([{ workshop_id: workshopId, code, role: 'worker', expires_at: expiresAt }])
+        .select().single()
+      if (error) throw error
+      setInvites(prev => [data, ...prev])
+    } catch (e) { alert(e.message) }
+    finally { setGenerating(false) }
+  }
+
+  const copyCode = (code) => {
+    navigator.clipboard.writeText(code)
+    setCopied(code); setTimeout(() => setCopied(null), 2000)
+  }
+
+  const saveName = async (memberId) => {
+    setSavingName(true)
+    try {
+      const { error } = await supabase.from('workshop_members')
+        .update({ name: editName.trim() || null }).eq('id', memberId)
+      if (error) throw error
+      setMembers(prev => prev.map(m => m.id === memberId ? { ...m, name: editName.trim() || null } : m))
+      setEditingId(null)
+    } catch (e) { alert(e.message) }
+    finally { setSavingName(false) }
+  }
+
+  const removeMember = async (member) => {
+    if (!window.confirm(t('wk_remove'))) return
+    const { error } = await supabase.from('workshop_members').delete().eq('id', member.id)
+    if (error) { alert(error.message); return }
+    setMembers(prev => prev.filter(m => m.id !== member.id))
+  }
+
+  const revokeInvite = async (invite) => {
+    const { error } = await supabase.from('workshop_invites').delete().eq('id', invite.id)
+    if (error) { alert(error.message); return }
+    setInvites(prev => prev.filter(i => i.id !== invite.id))
+  }
+
+  if (loading) return <div className="py-12 text-center"><RefreshCw className="w-5 h-5 animate-spin text-mute mx-auto" /></div>
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+        <p className="text-xs text-blue-800">{t('pr_access_hint')}</p>
+      </div>
+
+      {/* Current members */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-semibold text-ink text-sm">{t('pr_access_members')} ({members.length})</h3>
+        </div>
+        {members.length === 0 ? (
+          <div className="bg-surface-card border border-hairline rounded-lg p-6 text-center">
+            <p className="text-charcoal text-sm">{t('wk_no_workers')}</p>
+            <p className="text-mute text-xs mt-1">{t('wk_no_workers_sub')}</p>
+          </div>
+        ) : (
+          <div className="bg-surface-card rounded-lg border border-hairline overflow-hidden">
+            {members.map((m, i) => (
+              <div key={m.id}
+                className={`flex items-center gap-3 px-4 py-3.5 ${i < members.length - 1 ? 'border-b border-hairline' : ''}`}>
+                <div className="w-9 h-9 rounded-full bg-surface-bone border border-hairline flex items-center justify-center flex-shrink-0">
+                  <span className="text-charcoal font-bold text-sm">{(m.name || m.email || '?')[0].toUpperCase()}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  {editingId === m.id ? (
+                    <div className="flex items-center gap-2">
+                      <input autoFocus value={editName} onChange={e => setEditName(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') saveName(m.id); if (e.key === 'Escape') setEditingId(null) }}
+                        placeholder={m.email?.split('@')[0]}
+                        className="flex-1 bg-canvas border border-hairline rounded-full px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                      <button onClick={() => saveName(m.id)} disabled={savingName}
+                        className="w-7 h-7 rounded-full bg-primary flex items-center justify-center disabled:opacity-50">
+                        {savingName ? <Loader className="w-3 h-3 text-white animate-spin" /> : <Check className="w-3.5 h-3.5 text-white" />}
+                      </button>
+                      <button onClick={() => setEditingId(null)}
+                        className="w-7 h-7 rounded-full border border-hairline flex items-center justify-center text-mute hover:text-ink">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 group">
+                      <p className="text-ink font-semibold text-sm">{m.name || m.email?.split('@')[0] || t('wk_no_name')}</p>
+                      <button onClick={() => { setEditingId(m.id); setEditName(m.name || '') }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity text-ash hover:text-charcoal">
+                        <Pencil className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                  <p className="text-mute text-xs truncate mt-0.5">{m.email}</p>
+                </div>
+                <span className="text-[10px] bg-surface-bone border border-hairline px-2 py-0.5 rounded-full text-charcoal font-semibold flex items-center gap-1 flex-shrink-0">
+                  <Shield className="w-2.5 h-2.5" />{m.role}
+                </span>
+                {editingId !== m.id && (
+                  <button onClick={() => removeMember(m)}
+                    className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-red-50 text-mute hover:text-red-500 transition-colors">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Invite codes */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-semibold text-ink text-sm">{t('pr_access_invites')}</h3>
+          <button onClick={generateInvite} disabled={generating}
+            className="flex items-center gap-2 bg-primary hover:bg-primary-deep disabled:bg-stone text-white font-semibold rounded-full px-4 py-2 text-sm transition-colors">
+            <UserPlus className="w-3.5 h-3.5" />
+            {generating ? t('wk_generating') : t('wk_gen_invite')}
+          </button>
+        </div>
+        {invites.length === 0 ? (
+          <div className="bg-surface-card border border-hairline rounded-lg p-5 text-center">
+            <p className="text-charcoal text-sm">{t('wk_no_invites')}</p>
+            <p className="text-mute text-xs mt-1">{t('wk_no_invites_sub')}</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {invites.map(invite => (
+              <div key={invite.id} className="bg-surface-card border border-hairline rounded-md px-4 py-3 flex items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <span className="font-mono font-bold text-ink text-lg tracking-widest">{invite.code}</span>
+                  {invite.expires_at && (
+                    <p className="text-mute text-xs mt-0.5">{t('wk_expires')} {new Date(invite.expires_at).toLocaleDateString('ms-MY')}</p>
+                  )}
+                </div>
+                <button onClick={() => copyCode(invite.code)}
+                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full border border-hairline bg-canvas hover:bg-surface-bone transition-colors">
+                  {copied === invite.code
+                    ? <><Check className="w-3.5 h-3.5 text-badge-success" /> {t('copied')}</>
+                    : <><Copy className="w-3.5 h-3.5" /> {t('wk_copy')}</>}
+                </button>
+                <button onClick={() => revokeInvite(invite)}
+                  className="w-8 h-8 flex items-center justify-center text-mute hover:text-red-500 hover:bg-red-50 rounded-full transition-colors">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        <p className="text-ash text-xs mt-3 px-1">{t('wk_invite_hint')}</p>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 export function PayrollPage() {
   const { workshop } = useApp()
@@ -731,10 +917,12 @@ export function PayrollPage() {
       <div className="flex gap-1 bg-surface-bone rounded-full p-1 w-fit">
         <button onClick={() => setTab('employees')} className={tabCls('employees')}>{t('pr_tab_emp')}</button>
         <button onClick={() => setTab('payroll')}   className={tabCls('payroll')}>{t('pr_tab_pay')}</button>
+        <button onClick={() => setTab('access')}    className={tabCls('access')}>{t('pr_tab_access')}</button>
       </div>
 
       {tab === 'employees' && <EmployeesTab workshopId={workshop?.id} />}
       {tab === 'payroll'   && <PayrollTab   workshopId={workshop?.id} />}
+      {tab === 'access'    && <AppAccessTab workshopId={workshop?.id} />}
     </div>
   )
 }
