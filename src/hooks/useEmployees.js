@@ -15,7 +15,9 @@ export function useEmployees(workshopId) {
       .eq('workshop_id', workshopId)
       .eq('status', 'active')
       .order('name')
-    if (error?.code === '42P01') { setNeedsMigration(true); setLoading(false); return }
+    // 42P01 = Postgres "relation does not exist"; PGRST205 = PostgREST "table not
+    // found in schema cache" (what Supabase actually returns for a missing table).
+    if (error?.code === '42P01' || error?.code === 'PGRST205') { setNeedsMigration(true); setLoading(false); return }
     setEmployees(data || [])
     setLoading(false)
   }, [workshopId])

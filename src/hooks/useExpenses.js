@@ -22,8 +22,8 @@ export function useExpenses(workshopId) {
       .lte('date', to)
       .order('date', { ascending: false })
     if (err) {
-      // 42P01 = table does not exist
-      if (err.code === '42P01' || err.message?.toLowerCase().includes('relation')) {
+      // 42P01 = table does not exist; PGRST205 = PostgREST "not in schema cache"
+      if (err.code === '42P01' || err.code === 'PGRST205' || err.message?.toLowerCase().includes('relation')) {
         setNeedsMigration(true)
       } else {
         setError(err.message)
