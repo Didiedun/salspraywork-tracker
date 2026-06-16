@@ -24,10 +24,14 @@ body {
   animation: slideUp 0.2s ease-out;
 }
 
-/* Print isolation — only the marked document prints, not the app behind the modal */
+/* Print isolation — only the marked document prints, not the app behind the modal.
+   Two documents use this: payslip/EA via the .printable class, and the invoice
+   receipt via its own #invoice-print-portal (toggled in ReceiptModal). Both must
+   be un-hidden here, or the body* rule below blanks them out. */
 @media print {
   body * { visibility: hidden; }
-  .printable, .printable * { visibility: visible; }
+  .printable, .printable *,
+  #invoice-print-portal, #invoice-print-portal * { visibility: visible; }
   .printable {
     position: absolute;
     left: 0;
