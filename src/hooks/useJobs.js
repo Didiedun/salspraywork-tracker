@@ -36,14 +36,22 @@ async function deductStockForServices(services) {
 
 const OPTIONAL_COLS = ['est_completion', 'next_service_date', 'assigned_to', 'payment_method', 'discount']
 
-function stripOptional(payload) {
-  return Object.fromEntries(Object.entries(payload).filter(([k]) => !OPTIONAL_COLS.includes(k)))
+// Columns an older DB schema might lack. On a "column not found" error we strip
+// ONLY the column(s) the error actually names — not every optional column — so a
+// single missing column (e.g. assigned_to) can't silently discard the others
+// (e.g. discount).
+function missingCols(error) {
+  return error?.message ? OPTIONAL_COLS.filter(c => error.message.includes(c)) : []
+}
+function omit(payload, cols) {
+  return Object.fromEntries(Object.entries(payload).filter(([k]) => !cols.includes(k)))
 }
 
 async function safeInsert(payload) {
   let { data, error } = await supabase.from('jobs').insert([payload]).select('*, job_attachments(*)').single()
-  if (error && OPTIONAL_COLS.some(c => error.message?.includes(c))) {
-    ;({ data, error } = await supabase.from('jobs').insert([stripOptional(payload)]).select('*, job_attachments(*)').single())
+  const miss = missingCols(error)
+  if (error && miss.length) {
+    ;({ data, error } = await supabase.from('jobs').insert([omit(payload, miss)]).select('*, job_attachments(*)').single())
   }
   if (error) throw error
   return data
@@ -51,8 +59,9 @@ async function safeInsert(payload) {
 
 async function safeUpdate(id, payload) {
   let { data, error } = await supabase.from('jobs').update(payload).eq('id', id).select('*, job_attachments(*)').single()
-  if (error && OPTIONAL_COLS.some(c => error.message?.includes(c))) {
-    ;({ data, error } = await supabase.from('jobs').update(stripOptional(payload)).eq('id', id).select('*, job_attachments(*)').single())
+  const miss = missingCols(error)
+  if (error && miss.length) {
+    ;({ data, error } = await supabase.from('jobs').update(omit(payload, miss)).eq('id', id).select('*, job_attachments(*)').single())
   }
   if (error) throw error
   return data
