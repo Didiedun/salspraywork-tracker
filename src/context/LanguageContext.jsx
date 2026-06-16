@@ -11,7 +11,15 @@ export function LanguageProvider({ children }) {
     localStorage.setItem('lang', l)
   }
 
-  const t = (key) => translations[lang]?.[key] ?? translations.ms[key] ?? key
+  const t = (key, params) => {
+    let str = translations[lang]?.[key] ?? translations.ms[key] ?? key
+    if (params) {
+      for (const [k, v] of Object.entries(params)) {
+        str = str.replace(new RegExp(`\\{${k}\\}`, 'g'), v)
+      }
+    }
+    return str
+  }
 
   return (
     <LanguageContext.Provider value={{ lang, setLang, t }}>
