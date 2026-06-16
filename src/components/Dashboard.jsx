@@ -55,7 +55,7 @@ export function Dashboard() {
   const unpaid       = activeJobs.filter(j => paymentStatus(j) === 'unpaid').length
   const deposit      = activeJobs.filter(j => paymentStatus(j) === 'deposit').length
   const paid         = activeJobs.filter(j => paymentStatus(j) === 'paid').length
-  const totalRevenue = jobs.filter(j => j.paid).reduce((s, j) => s + (Number(j.total_amount) || 0), 0)
+  const totalRevenue = jobs.filter(j => j.paid).reduce((s, j) => s + (Number(j.total_amount) || 0) - (Number(j.discount) || 0), 0)
 
   const now = new Date()
   const thisMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -67,8 +67,9 @@ export function Dashboard() {
     jobs.forEach(j => {
       if (!j.paid || !j.total_amount) return
       const key = (j.date_in || j.created_at || '').slice(0, 7)
-      if (key === thisMonthKey) { thisRev += Number(j.total_amount); thisJobs++ }
-      if (key === lastMonthKey) { lastRev += Number(j.total_amount); lastJobs++ }
+      const net = Number(j.total_amount) - (Number(j.discount) || 0)
+      if (key === thisMonthKey) { thisRev += net; thisJobs++ }
+      if (key === lastMonthKey) { lastRev += net; lastJobs++ }
     })
     return { thisRev, lastRev, thisJobs, lastJobs }
   }, [jobs, thisMonthKey, lastMonthKey])

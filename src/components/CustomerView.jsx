@@ -98,7 +98,7 @@ export function CustomerView() {
   const wsWaNum = workshop?.phone ? (() => { const d = workshop.phone.replace(/\D/g,''); return d.startsWith('60') ? d : '60'+d.replace(/^0/,'') })() : null
   const formatDate   = (d) => d ? new Date(d).toLocaleDateString('ms-MY', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'
   const formatMoney  = (v) => v != null ? `RM ${Number(v).toFixed(2)}` : '-'
-  const balance      = job ? (Number(job.total_amount) || 0) - (Number(job.downpayment) || 0) : 0
+  const balance      = job ? (Number(job.total_amount) || 0) - (Number(job.discount) || 0) - (Number(job.downpayment) || 0) : 0
   const pStatus      = job ? paymentStatus(job) : null
 
   const paymentBorder = {
@@ -281,6 +281,12 @@ export function CustomerView() {
                   <span className="text-charcoal">{t('pay_total')}</span>
                   <span className="text-ink font-semibold">{formatMoney(job.total_amount)}</span>
                 </div>
+                {Number(job.discount) > 0 && (
+                  <div className="flex items-center justify-between text-sm mt-1">
+                    <span className="text-charcoal">{t('rc_discount')}</span>
+                    <span className="text-badge-success font-semibold">- {formatMoney(job.discount)}</span>
+                  </div>
+                )}
                 {job.downpayment > 0 && (
                   <div className="flex items-center justify-between text-sm mt-1">
                     <span className="text-charcoal">{t('pay_deposit_paid')}</span>

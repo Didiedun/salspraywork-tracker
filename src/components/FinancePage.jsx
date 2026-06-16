@@ -110,9 +110,11 @@ export function FinancePage() {
 
   const monthKey = `${year}-${String(month).padStart(2, '0')}`
 
+  // Actual revenue is the discounted total (total_amount − discount).
+  const jobNet = (j) => (Number(j.total_amount) || 0) - (Number(j.discount) || 0)
   const monthRevenue = useMemo(() =>
     jobs.filter(j => j.paid && (j.date_in || j.created_at || '').slice(0, 7) === monthKey)
-      .reduce((s, j) => s + (Number(j.total_amount) || 0), 0),
+      .reduce((s, j) => s + jobNet(j), 0),
     [jobs, monthKey]
   )
   const paidJobs = useMemo(() =>
@@ -144,7 +146,7 @@ export function FinancePage() {
         (j.date_in || j.created_at || '').slice(0, 10),
         'Pendapatan', j.stage || '',
         `${j.plate} — ${j.owner}`,
-        Number(j.total_amount).toFixed(2),
+        jobNet(j).toFixed(2),
       ]),
       ...expenses.map(e => [
         e.date, 'Perbelanjaan', t(`fin_cat_${e.category}`),
@@ -368,7 +370,7 @@ CREATE POLICY "service_manage_events" ON payment_events FOR ALL USING (true);`
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="text-sm font-bold text-badge-success">
-                      RM {Number(j.total_amount).toFixed(2)}
+                      RM {jobNet(j).toFixed(2)}
                     </p>
                     <p className="text-xs text-mute">{(j.date_in || j.created_at || '').slice(0, 10)}</p>
                   </div>

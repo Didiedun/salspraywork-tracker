@@ -16,7 +16,7 @@ export function RevenueChart({ jobs }) {
       const d   = new Date(j.created_at)
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
       const m   = result.find(r => r.key === key)
-      if (m) { m.revenue += Number(j.total_amount); m.count++ }
+      if (m) { m.revenue += Number(j.total_amount) - (Number(j.discount) || 0); m.count++ }
     })
     return result
   }, [jobs])

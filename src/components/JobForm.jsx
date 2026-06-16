@@ -21,7 +21,7 @@ function Toggle({ checked, onToggle, label }) {
 const EMPTY = {
   plate: '', owner: '', phone: '', car: '', notes: '',
   customer_email: '',
-  total_amount: '', downpayment: '', type: 'walk-in',
+  total_amount: '', discount: '', downpayment: '', type: 'walk-in',
   stage: 'ready', paid: false, archived: false,
   date_in: '', est_completion: '', next_service_date: '',
   assigned_to: '',
@@ -37,6 +37,7 @@ export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
   const [form, setForm] = useState(initial ? {
     ...EMPTY, ...initial,
     total_amount:      initial.total_amount      ?? '',
+    discount:          initial.discount          ?? '',
     downpayment:       initial.downpayment       ?? '',
     customer_email:    initial.customer_email    ?? '',
     date_in:           initial.date_in           ? initial.date_in.slice(0, 10)           : '',
@@ -151,6 +152,7 @@ export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
         car:            form.car.trim(),
         notes:          form.notes.trim(),
         total_amount:   form.total_amount  ? parseFloat(form.total_amount)  : null,
+        discount:       form.discount      ? parseFloat(form.discount)      : 0,
         downpayment:    form.downpayment   ? parseFloat(form.downpayment)   : 0,
         type:           form.type,
         stage:          form.stage,
@@ -314,7 +316,7 @@ export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
               )}
             </div>
 
-            {/* Money — total auto-fills from services, deposit manual */}
+            {/* Money — total auto-fills from services, discount + deposit manual */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={labelCls}><DollarSign className="w-3.5 h-3.5" /> {t('form_total')}</label>
@@ -324,10 +326,38 @@ export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
                 )}
               </div>
               <div>
+                <label className={labelCls}><DollarSign className="w-3.5 h-3.5" /> {t('form_discount')}</label>
+                <input type="text" inputMode="decimal" value={form.discount} onChange={set('discount')} placeholder="0.00" className={inputCls} />
+              </div>
+              <div>
                 <label className={labelCls}><DollarSign className="w-3.5 h-3.5" /> {t('form_deposit')}</label>
                 <input type="text" inputMode="decimal" value={form.downpayment} onChange={set('downpayment')} placeholder="0.00" className={inputCls} />
               </div>
             </div>
+
+            {/* Live total/balance summary */}
+            {(() => {
+              const total = parseFloat(form.total_amount) || 0
+              const disc  = parseFloat(form.discount) || 0
+              const dep   = parseFloat(form.downpayment) || 0
+              if (total <= 0 && disc <= 0) return null
+              const net = total - disc
+              const bal = net - dep
+              const money = (v) => `RM ${v.toFixed(2)}`
+              return (
+                <div className="bg-surface-bone border border-hairline rounded-xl px-4 py-3 space-y-1 text-xs">
+                  {disc > 0 && (
+                    <>
+                      <div className="flex justify-between"><span className="text-mute">{t('rc_subtotal')}</span><span>{money(total)}</span></div>
+                      <div className="flex justify-between"><span className="text-mute">{t('rc_discount')}</span><span className="text-badge-success">− {money(disc)}</span></div>
+                    </>
+                  )}
+                  <div className="flex justify-between font-semibold"><span className="text-charcoal">{t('form_total')}</span><span>{money(net)}</span></div>
+                  {dep > 0 && <div className="flex justify-between"><span className="text-mute">{t('form_deposit')}</span><span className="text-badge-success">− {money(dep)}</span></div>}
+                  <div className="flex justify-between font-bold border-t border-hairline pt-1.5 mt-1"><span className="text-charcoal">{t('rc_balance')}</span><span className="text-primary">{money(bal)}</span></div>
+                </div>
+              )
+            })()}
 
             {/* Stage select */}
             <div>

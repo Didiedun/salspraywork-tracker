@@ -14,9 +14,11 @@ const METHODS = [
 export function PaymentModal({ job, onSave, onClose }) {
   const { t } = useLang()
   const { workshop } = useApp()
-  const total   = Number(job.total_amount) || 0
-  const deposit = Number(job.downpayment)  || 0
-  const balance = total - deposit
+  const total    = Number(job.total_amount) || 0
+  const discount = Number(job.discount)     || 0
+  const netTotal = total - discount
+  const deposit  = Number(job.downpayment)  || 0
+  const balance  = netTotal - deposit
 
   const [method,       setMethod]       = useState('cash')
   const [amount,       setAmount]       = useState('')
@@ -43,7 +45,7 @@ export function PaymentModal({ job, onSave, onClose }) {
     if (collected <= 0) return
     setSaving(true)
     try {
-      const newDeposit = Math.min(deposit + collected, total)
+      const newDeposit = Math.min(deposit + collected, netTotal)
       await onSave(job.id, {
         downpayment:    newDeposit,
         paid:           isFullPay,
@@ -109,10 +111,27 @@ export function PaymentModal({ job, onSave, onClose }) {
           {/* Bill summary */}
           <div className="bg-surface-bone rounded-xl p-4 space-y-2">
             <p className="text-xs font-bold text-charcoal">{job.plate} — {job.owner}</p>
-            <div className="flex justify-between text-sm">
-              <span className="text-mute">{t('rc_total')}</span>
-              <span className="font-medium">{fmt(total)}</span>
-            </div>
+            {discount > 0 ? (
+              <>
+                <div className="flex justify-between text-sm">
+                  <span className="text-mute">{t('rc_subtotal')}</span>
+                  <span className="font-medium">{fmt(total)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-mute">{t('rc_discount')}</span>
+                  <span className="text-badge-success font-medium">− {fmt(discount)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-mute">{t('rc_total')}</span>
+                  <span className="font-medium">{fmt(netTotal)}</span>
+                </div>
+              </>
+            ) : (
+              <div className="flex justify-between text-sm">
+                <span className="text-mute">{t('rc_total')}</span>
+                <span className="font-medium">{fmt(total)}</span>
+              </div>
+            )}
             {deposit > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-mute">{t('pay_deposit_paid')}</span>

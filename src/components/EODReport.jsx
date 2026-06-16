@@ -30,7 +30,7 @@ export function EODReport({ jobs, workshop, onClose }) {
 
     const txns = relevant.map(j => {
       const method = ['cash', 'card', 'duitnow'].includes(j.payment_method) ? j.payment_method : 'other'
-      const amt    = j.paid ? (Number(j.total_amount) || 0) : (Number(j.downpayment) || 0)
+      const amt    = j.paid ? ((Number(j.total_amount) || 0) - (Number(j.discount) || 0)) : (Number(j.downpayment) || 0)
       s[method].amt   += amt
       s[method].count += 1
       total += amt

@@ -34,7 +34,7 @@ export function CustomerHistoryModal({ plate, onClose }) {
     const normalized = plate.replace(/\s/g, '').toUpperCase()
     supabase
       .from('jobs')
-      .select('id, created_at, date_in, stage, paid, total_amount, downpayment, services, owner, car, plate, notes')
+      .select('id, created_at, date_in, stage, paid, total_amount, discount, downpayment, services, owner, car, plate, notes')
       .eq('workshop_id', workshop.id)
       .ilike('plate', normalized)
       .order('created_at', { ascending: false })
@@ -77,7 +77,7 @@ export function CustomerHistoryModal({ plate, onClose }) {
                 const pStatus = paymentStatus(job)
                 const pColor  = PAYMENT_COLOR[pStatus]
                 const pLabel  = PAYMENT_LABEL[pStatus]
-                const balance = (Number(job.total_amount) || 0) - (Number(job.downpayment) || 0)
+                const balance = (Number(job.total_amount) || 0) - (Number(job.discount) || 0) - (Number(job.downpayment) || 0)
                 const isCurrent = idx === 0
 
                 return (

@@ -10,7 +10,10 @@ function makeInvNo(job) {
 }
 
 function InvoiceBody({ job, workshop, t }) {
-  const balance  = (Number(job.total_amount) || 0) - (Number(job.downpayment) || 0)
+  const subtotal = Number(job.total_amount) || 0
+  const discount = Number(job.discount) || 0
+  const netTotal = subtotal - discount
+  const balance  = netTotal - (Number(job.downpayment) || 0)
   const fmt      = (v) => v != null ? `RM ${Number(v).toFixed(2)}` : '-'
   const fmtDate  = (d) => d ? new Date(d).toLocaleDateString('ms-MY', { day: '2-digit', month: 'long', year: 'numeric' }) : '-'
   const pStatus  = paymentStatus(job)
@@ -119,9 +122,21 @@ function InvoiceBody({ job, workshop, t }) {
       {/* Payment summary */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 20 }}>
         <div style={{ width: 240 }}>
+          {discount > 0 && (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
+                <span style={{ color: '#6b7280' }}>{t('rc_subtotal')}</span>
+                <span style={{ fontWeight: 500 }}>{fmt(subtotal)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
+                <span style={{ color: '#6b7280' }}>{t('rc_discount')}</span>
+                <span style={{ color: '#059669', fontWeight: 500 }}>− {fmt(discount)}</span>
+              </div>
+            </>
+          )}
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
             <span style={{ color: '#6b7280' }}>{t('rc_total')}</span>
-            <span style={{ fontWeight: 500 }}>{fmt(job.total_amount)}</span>
+            <span style={{ fontWeight: 500 }}>{fmt(netTotal)}</span>
           </div>
           {(Number(job.downpayment) || 0) > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>

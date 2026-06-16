@@ -34,7 +34,7 @@ async function deductStockForServices(services) {
   return result
 }
 
-const OPTIONAL_COLS = ['est_completion', 'next_service_date', 'assigned_to', 'payment_method']
+const OPTIONAL_COLS = ['est_completion', 'next_service_date', 'assigned_to', 'payment_method', 'discount']
 
 function stripOptional(payload) {
   return Object.fromEntries(Object.entries(payload).filter(([k]) => !OPTIONAL_COLS.includes(k)))

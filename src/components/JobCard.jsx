@@ -74,7 +74,7 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
 
   const formatDate  = (d) => d ? new Date(d).toLocaleDateString('ms-MY', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'
   const formatMoney = (v) => v != null ? `RM ${Number(v).toFixed(2)}` : '-'
-  const balance     = (Number(job.total_amount) || 0) - (Number(job.downpayment) || 0)
+  const balance     = (Number(job.total_amount) || 0) - (Number(job.discount) || 0) - (Number(job.downpayment) || 0)
 
   const advanceStage = async (dir) => {
     setAdvancing(true)
