@@ -6,6 +6,7 @@ import { JobForm } from './JobForm'
 import { ReceiptModal } from './ReceiptModal'
 import { CustomerHistoryModal } from './CustomerHistoryModal'
 import { PaymentModal } from './PaymentModal'
+import { RefundModal } from './RefundModal'
 import { daysIn, isStale } from '../constants'
 import { useStages } from '../hooks/useStages'
 import { useLang } from '../context/LanguageContext'
@@ -56,6 +57,7 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
   const [showReceipt, setShowReceipt]   = useState(false)
   const [showHistory, setShowHistory]   = useState(false)
   const [showPayment, setShowPayment]   = useState(false)
+  const [showRefund, setShowRefund]     = useState(false)
   const [emailPrompt, setEmailPrompt]   = useState(false)
   const photoRef = useRef()
 
@@ -121,6 +123,9 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
       )}
       {showPayment && (
         <PaymentModal job={job} onSave={onUpdate} onClose={() => setShowPayment(false)} />
+      )}
+      {showRefund && (
+        <RefundModal job={job} onSave={onUpdate} onClose={() => setShowRefund(false)} />
       )}
       {emailPrompt && <EmailToast job={job} workshop={workshop} t={t} onClose={() => setEmailPrompt(false)} />}
       {lightbox && (
@@ -217,6 +222,13 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
                     onClick={() => setShowPayment(true)}
                     className="ml-1 text-amber-600 hover:text-amber-700 font-semibold underline underline-offset-2 transition-colors">
                     · {t('pay_balance').split(' ')[0]} {formatMoney(balance)}
+                  </button>
+                )}
+                {balance < -0.005 && (
+                  <button
+                    onClick={() => setShowRefund(true)}
+                    className="ml-1 text-amber-600 hover:text-amber-700 font-semibold underline underline-offset-2 transition-colors">
+                    · {t('rc_overpaid')} {formatMoney(-balance)}
                   </button>
                 )}
               </span>
