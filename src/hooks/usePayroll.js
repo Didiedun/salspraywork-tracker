@@ -87,6 +87,28 @@ export function usePayroll(workshopId, year, month) {
     const { data, error } = await supabase
       .from('payroll_runs').update({ status: 'final' }).eq('id', run.id).select().single()
     if (error) throw error
+
+    // Post the month's labour cost to Finance/P&L as a 'gaji' expense. The employer's
+    // true cash cost = gross wages + employer statutory contributions (employee
+    // deductions and PCB are already inside gross). Linked to the run so it is
+    // replaced on re-finalise and cascade-deleted if the run is removed.
+    const employerCost = entries.reduce((s, e) =>
+      s + Number(e.gross_salary) + Number(e.epf_employer) + Number(e.socso_employer) + Number(e.eis_employer), 0)
+    if (employerCost > 0) {
+      const pad = (n) => String(n).padStart(2, '0')
+      const lastDay = new Date(year, month, 0).getDate()
+      await supabase.from('expenses').delete().eq('payroll_run_id', run.id)
+      const { error: expErr } = await supabase.from('expenses').insert({
+        workshop_id: workshopId,
+        payroll_run_id: run.id,
+        date: `${year}-${pad(month)}-${pad(lastDay)}`,
+        category: 'gaji',
+        description: `Gaji & caruman ${pad(month)}/${year} — ${entries.length} pekerja`,
+        amount: Math.round(employerCost * 100) / 100,
+      })
+      // Don't block finalisation if the expense link migration hasn't been run yet.
+      if (expErr) console.warn('Payroll expense not posted to Finance:', expErr.message)
+    }
     setRun(data)
   }
 

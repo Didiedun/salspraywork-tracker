@@ -22,10 +22,12 @@ serve(async (req) => {
     const body = await req.text()
     const params = new URLSearchParams(body)
 
-    const billCode = params.get('billCode') || ''
-    const billpaymentStatus = params.get('billpaymentStatus') || ''
-    const billpaymentAmount = params.get('billpaymentAmount') || '0'
-    const billpaymentInvoiceNo = params.get('billpaymentInvoiceNo') || ''
+    // toyyibPay uses two callback field-naming conventions depending on channel —
+    // accept both so verification works regardless.
+    const billCode = params.get('billCode') || params.get('billcode') || ''
+    const billpaymentStatus = params.get('billpaymentStatus') || params.get('status') || ''
+    const billpaymentAmount = params.get('billpaymentAmount') || params.get('amount') || '0'
+    const billpaymentInvoiceNo = params.get('billpaymentInvoiceNo') || params.get('refno') || ''
 
     if (!billCode) return new Response('Bad Request: missing billCode', { status: 400 })
 
@@ -41,10 +43,10 @@ serve(async (req) => {
       event_id: eventId,
       payload: Object.fromEntries(params.entries()),
     })
-    if (dupeError?.code === '23505') {
-      // Already processed — safe to acknowledge
-      return new Response('OK', { status: 200 })
-    }
+    // A duplicate event is fine to record — but don't acknowledge-and-exit here.
+    // Settlement idempotency is enforced below by the payment.status === 'paid'
+    // guard, so a retry after a failed settlement can still complete.
+    void dupeError
 
     // Load local payment by gateway_ref
     const { data: payment } = await serviceClient
@@ -58,6 +60,23 @@ serve(async (req) => {
       console.error(`No payment record found for billCode: ${billCode}`)
       return new Response('Payment not found', { status: 404 })
     }
+
+    // Resolve this workshop's gateway environment so we verify against the
+    // correct toyyibPay host (sandbox vs production). The secret lives in the
+    // service-role-only secret store.
+    const { data: workshopCfg } = await serviceClient
+      .from('workshops')
+      .select('toyyibpay_sandbox')
+      .eq('id', payment.workshop_id)
+      .single()
+    const { data: secretRow } = await serviceClient
+      .from('workshop_secrets')
+      .select('toyyibpay_secret_key')
+      .eq('workshop_id', payment.workshop_id)
+      .single()
+    const verifyBase = workshopCfg?.toyyibpay_sandbox !== false
+      ? 'https://dev.toyyibpay.com'
+      : 'https://toyyibpay.com'
 
     // Link the event to the payment
     await serviceClient
@@ -79,6 +98,40 @@ serve(async (req) => {
 
     // Idempotent: already settled
     if (payment.status === 'paid') return new Response('OK', { status: 200 })
+
+    // SECURITY: never trust the callback's success flag alone. This endpoint is
+    // public and the billCode appears in the payment link, so a "paid" callback
+    // can be forged. Re-fetch the real transaction status from toyyibPay and only
+    // settle when an actual successful transaction exists for THIS payment.
+    const vForm = new FormData()
+    if (secretRow?.toyyibpay_secret_key) vForm.append('userSecretKey', secretRow.toyyibpay_secret_key)
+    vForm.append('billCode', billCode)
+    vForm.append('billpaymentStatus', '1')
+
+    let verifiedTxn: Record<string, string> | null = null
+    try {
+      const vRes = await fetch(`${verifyBase}/index.php/api/getBillTransactions`, { method: 'POST', body: vForm })
+      const vData = await vRes.json()
+      if (Array.isArray(vData)) {
+        verifiedTxn = (vData as Record<string, string>[]).find((tx) =>
+          String(tx.billExternalReferenceNo) === String(payment.id) &&
+          String(tx.billpaymentStatus) === '1'
+        ) || null
+      }
+    } catch (e) {
+      console.error('getBillTransactions verification failed:', e)
+    }
+
+    if (!verifiedTxn) {
+      // Could not confirm a genuine successful payment for this bill — do NOT settle.
+      await serviceClient.from('payments').update({
+        gateway_status: 'unverified',
+        gateway_payload: Object.fromEntries(params.entries()),
+        updated_at: new Date().toISOString(),
+      }).eq('id', payment.id)
+      console.warn(`Callback claimed paid but getBillTransactions did not confirm payment ${payment.id}`)
+      return new Response('OK', { status: 200 })
+    }
 
     // Verify amount — ToyyibPay sends amount in cents
     const paidCents = Math.round(parseFloat(billpaymentAmount))

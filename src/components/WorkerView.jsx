@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 
 function timeAgo(dateStr, lang) {
   if (!dateStr) return null
@@ -17,11 +17,16 @@ import { PaymentBadge } from './StatusBadge'
 import { daysIn, isStale } from '../constants'
 import { useStages } from '../hooks/useStages'
 import { useLang } from '../context/LanguageContext'
-import { RefreshCw, ChevronRight, ChevronLeft, Search, LogOut, Wrench, Clock, Camera, X, Image, DoorOpen, UserCheck, Pencil, Check } from 'lucide-react'
+import { RefreshCw, ChevronRight, ChevronLeft, Search, LogOut, Wrench, Clock, Camera, X, Image, DoorOpen, UserCheck, Pencil, Check, AlertTriangle, Save, FileText } from 'lucide-react'
 import { FeedbackWidget } from './FeedbackWidget'
+import { PayslipModal } from './PayslipModal'
+
+const MONTH_LABELS_MS = ['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogs','Sep','Okt','Nov','Dis']
+
+const BANKS = ['Maybank','CIMB','Public Bank','RHB','Hong Leong','AmBank','Bank Islam','BSN','Agro Bank','Lain-lain']
 
 export function WorkerView() {
-  const { workshop, signOut, leaveWorkshop, member, updateMemberName } = useApp()
+  const { workshop, signOut, leaveWorkshop, member, updateMemberName, user } = useApp()
   const { jobs, loading, fetchJobs, updateJob, addAttachment } = useJobs(workshop?.id)
   const [search, setSearch]         = useState('')
   const [advancing, setAdvancing]   = useState({})
@@ -33,6 +38,84 @@ export function WorkerView() {
   const [nameSaved, setNameSaved]   = useState(false)
   const { stages, stageMap, lastValue, nextStage, prevStage, isOverdue: checkOverdue } = useStages()
   const { t, lang } = useLang()
+
+  // Self-service HR profile
+  const [myProfile,      setMyProfile]      = useState(undefined) // undefined = checking
+  const [showProfileForm, setShowProfileForm] = useState(false)
+  const [profileForm,    setProfileForm]    = useState({ ic_number: '', epf_number: '', socso_number: '', bank_name: '', bank_account: '' })
+  const [savingProfile,  setSavingProfile]  = useState(false)
+  const [profileSaved,   setProfileSaved]   = useState(false)
+
+  // My payslips (finalised runs only)
+  const [payslips,        setPayslips]        = useState([])
+  const [selectedPayslip, setSelectedPayslip] = useState(null)
+
+  useEffect(() => {
+    if (!user?.id || !workshop?.id) return
+    supabase.from('employees')
+      .select('id, ic_number, epf_number, socso_number, bank_name, bank_account')
+      .eq('user_id', user.id)
+      .eq('workshop_id', workshop.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        setMyProfile(data || null)
+        if (data) setProfileForm({
+          ic_number:    data.ic_number    || '',
+          epf_number:   data.epf_number   || '',
+          socso_number: data.socso_number || '',
+          bank_name:    data.bank_name    || '',
+          bank_account: data.bank_account || '',
+        })
+      })
+  }, [user?.id, workshop?.id])
+
+  // Load this worker's finalised payslips (RLS limits rows to their own entries).
+  useEffect(() => {
+    if (!myProfile?.id) { setPayslips([]); return }
+    supabase.from('payroll_entries')
+      .select('*, employee:employees(*), run:payroll_runs(*)')
+      .eq('employee_id', myProfile.id)
+      .then(({ data }) => {
+        const finalised = (data || [])
+          .filter(e => e.run?.status === 'final')
+          .sort((a, b) => (b.run.year - a.run.year) || (b.run.month - a.run.month))
+        setPayslips(finalised)
+      })
+  }, [myProfile?.id])
+
+  const setField = (k, v) => setProfileForm(f => ({ ...f, [k]: v }))
+
+  const saveProfile = async () => {
+    setSavingProfile(true)
+    try {
+      const payload = {
+        ic_number:    profileForm.ic_number.trim()    || null,
+        epf_number:   profileForm.epf_number.trim()   || null,
+        socso_number: profileForm.socso_number.trim() || null,
+        bank_name:    profileForm.bank_name            || null,
+        bank_account: profileForm.bank_account.trim() || null,
+      }
+      if (myProfile) {
+        const { error } = await supabase.from('employees').update(payload).eq('id', myProfile.id)
+        if (error) throw error
+      } else {
+        const { data, error } = await supabase.from('employees').insert({
+          ...payload,
+          user_id:     user.id,
+          workshop_id: workshop.id,
+          name:        member?.name || user.email?.split('@')[0] || 'Pekerja',
+          basic_salary: 0,
+          status:      'active',
+        }).select('id').single()
+        if (error) throw error
+        setMyProfile(data)
+      }
+      setShowProfileForm(false)
+      setProfileSaved(true)
+      setTimeout(() => setProfileSaved(false), 3000)
+    } catch (e) { alert(e.message) }
+    finally { setSavingProfile(false) }
+  }
 
   const handleSaveName = async () => {
     if (!nameInput.trim()) { setEditingName(false); return }
@@ -162,6 +245,160 @@ export function WorkerView() {
             </div>
           ))}
         </div>
+
+        {/* HR profile banner — shown when no employee record linked */}
+        {myProfile === null && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg overflow-hidden">
+            <button onClick={() => setShowProfileForm(v => !v)}
+              className="w-full flex items-center justify-between px-4 py-3 hover:bg-amber-100/50 transition-colors">
+              <div className="flex items-center gap-2.5">
+                <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                <div className="text-left">
+                  <p className="text-sm font-semibold text-amber-800">{t('wv_profile_title')}</p>
+                  <p className="text-xs text-amber-600">{t('wv_profile_sub')}</p>
+                </div>
+              </div>
+              <ChevronRight className={`w-4 h-4 text-amber-500 transition-transform flex-shrink-0 ${showProfileForm ? 'rotate-90' : ''}`} />
+            </button>
+            {showProfileForm && (
+              <div className="border-t border-amber-200 px-4 pb-4 pt-3 space-y-3 bg-white/60">
+                <p className="text-xs text-amber-700">{t('wv_profile_hint')}</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2 sm:col-span-1">
+                    <label className="text-xs font-semibold text-charcoal block mb-1">{t('pr_emp_ic')}</label>
+                    <input value={profileForm.ic_number} onChange={e => setField('ic_number', e.target.value)}
+                      placeholder="901231-01-1234"
+                      className="w-full bg-white border border-amber-200 rounded-lg px-3 py-2 text-ink text-sm placeholder-ash focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-charcoal block mb-1">{t('pr_emp_epf_no')}</label>
+                    <input value={profileForm.epf_number} onChange={e => setField('epf_number', e.target.value)}
+                      placeholder="KWSP no."
+                      className="w-full bg-white border border-amber-200 rounded-lg px-3 py-2 text-ink text-sm placeholder-ash focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-charcoal block mb-1">{t('pr_emp_socso_no')}</label>
+                    <input value={profileForm.socso_number} onChange={e => setField('socso_number', e.target.value)}
+                      placeholder="PERKESO no."
+                      className="w-full bg-white border border-amber-200 rounded-lg px-3 py-2 text-ink text-sm placeholder-ash focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-charcoal block mb-1">{t('pr_emp_bank')}</label>
+                    <select value={profileForm.bank_name} onChange={e => setField('bank_name', e.target.value)}
+                      className="w-full bg-white border border-amber-200 rounded-lg px-3 py-2 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400">
+                      <option value="">— {t('pr_emp_bank_ph')} —</option>
+                      {BANKS.map(b => <option key={b} value={b}>{b}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-charcoal block mb-1">{t('pr_emp_account')}</label>
+                    <input value={profileForm.bank_account} onChange={e => setField('bank_account', e.target.value)}
+                      placeholder="1234567890"
+                      className="w-full bg-white border border-amber-200 rounded-lg px-3 py-2 text-ink text-sm placeholder-ash focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400" />
+                  </div>
+                </div>
+                <button onClick={saveProfile} disabled={savingProfile}
+                  className="flex items-center gap-2 bg-amber-600 hover:bg-amber-700 disabled:bg-stone text-white font-semibold rounded-full px-5 py-2.5 text-sm transition-colors">
+                  {savingProfile ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                  {savingProfile ? t('saving') : t('wv_profile_save')}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Profile saved confirmation */}
+        {profileSaved && (
+          <div className="bg-badge-success/10 border border-badge-success/30 rounded-lg px-4 py-2.5 flex items-center gap-2">
+            <Check className="w-4 h-4 text-badge-success" />
+            <p className="text-sm font-semibold text-badge-success">{t('wv_profile_saved')}</p>
+          </div>
+        )}
+
+        {/* Completed profile indicator */}
+        {myProfile && myProfile.ic_number && (
+          <div className="bg-surface-card border border-hairline rounded-lg px-4 py-2.5 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-badge-success" />
+              <p className="text-sm font-semibold text-charcoal">{t('wv_profile_complete')}</p>
+            </div>
+            <button onClick={() => setShowProfileForm(v => !v)}
+              className="text-xs text-mute hover:text-charcoal transition-colors flex items-center gap-1">
+              <Pencil className="w-3 h-3" /> {t('edit')}
+            </button>
+          </div>
+        )}
+
+        {/* Edit form for already-completed profile */}
+        {myProfile && showProfileForm && (
+          <div className="bg-surface-card border border-hairline rounded-lg px-4 pb-4 pt-3 space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2 sm:col-span-1">
+                <label className="text-xs font-semibold text-charcoal block mb-1">{t('pr_emp_ic')}</label>
+                <input value={profileForm.ic_number} onChange={e => setField('ic_number', e.target.value)}
+                  placeholder="901231-01-1234"
+                  className="w-full bg-canvas border border-hairline rounded-lg px-3 py-2 text-ink text-sm placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-charcoal block mb-1">{t('pr_emp_epf_no')}</label>
+                <input value={profileForm.epf_number} onChange={e => setField('epf_number', e.target.value)}
+                  placeholder="KWSP no."
+                  className="w-full bg-canvas border border-hairline rounded-lg px-3 py-2 text-ink text-sm placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-charcoal block mb-1">{t('pr_emp_socso_no')}</label>
+                <input value={profileForm.socso_number} onChange={e => setField('socso_number', e.target.value)}
+                  placeholder="PERKESO no."
+                  className="w-full bg-canvas border border-hairline rounded-lg px-3 py-2 text-ink text-sm placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-charcoal block mb-1">{t('pr_emp_bank')}</label>
+                <select value={profileForm.bank_name} onChange={e => setField('bank_name', e.target.value)}
+                  className="w-full bg-canvas border border-hairline rounded-lg px-3 py-2 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                  <option value="">— {t('pr_emp_bank_ph')} —</option>
+                  {BANKS.map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-charcoal block mb-1">{t('pr_emp_account')}</label>
+                <input value={profileForm.bank_account} onChange={e => setField('bank_account', e.target.value)}
+                  placeholder="1234567890"
+                  className="w-full bg-canvas border border-hairline rounded-lg px-3 py-2 text-ink text-sm placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={saveProfile} disabled={savingProfile}
+                className="flex items-center gap-2 bg-primary hover:bg-primary-deep disabled:bg-stone text-white font-semibold rounded-full px-5 py-2.5 text-sm transition-colors">
+                {savingProfile ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                {savingProfile ? t('saving') : t('save')}
+              </button>
+              <button onClick={() => setShowProfileForm(false)}
+                className="flex items-center gap-2 bg-canvas border border-hairline text-charcoal font-semibold rounded-full px-5 py-2.5 text-sm transition-colors hover:bg-surface-bone">
+                {t('no')}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* My payslips */}
+        {payslips.length > 0 && (
+          <div className="bg-surface-card border border-hairline rounded-lg overflow-hidden">
+            <div className="px-4 py-2.5 border-b border-hairline flex items-center gap-2">
+              <FileText className="w-4 h-4 text-primary" />
+              <p className="text-sm font-semibold text-ink">{t('wv_payslips')}</p>
+            </div>
+            {payslips.map((ps, i) => (
+              <button key={ps.id} onClick={() => setSelectedPayslip(ps)}
+                className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-canvas transition-colors text-left ${i < payslips.length - 1 ? 'border-b border-hairline' : ''}`}>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-ink">{MONTH_LABELS_MS[ps.run.month - 1]} {ps.run.year}</p>
+                  <p className="text-xs text-mute">{t('wv_net_pay')}: RM {Number(ps.net_salary).toFixed(2)}</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-ash flex-shrink-0" />
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-ash w-4 h-4" />
@@ -303,6 +540,15 @@ export function WorkerView() {
       </div>
 
       <FeedbackWidget />
+
+      {selectedPayslip && (
+        <PayslipModal
+          entry={selectedPayslip}
+          run={selectedPayslip.run}
+          workshop={workshop}
+          onClose={() => setSelectedPayslip(null)}
+        />
+      )}
 
       {lightbox && (
         <div className="fixed inset-0 bg-ink/80 z-50 flex items-center justify-center p-4" onClick={() => setLightbox(null)}>

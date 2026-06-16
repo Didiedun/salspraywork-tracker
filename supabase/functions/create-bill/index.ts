@@ -57,14 +57,21 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
 
-    // Load this workshop's own ToyyibPay credentials
+    // Load this workshop's own ToyyibPay config (non-secret fields) + the secret
+    // from the service-role-only secret store.
     const { data: workshop } = await serviceClient
       .from('workshops')
-      .select('name, slug, toyyibpay_secret_key, toyyibpay_category_code, toyyibpay_sandbox')
+      .select('name, slug, toyyibpay_category_code, toyyibpay_sandbox')
       .eq('id', job.workshop_id)
       .single()
 
-    const secretKey    = workshop?.toyyibpay_secret_key
+    const { data: secretRow } = await serviceClient
+      .from('workshop_secrets')
+      .select('toyyibpay_secret_key')
+      .eq('workshop_id', job.workshop_id)
+      .single()
+
+    const secretKey    = secretRow?.toyyibpay_secret_key
     const categoryCode = workshop?.toyyibpay_category_code
     const isSandbox    = workshop?.toyyibpay_sandbox !== false
 
@@ -111,7 +118,9 @@ serve(async (req) => {
     form.append('billReturnUrl', returnUrl)
     form.append('billCallbackUrl', callbackUrl)
     form.append('billExternalReferenceNo', payment.id)
-    form.append('billPaymentMethod', '2')
+    // billPaymentChannel: 0 = FPX, 1 = card, 2 = both (the old `billPaymentMethod`
+    // key is not a real toyyibPay param and was silently ignored)
+    form.append('billPaymentChannel', '2')
     if (job.owner) form.append('billTo', job.owner.substring(0, 50))
     if (job.phone) form.append('billPhone', job.phone.replace(/\D/g, '').substring(0, 15))
 

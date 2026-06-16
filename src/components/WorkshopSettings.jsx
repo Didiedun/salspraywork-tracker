@@ -9,7 +9,9 @@ function PaymentGatewayCard() {
   const { workshop, reloadWorkshop } = useApp()
   const { t } = useLang()
 
-  const [secretKey,  setSecretKey]  = useState(workshop?.toyyibpay_secret_key    || '')
+  // The secret is never sent to the client; the field is write-only. It stays
+  // blank on load and is only submitted when the owner types a new key.
+  const [secretKey,  setSecretKey]  = useState('')
   const [catCode,    setCatCode]    = useState(workshop?.toyyibpay_category_code  || '')
   const [sandbox,    setSandbox]    = useState(workshop?.toyyibpay_sandbox !== false)
   const [showKey,    setShowKey]    = useState(false)
@@ -17,21 +19,23 @@ function PaymentGatewayCard() {
   const [saved,      setSaved]      = useState(false)
   const [error,      setError]      = useState('')
 
-  const isConfigured = !!(workshop?.toyyibpay_secret_key && workshop?.toyyibpay_category_code)
+  const secretSet    = !!workshop?.toyyibpay_secret_set
+  const isConfigured = secretSet && !!workshop?.toyyibpay_category_code
 
   const handleSave = async () => {
-    if (!secretKey.trim() || !catCode.trim()) { setError('Secret Key dan Category Code diperlukan.'); return }
+    if (!catCode.trim()) { setError('Category Code diperlukan.'); return }
+    // Secret only required the first time; afterwards a blank field keeps the existing key.
+    if (!secretSet && !secretKey.trim()) { setError('Secret Key dan Category Code diperlukan.'); return }
     setSaving(true); setError(''); setSaved(false)
     try {
-      const { error: err } = await supabase
-        .from('workshops')
-        .update({
-          toyyibpay_secret_key:    secretKey.trim(),
-          toyyibpay_category_code: catCode.trim(),
-          toyyibpay_sandbox:       sandbox,
-        })
-        .eq('id', workshop.id)
+      const { error: err } = await supabase.rpc('set_toyyibpay_secret', {
+        p_workshop_id: workshop.id,
+        p_secret:      secretKey.trim() || null,
+        p_category:    catCode.trim(),
+        p_sandbox:     sandbox,
+      })
       if (err) throw err
+      setSecretKey('')
       await reloadWorkshop()
       setSaved(true)
       setTimeout(() => setSaved(false), 5000)
@@ -76,7 +80,7 @@ function PaymentGatewayCard() {
             type={showKey ? 'text' : 'password'}
             value={secretKey}
             onChange={e => setSecretKey(e.target.value)}
-            placeholder={t('st_gw_key_ph')}
+            placeholder={secretSet ? '•••••••••• (tersimpan)' : t('st_gw_key_ph')}
             className={inputCls + ' pr-12'}
           />
           <button type="button" onClick={() => setShowKey(v => !v)}
@@ -84,6 +88,9 @@ function PaymentGatewayCard() {
             {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
         </div>
+        {secretSet && (
+          <p className="text-xs text-mute mt-1.5">Kunci sudah disimpan. Biarkan kosong untuk kekalkan, atau taip kunci baharu untuk gantikan.</p>
+        )}
       </div>
 
       <div>

@@ -23,3 +23,16 @@ body {
 .animate-slideUp {
   animation: slideUp 0.2s ease-out;
 }
+
+/* Print isolation — only the marked document prints, not the app behind the modal */
+@media print {
+  body * { visibility: hidden; }
+  .printable, .printable * { visibility: visible; }
+  .printable {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 0;
+  }
+}

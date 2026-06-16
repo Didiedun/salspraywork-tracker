@@ -4,10 +4,13 @@ import { useLang } from '../context/LanguageContext'
 import { useEmployees } from '../hooks/useEmployees'
 import { usePayroll } from '../hooks/usePayroll'
 import { supabase } from '../lib/supabase'
+import { calcEntry } from '../lib/payroll'
+import { PayslipModal } from './PayslipModal'
+import { EAFormModal } from './EAFormModal'
 import {
   Users, Plus, Pencil, Trash2, Save, X, Loader, AlertTriangle,
   ChevronLeft, ChevronRight, Printer, Download, Lock, RotateCcw,
-  Copy, Check, UserPlus, RefreshCw, Shield,
+  Copy, Check, UserPlus, FileText,
 } from 'lucide-react'
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -24,6 +27,7 @@ const SQL = `-- Run once in Supabase SQL Editor
 CREATE TABLE IF NOT EXISTS employees (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   workshop_id uuid REFERENCES workshops(id) ON DELETE CASCADE,
+  user_id text,
   name text NOT NULL,
   ic_number text,
   phone text,
@@ -41,9 +45,15 @@ CREATE TABLE IF NOT EXISTS employees (
   status text DEFAULT 'active',
   created_at timestamptz DEFAULT now()
 );
+ALTER TABLE employees ADD COLUMN IF NOT EXISTS user_id text;
 ALTER TABLE employees ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "owners_manage_employees" ON employees
   FOR ALL USING (workshop_id IN (SELECT id FROM workshops WHERE owner_id = auth.uid()));
+DO $$ BEGIN
+  CREATE POLICY "workers_self_profile" ON employees
+    FOR ALL USING (user_id = auth.uid()::text);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 CREATE TABLE IF NOT EXISTS payroll_runs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -97,6 +107,11 @@ function EmployeeModal({ initial, onSave, onClose }) {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const inputCls = 'w-full bg-canvas border border-hairline rounded-lg px-3 py-2.5 text-ink text-sm placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors'
+
+  // Live statutory breakdown so the owner sees take-home + employer cost as they type.
+  const salaryNum = Number(form.basic_salary) || 0
+  const preview = calcEntry(salaryNum, 0, 0, 0, form.is_epf, form.is_socso, form.is_eis)
+  const employerCost = salaryNum + preview.epf_employer + preview.socso_employer + preview.eis_employer
 
   const handleSave = async () => {
     if (!form.name.trim()) { setError(t('pr_emp_name_req')); return }
@@ -207,6 +222,26 @@ function EmployeeModal({ initial, onSave, onClose }) {
             ))}
           </div>
 
+          {/* Live auto-calculation preview */}
+          {salaryNum > 0 && (
+            <div className="border-t border-hairline pt-4">
+              <p className="text-xs font-semibold text-charcoal mb-2">{t('pr_preview_title')}</p>
+              <div className="bg-surface-bone rounded-lg p-3 space-y-1.5 text-xs">
+                <div className="flex justify-between"><span className="text-mute">{t('pr_basic')}</span><span className="font-semibold text-ink">{fmt(salaryNum)}</span></div>
+                {preview.epf_employee > 0   && <div className="flex justify-between"><span className="text-mute">KWSP (11%)</span><span className="text-red-600">− {fmt(preview.epf_employee)}</span></div>}
+                {preview.socso_employee > 0 && <div className="flex justify-between"><span className="text-mute">PERKESO (0.5%)</span><span className="text-red-600">− {fmt(preview.socso_employee)}</span></div>}
+                {preview.eis_employee > 0   && <div className="flex justify-between"><span className="text-mute">EIS (0.2%)</span><span className="text-red-600">− {fmt(preview.eis_employee)}</span></div>}
+                <div className="flex justify-between font-bold border-t border-hairline pt-1.5 mt-1">
+                  <span className="text-charcoal">{t('pr_net')}</span><span className="text-primary">{fmt(preview.net_salary)}</span>
+                </div>
+                <div className="flex justify-between text-mute pt-1">
+                  <span>{t('pr_employer_cost')}</span><span className="font-semibold">{fmt(employerCost)}</span>
+                </div>
+              </div>
+              <p className="text-[10px] text-ash mt-1.5">{t('pr_preview_note')}</p>
+            </div>
+          )}
+
           {error && <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
         </div>
 
@@ -222,117 +257,80 @@ function EmployeeModal({ initial, onSave, onClose }) {
   )
 }
 
-// ─── Payslip modal ────────────────────────────────────────────────────────────
-function PayslipModal({ entry, run, workshop, onClose }) {
-  const { lang } = useLang()
-  const months = lang === 'ms' ? MONTH_MS : MONTH_EN
-  const emp = entry.employee
-  const period = `${months[run.month - 1]} ${run.year}`
-  const totalEmpDed = Number(entry.epf_employee) + Number(entry.socso_employee) + Number(entry.eis_employee) + Number(entry.pcb) + Number(entry.other_deductions)
-  const totalErContr = Number(entry.epf_employer) + Number(entry.socso_employer) + Number(entry.eis_employer)
-
-  return (
-    <div className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-md shadow-xl flex flex-col max-h-[90vh]">
-        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-hairline print:hidden">
-          <h3 className="font-display font-bold text-ink text-sm">Slip Gaji — {period}</h3>
-          <div className="flex gap-2">
-            <button onClick={() => window.print()} className="flex items-center gap-1.5 bg-primary text-white text-xs font-semibold px-3 py-2 rounded-full hover:bg-primary-deep transition-colors">
-              <Printer className="w-3.5 h-3.5" /> Cetak
-            </button>
-            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
-              <X className="w-4 h-4 text-ash" />
-            </button>
-          </div>
-        </div>
-
-        <div id="payslip-content" className="p-6 overflow-y-auto space-y-4 text-sm">
-          {/* Header */}
-          <div className="text-center border-b border-hairline pb-4">
-            {workshop?.logo_url && (
-              <img src={workshop.logo_url} alt="logo" className="w-12 h-12 object-cover rounded-lg mx-auto mb-2" />
-            )}
-            <p className="font-display font-bold text-ink text-base">{workshop?.name}</p>
-            {workshop?.address && <p className="text-xs text-mute">{workshop.address}</p>}
-            <p className="text-primary font-bold mt-1">SLIP GAJI / PAYSLIP</p>
-            <p className="text-xs text-charcoal font-semibold mt-0.5">{period}</p>
-          </div>
-
-          {/* Employee info */}
-          <div className="bg-surface-bone rounded-lg p-3 space-y-1 text-xs">
-            <div className="flex justify-between"><span className="text-mute">Nama</span><span className="font-semibold text-ink">{emp.name}</span></div>
-            {emp.position && <div className="flex justify-between"><span className="text-mute">Jawatan</span><span className="font-semibold">{emp.position}</span></div>}
-            {emp.ic_number && <div className="flex justify-between"><span className="text-mute">No. IC</span><span className="font-mono">{emp.ic_number}</span></div>}
-            {emp.epf_number && <div className="flex justify-between"><span className="text-mute">No. KWSP</span><span className="font-mono">{emp.epf_number}</span></div>}
-            {emp.socso_number && <div className="flex justify-between"><span className="text-mute">No. PERKESO</span><span className="font-mono">{emp.socso_number}</span></div>}
-          </div>
-
-          {/* Earnings */}
-          <div>
-            <p className="text-xs font-bold text-charcoal mb-2 uppercase tracking-wide">Pendapatan</p>
-            <div className="space-y-1 text-xs">
-              <div className="flex justify-between"><span>Gaji Asas</span><span>{fmt(entry.basic_salary)}</span></div>
-              {Number(entry.allowances) > 0 && <div className="flex justify-between"><span>Elaun</span><span>{fmt(entry.allowances)}</span></div>}
-              <div className="flex justify-between font-bold border-t border-hairline pt-1 mt-1">
-                <span>Jumlah Kasar</span><span>{fmt(entry.gross_salary)}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Deductions */}
-          <div>
-            <p className="text-xs font-bold text-charcoal mb-2 uppercase tracking-wide">Potongan Pekerja</p>
-            <div className="space-y-1 text-xs">
-              {Number(entry.epf_employee) > 0    && <div className="flex justify-between"><span>KWSP (11%)</span><span className="text-red-600">− {fmt(entry.epf_employee)}</span></div>}
-              {Number(entry.socso_employee) > 0  && <div className="flex justify-between"><span>PERKESO (0.5%)</span><span className="text-red-600">− {fmt(entry.socso_employee)}</span></div>}
-              {Number(entry.eis_employee) > 0    && <div className="flex justify-between"><span>EIS/SIP (0.2%)</span><span className="text-red-600">− {fmt(entry.eis_employee)}</span></div>}
-              {Number(entry.pcb) > 0             && <div className="flex justify-between"><span>PCB/Cukai Pendapatan</span><span className="text-red-600">− {fmt(entry.pcb)}</span></div>}
-              {Number(entry.other_deductions) > 0 && <div className="flex justify-between"><span>Potongan Lain</span><span className="text-red-600">− {fmt(entry.other_deductions)}</span></div>}
-              <div className="flex justify-between font-bold border-t border-hairline pt-1 mt-1">
-                <span>Jumlah Potongan</span><span className="text-red-600">− {fmt(totalEmpDed)}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Net */}
-          <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 flex justify-between items-center">
-            <span className="font-bold text-charcoal">GAJI BERSIH</span>
-            <span className="font-display font-bold text-primary text-xl">{fmt(entry.net_salary)}</span>
-          </div>
-
-          {/* Employer contributions */}
-          <div>
-            <p className="text-xs font-bold text-charcoal mb-2 uppercase tracking-wide">Caruman Majikan (Maklumat)</p>
-            <div className="space-y-1 text-xs">
-              {Number(entry.epf_employer) > 0    && <div className="flex justify-between text-mute"><span>KWSP (13%/12%)</span><span>{fmt(entry.epf_employer)}</span></div>}
-              {Number(entry.socso_employer) > 0  && <div className="flex justify-between text-mute"><span>PERKESO (1.75%)</span><span>{fmt(entry.socso_employer)}</span></div>}
-              {Number(entry.eis_employer) > 0    && <div className="flex justify-between text-mute"><span>EIS/SIP (0.2%)</span><span>{fmt(entry.eis_employer)}</span></div>}
-              <div className="flex justify-between text-mute font-semibold border-t border-hairline pt-1 mt-1">
-                <span>Jumlah Caruman Majikan</span><span>{fmt(totalErContr)}</span>
-              </div>
-            </div>
-          </div>
-
-          {emp.bank_name && emp.bank_account && (
-            <div className="bg-surface-bone rounded-lg p-3 text-xs">
-              <p className="text-mute">Dibayar ke: <span className="font-semibold text-ink">{emp.bank_name} — {emp.bank_account}</span></p>
-            </div>
-          )}
-
-          <p className="text-[10px] text-ash text-center border-t border-hairline pt-3">
-            Dokumen ini dijana secara automatik oleh Digital Depot. {workshop?.name} · {period}
-          </p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ─── Employees tab ────────────────────────────────────────────────────────────
+// ─── Employees tab (unified: staff profiles + invite) ────────────────────────
 function EmployeesTab({ workshopId }) {
   const { t } = useLang()
   const { employees, loading, needsMigration, addEmployee, updateEmployee, deactivateEmployee } = useEmployees(workshopId)
-  const [modal, setModal] = useState(null) // null | 'add' | employee object
+  const [modal,      setModal]      = useState(null)
+  const [invites,    setInvites]    = useState([])
+  const [generating, setGenerating] = useState(false)
+  const [copied,     setCopied]     = useState(null)
+  const [showInvite, setShowInvite] = useState(false)
+  const [salaryEdit, setSalaryEdit] = useState(null)
+  const [salaryVal,  setSalaryVal]  = useState('')
+  const [savingSal,  setSavingSal]  = useState(false)
+  const [members,    setMembers]    = useState([])
+  const [addingMem,  setAddingMem]  = useState(null) // member user_id being added
+
+  useEffect(() => {
+    if (!workshopId) return
+    supabase.from('workshop_invites').select('*')
+      .eq('workshop_id', workshopId).is('used_at', null).order('created_at', { ascending: false })
+      .then(({ data }) => setInvites(data || []))
+    // Load members with app accounts (workers only)
+    supabase.from('workshop_members').select('user_id, name, role')
+      .eq('workshop_id', workshopId).eq('role', 'worker')
+      .then(({ data }) => setMembers(data || []))
+  }, [workshopId])
+
+  const generateInvite = async () => {
+    setGenerating(true)
+    try {
+      const code = Math.random().toString(36).slice(2, 8).toUpperCase()
+      const exp  = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+      const { data, error } = await supabase.from('workshop_invites')
+        .insert([{ workshop_id: workshopId, code, role: 'worker', expires_at: exp }])
+        .select().single()
+      if (error) throw error
+      setInvites(prev => [data, ...prev])
+    } catch (e) { alert(e.message) }
+    finally { setGenerating(false) }
+  }
+
+  const revokeInvite = async (id) => {
+    await supabase.from('workshop_invites').delete().eq('id', id)
+    setInvites(prev => prev.filter(i => i.id !== id))
+  }
+
+  const copyCode = (code) => {
+    navigator.clipboard.writeText(code)
+    setCopied(code); setTimeout(() => setCopied(null), 2000)
+  }
+
+  const addMemberAsEmployee = async (member) => {
+    setAddingMem(member.user_id)
+    try {
+      await addEmployee({
+        name: member.name || t('wk_no_name'),
+        user_id: member.user_id,
+        basic_salary: 0,
+        is_epf: true, is_socso: true, is_eis: true,
+        employment_type: 'full_time', status: 'active',
+      })
+    } catch (e) { alert(e.message) }
+    finally { setAddingMem(null) }
+  }
+
+  const saveSalary = async (emp) => {
+    const val = parseFloat(salaryVal)
+    if (isNaN(val) || val < 0) return
+    setSavingSal(true)
+    try {
+      await updateEmployee(emp.id, { basic_salary: val })
+      setSalaryEdit(null)
+    } catch (e) { alert(e.message) }
+    finally { setSavingSal(false) }
+  }
 
   if (loading) return <div className="py-12 text-center"><Loader className="w-5 h-5 animate-spin text-mute mx-auto" /></div>
 
@@ -351,11 +349,88 @@ function EmployeesTab({ workshopId }) {
 
   return (
     <div className="space-y-4">
+
+      {/* Invite card */}
+      <div className="bg-surface-card border border-hairline rounded-lg overflow-hidden">
+        <button onClick={() => setShowInvite(v => !v)}
+          className="w-full flex items-center justify-between px-4 py-3 hover:bg-canvas transition-colors">
+          <div className="flex items-center gap-2.5">
+            <UserPlus className="w-4 h-4 text-primary" />
+            <div className="text-left">
+              <p className="text-sm font-semibold text-ink">{t('pr_invite_title')}</p>
+              <p className="text-xs text-mute">{t('pr_invite_sub')}</p>
+            </div>
+          </div>
+          <ChevronRight className={`w-4 h-4 text-ash transition-transform ${showInvite ? 'rotate-90' : ''}`} />
+        </button>
+
+        {showInvite && (
+          <div className="border-t border-hairline px-4 pb-4 pt-3 space-y-3">
+            <p className="text-xs text-mute">{t('pr_invite_how')}</p>
+            <button onClick={generateInvite} disabled={generating}
+              className="flex items-center gap-2 bg-primary hover:bg-primary-deep disabled:bg-stone text-white font-semibold rounded-full px-4 py-2 text-sm transition-colors">
+              {generating ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+              {generating ? t('wk_generating') : t('wk_gen_invite')}
+            </button>
+            {invites.length > 0 && (
+              <div className="space-y-2">
+                {invites.map(inv => (
+                  <div key={inv.id} className="flex items-center gap-3 bg-surface-bone rounded-lg px-3 py-2">
+                    <span className="font-mono font-bold text-ink tracking-widest flex-1">{inv.code}</span>
+                    {inv.expires_at && (
+                      <span className="text-xs text-mute">{t('wk_expires')} {new Date(inv.expires_at).toLocaleDateString('ms-MY')}</span>
+                    )}
+                    <button onClick={() => copyCode(inv.code)}
+                      className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-full border border-hairline bg-canvas hover:bg-white transition-colors">
+                      {copied === inv.code ? <><Check className="w-3 h-3 text-badge-success" /> {t('copied')}</> : <><Copy className="w-3 h-3" /> {t('copy')}</>}
+                    </button>
+                    <button onClick={() => revokeInvite(inv.id)}
+                      className="w-7 h-7 flex items-center justify-center text-mute hover:text-red-500 hover:bg-red-50 rounded-full transition-colors">
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Workers with app accounts not yet in payroll */}
+      {(() => {
+        const linkedIds = new Set(employees.map(e => e.user_id).filter(Boolean))
+        const unlinked = members.filter(m => !linkedIds.has(m.user_id))
+        if (unlinked.length === 0) return null
+        return (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg overflow-hidden">
+            <div className="px-4 py-2.5 border-b border-blue-200">
+              <p className="text-xs font-semibold text-blue-800">{t('pr_unlinked_title')}</p>
+              <p className="text-xs text-blue-600 mt-0.5">{t('pr_unlinked_sub')}</p>
+            </div>
+            {unlinked.map((m, i) => (
+              <div key={m.user_id}
+                className={`flex items-center gap-3 px-4 py-3 ${i < unlinked.length - 1 ? 'border-b border-blue-200' : ''}`}>
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <span className="font-bold text-blue-600 text-sm">{(m.name || '?')[0].toUpperCase()}</span>
+                </div>
+                <p className="flex-1 text-sm font-semibold text-ink">{m.name || t('wk_no_name')}</p>
+                <button onClick={() => addMemberAsEmployee(m)} disabled={addingMem === m.user_id}
+                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-blue-600 hover:bg-blue-700 disabled:bg-stone text-white transition-colors flex-shrink-0">
+                  {addingMem === m.user_id ? <Loader className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                  {t('pr_add_to_payroll')}
+                </button>
+              </div>
+            ))}
+          </div>
+        )
+      })()}
+
+      {/* Staff list */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-mute">{employees.length} {t('pr_emp_count')}</p>
         <button onClick={() => setModal('add')}
-          className="flex items-center gap-2 bg-primary hover:bg-primary-deep text-white font-semibold rounded-full px-4 py-2 text-sm transition-colors">
-          <Plus className="w-3.5 h-3.5" /> {t('pr_add_emp')}
+          className="flex items-center gap-2 bg-surface-card hover:bg-canvas border border-hairline text-charcoal font-semibold rounded-full px-3 py-1.5 text-sm transition-colors">
+          <Plus className="w-3.5 h-3.5" /> {t('pr_add_manual')}
         </button>
       </div>
 
@@ -367,37 +442,83 @@ function EmployeesTab({ workshopId }) {
         </div>
       ) : (
         <div className="bg-surface-card rounded-lg border border-hairline overflow-hidden">
-          {employees.map((emp, i) => (
-            <div key={emp.id}
-              className={`flex items-center gap-3 px-4 py-3.5 ${i < employees.length - 1 ? 'border-b border-hairline' : ''}`}>
-              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <span className="font-bold text-primary text-sm">{emp.name[0].toUpperCase()}</span>
+          {employees.map((emp, i) => {
+            const noSalary = !Number(emp.basic_salary)
+            return (
+              <div key={emp.id}
+                className={`px-4 py-3.5 ${i < employees.length - 1 ? 'border-b border-hairline' : ''}`}>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <span className="font-bold text-primary text-sm">{emp.name[0].toUpperCase()}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <p className="font-semibold text-ink text-sm">{emp.name}</p>
+                      {emp.user_id && (
+                        <span className="text-[10px] bg-primary/8 text-primary px-1.5 py-0.5 rounded-full font-bold">
+                          {t('pr_has_account')}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-mute truncate">{emp.position || '—'}</p>
+                  </div>
+
+                  {salaryEdit === emp.id ? (
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <div className="relative">
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-mute">RM</span>
+                        <input autoFocus type="number" min="0" step="0.01" value={salaryVal}
+                          onChange={e => setSalaryVal(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') saveSalary(emp); if (e.key === 'Escape') setSalaryEdit(null) }}
+                          className="w-28 pl-8 pr-2 py-1.5 text-sm border border-primary rounded-full focus:outline-none" />
+                      </div>
+                      <button onClick={() => saveSalary(emp)} disabled={savingSal}
+                        className="w-7 h-7 rounded-full bg-primary flex items-center justify-center disabled:opacity-50">
+                        {savingSal ? <Loader className="w-3 h-3 text-white animate-spin" /> : <Check className="w-3.5 h-3.5 text-white" />}
+                      </button>
+                      <button onClick={() => setSalaryEdit(null)}
+                        className="w-7 h-7 rounded-full border border-hairline flex items-center justify-center text-mute hover:text-ink">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => { setSalaryEdit(emp.id); setSalaryVal(emp.basic_salary || '') }}
+                      className={`text-xs font-semibold px-2.5 py-1.5 rounded-full border flex-shrink-0 transition-colors ${
+                        noSalary
+                          ? 'border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100'
+                          : 'border-hairline bg-canvas text-charcoal hover:bg-surface-bone'
+                      }`}>
+                      {noSalary ? t('pr_set_salary') : fmt(emp.basic_salary)}
+                    </button>
+                  )}
+
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button onClick={() => setModal(emp)}
+                      className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-canvas text-ash hover:text-charcoal transition-colors">
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => { if (window.confirm(t('pr_emp_del_confirm'))) deactivateEmployee(emp.id) }}
+                      className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-red-50 text-ash hover:text-red-500 transition-colors">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {!salaryEdit && (
+                  <div className="flex gap-1.5 mt-2 pl-12">
+                    {emp.is_epf   && <span className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded font-bold">EPF</span>}
+                    {emp.is_socso && <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-bold">SOCSO</span>}
+                    {emp.is_eis   && <span className="text-[10px] bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded font-bold">EIS</span>}
+                    {noSalary     && <span className="text-[10px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded font-bold">⚠ {t('pr_salary_needed')}</span>}
+                  </div>
+                )}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-ink text-sm">{emp.name}</p>
-                <p className="text-xs text-mute truncate">{emp.position || '—'} · {fmt(emp.basic_salary)}/bln</p>
-              </div>
-              <div className="flex items-center gap-1.5 flex-shrink-0">
-                {emp.is_epf    && <span className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded font-bold">EPF</span>}
-                {emp.is_socso  && <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-bold">SOCSO</span>}
-                {emp.is_eis    && <span className="text-[10px] bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded font-bold">EIS</span>}
-              </div>
-              <button onClick={() => setModal(emp)}
-                className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-canvas text-ash hover:text-charcoal transition-colors">
-                <Pencil className="w-3.5 h-3.5" />
-              </button>
-              <button onClick={() => { if (window.confirm(t('pr_emp_del_confirm'))) deactivateEmployee(emp.id) }}
-                className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-red-50 text-ash hover:text-red-500 transition-colors">
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
-      {modal === 'add' && (
-        <EmployeeModal onSave={addEmployee} onClose={() => setModal(null)} />
-      )}
+      {modal === 'add' && <EmployeeModal onSave={addEmployee} onClose={() => setModal(null)} />}
       {modal && modal !== 'add' && (
         <EmployeeModal initial={modal} onSave={(data) => updateEmployee(modal.id, data)} onClose={() => setModal(null)} />
       )}
@@ -421,6 +542,7 @@ function PayrollTab({ workshopId }) {
   const [processing,  setProcessing]  = useState(false)
   const [finalising,  setFinalising]  = useState(false)
   const [payslip,     setPayslip]     = useState(null)
+  const [showEA,      setShowEA]      = useState(false)
   const [editingId,   setEditingId]   = useState(null)
   const [editVals,    setEditVals]    = useState({})
   const [savingEntry, setSavingEntry] = useState(false)
@@ -499,7 +621,7 @@ function PayrollTab({ workshopId }) {
       e.employee.name,
       e.employee.ic_number || '',
       e.employee.socso_number || '',
-      fmtCompact(Math.min(Number(e.gross_salary), 5000)),
+      fmtCompact(Math.min(Number(e.gross_salary), 6000)),
       fmtCompact(e.socso_employee),
       fmtCompact(e.socso_employer),
       fmtCompact(e.eis_employee),
@@ -550,6 +672,10 @@ function PayrollTab({ workshopId }) {
           <ChevronRight className="w-4 h-4 text-charcoal" />
         </button>
         {isFinal && <span className="text-xs bg-badge-success/10 text-badge-success font-bold px-2.5 py-1 rounded-full">{t('pr_finalised')}</span>}
+        <button onClick={() => setShowEA(true)}
+          className="ml-auto flex items-center gap-1.5 text-xs font-semibold bg-surface-card border border-hairline text-charcoal px-3 py-2 rounded-full hover:bg-canvas transition-colors">
+          <FileText className="w-3.5 h-3.5" /> {t('pr_ea_btn')} {year}
+        </button>
       </div>
 
       {loading ? (
@@ -706,190 +832,15 @@ function PayrollTab({ workshopId }) {
           onClose={() => setPayslip(null)}
         />
       )}
-    </div>
-  )
-}
 
-// ─── App access tab (formerly WorkersPage) ───────────────────────────────────
-function AppAccessTab({ workshopId }) {
-  const { t } = useLang()
-  const [members,    setMembers]    = useState([])
-  const [invites,    setInvites]    = useState([])
-  const [loading,    setLoading]    = useState(true)
-  const [generating, setGenerating] = useState(false)
-  const [copied,     setCopied]     = useState(null)
-  const [editingId,  setEditingId]  = useState(null)
-  const [editName,   setEditName]   = useState('')
-  const [savingName, setSavingName] = useState(false)
-
-  const load = async () => {
-    if (!workshopId) return
-    setLoading(true)
-    const [mem, inv] = await Promise.all([
-      supabase.rpc('get_workshop_members', { workshop_uuid: workshopId }),
-      supabase.from('workshop_invites').select('*')
-        .eq('workshop_id', workshopId).is('used_at', null).order('created_at', { ascending: false }),
-    ])
-    setMembers(mem.data || [])
-    setInvites(inv.data || [])
-    setLoading(false)
-  }
-
-  useEffect(() => { load() }, [workshopId])
-
-  const generateInvite = async () => {
-    setGenerating(true)
-    try {
-      const code = Math.random().toString(36).slice(2, 8).toUpperCase()
-      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-      const { data, error } = await supabase.from('workshop_invites')
-        .insert([{ workshop_id: workshopId, code, role: 'worker', expires_at: expiresAt }])
-        .select().single()
-      if (error) throw error
-      setInvites(prev => [data, ...prev])
-    } catch (e) { alert(e.message) }
-    finally { setGenerating(false) }
-  }
-
-  const copyCode = (code) => {
-    navigator.clipboard.writeText(code)
-    setCopied(code); setTimeout(() => setCopied(null), 2000)
-  }
-
-  const saveName = async (memberId) => {
-    setSavingName(true)
-    try {
-      const { error } = await supabase.from('workshop_members')
-        .update({ name: editName.trim() || null }).eq('id', memberId)
-      if (error) throw error
-      setMembers(prev => prev.map(m => m.id === memberId ? { ...m, name: editName.trim() || null } : m))
-      setEditingId(null)
-    } catch (e) { alert(e.message) }
-    finally { setSavingName(false) }
-  }
-
-  const removeMember = async (member) => {
-    if (!window.confirm(t('wk_remove'))) return
-    const { error } = await supabase.from('workshop_members').delete().eq('id', member.id)
-    if (error) { alert(error.message); return }
-    setMembers(prev => prev.filter(m => m.id !== member.id))
-  }
-
-  const revokeInvite = async (invite) => {
-    const { error } = await supabase.from('workshop_invites').delete().eq('id', invite.id)
-    if (error) { alert(error.message); return }
-    setInvites(prev => prev.filter(i => i.id !== invite.id))
-  }
-
-  if (loading) return <div className="py-12 text-center"><RefreshCw className="w-5 h-5 animate-spin text-mute mx-auto" /></div>
-
-  return (
-    <div className="space-y-6">
-      <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
-        <p className="text-xs text-blue-800">{t('pr_access_hint')}</p>
-      </div>
-
-      {/* Current members */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-ink text-sm">{t('pr_access_members')} ({members.length})</h3>
-        </div>
-        {members.length === 0 ? (
-          <div className="bg-surface-card border border-hairline rounded-lg p-6 text-center">
-            <p className="text-charcoal text-sm">{t('wk_no_workers')}</p>
-            <p className="text-mute text-xs mt-1">{t('wk_no_workers_sub')}</p>
-          </div>
-        ) : (
-          <div className="bg-surface-card rounded-lg border border-hairline overflow-hidden">
-            {members.map((m, i) => (
-              <div key={m.id}
-                className={`flex items-center gap-3 px-4 py-3.5 ${i < members.length - 1 ? 'border-b border-hairline' : ''}`}>
-                <div className="w-9 h-9 rounded-full bg-surface-bone border border-hairline flex items-center justify-center flex-shrink-0">
-                  <span className="text-charcoal font-bold text-sm">{(m.name || m.email || '?')[0].toUpperCase()}</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  {editingId === m.id ? (
-                    <div className="flex items-center gap-2">
-                      <input autoFocus value={editName} onChange={e => setEditName(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter') saveName(m.id); if (e.key === 'Escape') setEditingId(null) }}
-                        placeholder={m.email?.split('@')[0]}
-                        className="flex-1 bg-canvas border border-hairline rounded-full px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
-                      <button onClick={() => saveName(m.id)} disabled={savingName}
-                        className="w-7 h-7 rounded-full bg-primary flex items-center justify-center disabled:opacity-50">
-                        {savingName ? <Loader className="w-3 h-3 text-white animate-spin" /> : <Check className="w-3.5 h-3.5 text-white" />}
-                      </button>
-                      <button onClick={() => setEditingId(null)}
-                        className="w-7 h-7 rounded-full border border-hairline flex items-center justify-center text-mute hover:text-ink">
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1.5 group">
-                      <p className="text-ink font-semibold text-sm">{m.name || m.email?.split('@')[0] || t('wk_no_name')}</p>
-                      <button onClick={() => { setEditingId(m.id); setEditName(m.name || '') }}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity text-ash hover:text-charcoal">
-                        <Pencil className="w-3 h-3" />
-                      </button>
-                    </div>
-                  )}
-                  <p className="text-mute text-xs truncate mt-0.5">{m.email}</p>
-                </div>
-                <span className="text-[10px] bg-surface-bone border border-hairline px-2 py-0.5 rounded-full text-charcoal font-semibold flex items-center gap-1 flex-shrink-0">
-                  <Shield className="w-2.5 h-2.5" />{m.role}
-                </span>
-                {editingId !== m.id && (
-                  <button onClick={() => removeMember(m)}
-                    className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-red-50 text-mute hover:text-red-500 transition-colors">
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Invite codes */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-ink text-sm">{t('pr_access_invites')}</h3>
-          <button onClick={generateInvite} disabled={generating}
-            className="flex items-center gap-2 bg-primary hover:bg-primary-deep disabled:bg-stone text-white font-semibold rounded-full px-4 py-2 text-sm transition-colors">
-            <UserPlus className="w-3.5 h-3.5" />
-            {generating ? t('wk_generating') : t('wk_gen_invite')}
-          </button>
-        </div>
-        {invites.length === 0 ? (
-          <div className="bg-surface-card border border-hairline rounded-lg p-5 text-center">
-            <p className="text-charcoal text-sm">{t('wk_no_invites')}</p>
-            <p className="text-mute text-xs mt-1">{t('wk_no_invites_sub')}</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {invites.map(invite => (
-              <div key={invite.id} className="bg-surface-card border border-hairline rounded-md px-4 py-3 flex items-center gap-3">
-                <div className="flex-1 min-w-0">
-                  <span className="font-mono font-bold text-ink text-lg tracking-widest">{invite.code}</span>
-                  {invite.expires_at && (
-                    <p className="text-mute text-xs mt-0.5">{t('wk_expires')} {new Date(invite.expires_at).toLocaleDateString('ms-MY')}</p>
-                  )}
-                </div>
-                <button onClick={() => copyCode(invite.code)}
-                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full border border-hairline bg-canvas hover:bg-surface-bone transition-colors">
-                  {copied === invite.code
-                    ? <><Check className="w-3.5 h-3.5 text-badge-success" /> {t('copied')}</>
-                    : <><Copy className="w-3.5 h-3.5" /> {t('wk_copy')}</>}
-                </button>
-                <button onClick={() => revokeInvite(invite)}
-                  className="w-8 h-8 flex items-center justify-center text-mute hover:text-red-500 hover:bg-red-50 rounded-full transition-colors">
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-        <p className="text-ash text-xs mt-3 px-1">{t('wk_invite_hint')}</p>
-      </div>
+      {showEA && (
+        <EAFormModal
+          workshopId={workshopId}
+          workshop={workshop}
+          year={year}
+          onClose={() => setShowEA(false)}
+        />
+      )}
     </div>
   )
 }
@@ -917,12 +868,10 @@ export function PayrollPage() {
       <div className="flex gap-1 bg-surface-bone rounded-full p-1 w-fit">
         <button onClick={() => setTab('employees')} className={tabCls('employees')}>{t('pr_tab_emp')}</button>
         <button onClick={() => setTab('payroll')}   className={tabCls('payroll')}>{t('pr_tab_pay')}</button>
-        <button onClick={() => setTab('access')}    className={tabCls('access')}>{t('pr_tab_access')}</button>
       </div>
 
       {tab === 'employees' && <EmployeesTab workshopId={workshop?.id} />}
       {tab === 'payroll'   && <PayrollTab   workshopId={workshop?.id} />}
-      {tab === 'access'    && <AppAccessTab workshopId={workshop?.id} />}
     </div>
   )
 }
