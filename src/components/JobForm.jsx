@@ -354,7 +354,10 @@ export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
                   )}
                   <div className="flex justify-between font-semibold"><span className="text-charcoal">{t('form_total')}</span><span>{money(net)}</span></div>
                   {dep > 0 && <div className="flex justify-between"><span className="text-mute">{t('form_deposit')}</span><span className="text-badge-success">− {money(dep)}</span></div>}
-                  <div className="flex justify-between font-bold border-t border-hairline pt-1.5 mt-1"><span className="text-charcoal">{t('rc_balance')}</span><span className="text-primary">{money(bal)}</span></div>
+                  <div className="flex justify-between font-bold border-t border-hairline pt-1.5 mt-1">
+                    <span className="text-charcoal">{bal < -0.005 ? t('rc_overpaid') : t('rc_balance')}</span>
+                    <span className={bal < -0.005 ? 'text-badge-success' : 'text-primary'}>{money(bal < -0.005 ? -bal : Math.max(bal, 0))}</span>
+                  </div>
                 </div>
               )
             })()}

@@ -16,7 +16,9 @@ function InvoiceBody({ job, workshop, t }) {
   const balance  = netTotal - (Number(job.downpayment) || 0)
   const fmt      = (v) => v != null ? `RM ${Number(v).toFixed(2)}` : '-'
   const fmtDate  = (d) => d ? new Date(d).toLocaleDateString('ms-MY', { day: '2-digit', month: 'long', year: 'numeric' }) : '-'
-  const pStatus  = paymentStatus(job)
+  const overpaid = balance < -0.005          // paid more than owed (e.g. discount after full payment)
+  const settled  = balance <= 0.005           // nothing left to collect
+  const pStatus  = settled ? 'paid' : paymentStatus(job)
   const payLabel = { unpaid: t('pay_unpaid'), deposit: t('pay_deposit'), paid: t('pay_paid') }[pStatus]
   const pColor   = PAYMENT_COLOR[pStatus]
   const invNo    = makeInvNo(job)
@@ -145,8 +147,10 @@ function InvoiceBody({ job, workshop, t }) {
             </div>
           )}
           <div style={{ borderTop: '2px solid #e5e7eb', paddingTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontWeight: 700, fontSize: 14 }}>{t('rc_balance')}</span>
-            <span style={{ fontWeight: 800, fontSize: 24, color: '#ea2804' }}>{fmt(balance)}</span>
+            <span style={{ fontWeight: 700, fontSize: 14 }}>{overpaid ? t('rc_overpaid') : t('rc_balance')}</span>
+            <span style={{ fontWeight: 800, fontSize: 24, color: overpaid ? '#059669' : '#ea2804' }}>
+              {fmt(overpaid ? -balance : Math.max(balance, 0))}
+            </span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <span style={{ display: 'inline-block', padding: '3px 12px', borderRadius: 999, fontSize: 11, fontWeight: 700, color: 'white', background: pColor }}>{payLabel}</span>

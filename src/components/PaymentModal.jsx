@@ -139,9 +139,14 @@ export function PaymentModal({ job, onSave, onClose }) {
               </div>
             )}
             <div className="border-t border-hairline pt-2 flex justify-between items-baseline">
-              <span className="font-bold text-sm text-charcoal">{t('pay_balance')}</span>
-              <span className="font-bold text-primary text-xl">{fmt(balance)}</span>
+              <span className="font-bold text-sm text-charcoal">{balance < -0.005 ? t('rc_overpaid') : t('pay_balance')}</span>
+              <span className={`font-bold text-xl ${balance < -0.005 ? 'text-badge-success' : 'text-primary'}`}>
+                {fmt(balance < -0.005 ? -balance : Math.max(balance, 0))}
+              </span>
             </div>
+            {balance < -0.005 && (
+              <p className="text-xs text-amber-600 font-semibold">{t('pay_overpaid_note')}</p>
+            )}
           </div>
 
           {/* Payment method */}
