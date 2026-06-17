@@ -130,8 +130,11 @@ export function useJobs(workshopId) {
       }).filter(Boolean)
       if (paths.length > 0) await supabase.storage.from('attachments').remove(paths)
     }
-    const { error: err } = await supabase.from('jobs').delete().eq('id', id)
+    // .select() so an RLS block (which deletes 0 rows with no error) surfaces as a
+    // visible failure instead of a row that silently reappears on refresh.
+    const { data: deleted, error: err } = await supabase.from('jobs').delete().eq('id', id).select('id')
     if (err) throw err
+    if (!deleted || deleted.length === 0) throw new Error('tiada kebenaran memadam (RLS) atau rekod tidak wujud')
     const next = jobs.filter(j => j.id !== id); setJobs(next); lsSave(workshopId, next)
   }
 

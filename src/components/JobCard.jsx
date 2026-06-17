@@ -105,8 +105,13 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
     const file = e.target.files?.[0]; if (file) uploadFile(file, type); e.target.value = ''
   }
 
-  const handleDelete = () => {
-    if (window.confirm(`${t('card_confirm_delete')} ${job.plate}?`)) onDelete(job.id)
+  const handleDelete = async () => {
+    if (!window.confirm(`${t('card_confirm_delete')} ${job.plate}?`)) return
+    try {
+      await onDelete(job.id)
+    } catch (e) {
+      alert('Gagal padam / Delete failed: ' + e.message)
+    }
   }
 
   return (
