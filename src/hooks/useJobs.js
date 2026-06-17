@@ -121,20 +121,19 @@ export function useJobs(workshopId) {
       lsSave(workshopId, next); setJobs(next); return
     }
     const job = jobs.find(j => j.id === id)
-    const photos = job?.job_attachments?.filter(a => a.type === 'photo') || []
-    if (photos.length > 0) {
-      const paths = photos.map(a => {
-        const marker = '/object/public/attachments/'
-        const idx = a.url.indexOf(marker)
-        return idx !== -1 ? a.url.slice(idx + marker.length) : null
-      }).filter(Boolean)
-      if (paths.length > 0) await supabase.storage.from('attachments').remove(paths)
-    }
-    // .select() so an RLS block (which deletes 0 rows with no error) surfaces as a
-    // visible failure instead of a row that silently reappears on refresh.
+    // Delete the job FIRST (cascades to job_attachments + refunds). .select() so an
+    // RLS block (which deletes 0 rows with no error) surfaces as a visible failure
+    // instead of a row that silently reappears on refresh.
     const { data: deleted, error: err } = await supabase.from('jobs').delete().eq('id', id).select('id')
     if (err) throw err
     if (!deleted || deleted.length === 0) throw new Error('tiada kebenaran memadam (RLS) atau rekod tidak wujud')
+    // Best-effort cleanup of the photo files — must never block the delete itself.
+    const paths = (job?.job_attachments?.filter(a => a.type === 'photo') || []).map(a => {
+      const marker = '/object/public/attachments/'
+      const idx = a.url.indexOf(marker)
+      return idx !== -1 ? a.url.slice(idx + marker.length) : null
+    }).filter(Boolean)
+    if (paths.length > 0) { try { await supabase.storage.from('attachments').remove(paths) } catch { /* ignore */ } }
     const next = jobs.filter(j => j.id !== id); setJobs(next); lsSave(workshopId, next)
   }
 
