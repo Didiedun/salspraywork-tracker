@@ -708,8 +708,8 @@ function PayrollTab({ workshopId }) {
             ))}
           </div>
 
-          {/* Entries table */}
-          <div className="bg-surface-card border border-hairline rounded-lg overflow-hidden">
+          {/* Entries — table on desktop, stacked cards on phones */}
+          <div className="hidden sm:block bg-surface-card border border-hairline rounded-lg overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
@@ -795,6 +795,81 @@ function PayrollTab({ workshopId }) {
                 </tbody>
               </table>
             </div>
+          </div>
+
+          {/* Mobile: stacked cards (same data + edit controls as the table) */}
+          <div className="sm:hidden space-y-2.5">
+            {entries.map((entry) => {
+              const editing = editingId === entry.id
+              const editInput = 'w-24 text-right border border-primary rounded px-2 py-1 text-xs focus:outline-none'
+              const figure = (label, value, cls = 'text-charcoal') => (
+                <div className="flex justify-between gap-2">
+                  <span className="text-mute">{label}</span>
+                  <span className={cls}>{value}</span>
+                </div>
+              )
+              return (
+                <div key={entry.id} className="bg-surface-card border border-hairline rounded-lg p-3.5">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-ink text-sm truncate">{entry.employee.name}</p>
+                      {entry.employee.position && <p className="text-xs text-mute truncate">{entry.employee.position}</p>}
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-[10px] text-mute uppercase tracking-wide">{t('pr_net')}</p>
+                      <p className="font-display font-bold text-primary text-lg leading-tight">{fmt(entry.net_salary)}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-x-5 gap-y-1.5 text-xs">
+                    {figure(t('pr_basic'), fmtCompact(entry.basic_salary))}
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="text-mute">{t('pr_allowances')}</span>
+                      {editing ? (
+                        <input type="number" min="0" step="0.01" value={editVals.allowances}
+                          onChange={e => setEditVals(v => ({ ...v, allowances: e.target.value }))} className={editInput} />
+                      ) : <span className="text-charcoal">{fmtCompact(entry.allowances)}</span>}
+                    </div>
+                    {figure(t('pr_gross'), fmtCompact(entry.gross_salary))}
+                    {figure('EPF (P)', fmtCompact(entry.epf_employee), 'text-red-600')}
+                    {figure('EPF (M)', fmtCompact(entry.epf_employer), 'text-blue-600')}
+                    {figure('SOCSO', `${fmtCompact(entry.socso_employee)} / ${fmtCompact(entry.socso_employer)}`, 'text-mute')}
+                    {figure('EIS', `${fmtCompact(entry.eis_employee)} / ${fmtCompact(entry.eis_employer)}`, 'text-mute')}
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="text-mute">PCB</span>
+                      {editing ? (
+                        <input type="number" min="0" step="0.01" value={editVals.pcb}
+                          onChange={e => setEditVals(v => ({ ...v, pcb: e.target.value }))} className={editInput} />
+                      ) : <span className="text-charcoal">{fmtCompact(entry.pcb)}</span>}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 mt-3 pt-2.5 border-t border-hairline">
+                    {!isFinal && (editing ? (
+                      <>
+                        <button onClick={() => saveEdit(entry.id)} disabled={savingEntry}
+                          className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-primary text-white hover:bg-primary-deep disabled:opacity-50 transition-colors">
+                          {savingEntry ? <Loader className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />} {t('save')}
+                        </button>
+                        <button onClick={() => setEditingId(null)}
+                          className="text-xs font-semibold px-3 py-1.5 rounded-full border border-hairline text-charcoal hover:bg-canvas transition-colors">
+                          {t('no')}
+                        </button>
+                      </>
+                    ) : (
+                      <button onClick={() => startEdit(entry)}
+                        className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border border-hairline text-charcoal hover:bg-canvas transition-colors">
+                        <Pencil className="w-3 h-3" /> {t('edit')}
+                      </button>
+                    ))}
+                    <button onClick={() => setPayslip(entry)}
+                      className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border border-hairline text-charcoal hover:bg-surface-bone transition-colors">
+                      <Printer className="w-3 h-3" /> Slip
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
           </div>
 
           {/* Actions */}
