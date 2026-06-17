@@ -13,7 +13,7 @@ import { useLang } from '../context/LanguageContext'
 import { useApp } from '../context/AppContext'
 import {
   Edit2, Trash2, Camera, Printer, Image, DollarSign,
-  ChevronDown, ChevronUp, X, ChevronRight, ChevronLeft, Clock, UserCheck, Mail
+  ChevronDown, ChevronUp, X, ChevronRight, ChevronLeft, Clock, UserCheck, Mail, Loader
 } from 'lucide-react'
 
 function EmailToast({ job, workshop, t, onClose }) {
@@ -59,6 +59,9 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
   const [showPayment, setShowPayment]   = useState(false)
   const [showRefund, setShowRefund]     = useState(false)
   const [emailPrompt, setEmailPrompt]   = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting]           = useState(false)
+  const [deleteErr, setDeleteErr]         = useState('')
   const photoRef = useRef()
 
   const { stages, stageMap, lastValue, nextStage, prevStage, isOverdue: checkOverdue } = useStages()
@@ -105,12 +108,16 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
     const file = e.target.files?.[0]; if (file) uploadFile(file, type); e.target.value = ''
   }
 
-  const handleDelete = async () => {
-    if (!window.confirm(`${t('card_confirm_delete')} ${job.plate}?`)) return
+  // In-app confirm (no window.confirm — browsers can silently suppress dialogs).
+  const doDelete = async () => {
+    setDeleting(true); setDeleteErr('')
     try {
       await onDelete(job.id)
+      setConfirmDelete(false)
     } catch (e) {
-      alert('Gagal padam / Delete failed: ' + e.message)
+      setDeleteErr(e.message)
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -131,6 +138,34 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
       )}
       {showRefund && (
         <RefundModal job={job} onSave={onUpdate} onClose={() => setShowRefund(false)} />
+      )}
+      {confirmDelete && (
+        <div className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-[80] flex items-center justify-center p-4"
+          onClick={() => !deleting && setConfirmDelete(false)}>
+          <div className="bg-surface-card rounded-2xl w-full max-w-xs p-5 space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
+                <Trash2 className="w-4 h-4 text-red-500" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-semibold text-ink text-sm">{t('card_confirm_delete')}</p>
+                <p className="text-xs text-mute truncate">{job.plate} — {job.owner}</p>
+              </div>
+            </div>
+            {deleteErr && <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{deleteErr}</p>}
+            <div className="flex gap-2">
+              <button onClick={() => setConfirmDelete(false)} disabled={deleting}
+                className="flex-1 py-2.5 rounded-full border border-hairline text-charcoal text-sm font-semibold hover:bg-canvas transition-colors disabled:opacity-50">
+                {t('no')}
+              </button>
+              <button onClick={doDelete} disabled={deleting}
+                className="flex-1 py-2.5 rounded-full bg-red-500 hover:bg-red-600 text-white text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50">
+                {deleting ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                {t('delete')}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
       {emailPrompt && <EmailToast job={job} workshop={workshop} t={t} onClose={() => setEmailPrompt(false)} />}
       {lightbox && (
@@ -313,7 +348,7 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
               <Printer className="w-3.5 h-3.5" /> {t('card_invoice')}
             </button>
           )}
-          <button onClick={handleDelete} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs text-red-500 hover:bg-red-50 transition-colors font-semibold">
+          <button onClick={() => { setDeleteErr(''); setConfirmDelete(true) }} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs text-red-500 hover:bg-red-50 transition-colors font-semibold">
             <Trash2 className="w-3.5 h-3.5" /> {t('delete')}
           </button>
         </div>
