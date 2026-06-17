@@ -108,14 +108,34 @@ NOTIFY pgrst, 'reload schema';
 -- See them first:
 SELECT id, plate, created_at FROM jobs ORDER BY created_at DESC;
 
--- Then delete one — UNCOMMENT a line and set the value:
--- DELETE FROM jobs WHERE plate = 'JDT9012';
--- DELETE FROM jobs WHERE id = '00000000-0000-0000-0000-000000000000';
+-- Your 3 hand-inserted seed jobs all share the timestamp 2026-04-11 — delete them:
+DELETE FROM jobs WHERE created_at::date = '2026-04-11';
+-- (or delete a single one by id:)
+-- DELETE FROM jobs WHERE id = '3730e945-fe1b-4db8-8efd-7c9d88e0a740';
 
 
 -- ============================================================================
--- PART 4 — job_attachments / workshop_invites / workshops cleanup
+-- PART 4 — close the last holes (attachments + invite codes)  [run as a block]
 -- ============================================================================
--- I'll fill this in once you paste me the PART 1C result, so it closes the
--- holes (anyone can add/delete photos; anyone can read invite codes) WITHOUT
--- breaking photo uploads, joining a workshop, or the public customer tracker.
+-- job_attachments: anyone could INSERT/DELETE photos. Remove the public write +
+-- duplicate public reads; keep ONE public read (customer tracker needs photos),
+-- keep the worker read/insert, and add owner full control.
+DROP POLICY IF EXISTS "Public delete" ON job_attachments;
+DROP POLICY IF EXISTS "Public insert" ON job_attachments;
+DROP POLICY IF EXISTS "Public read"   ON job_attachments;
+DROP POLICY IF EXISTS "Public can read job attachments" ON job_attachments;
+DO $$ BEGIN
+  CREATE POLICY "owners_manage_attachments" ON job_attachments
+    FOR ALL TO authenticated
+    USING      (job_id IN (SELECT id FROM jobs WHERE workshop_id IN (SELECT id FROM workshops WHERE owner_id = auth.uid())))
+    WITH CHECK (job_id IN (SELECT id FROM jobs WHERE workshop_id IN (SELECT id FROM workshops WHERE owner_id = auth.uid())));
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- workshop_invites: codes were world-readable. Joining goes through the
+-- join_workshop() RPC, so the client never needs to read them — drop the open read.
+DROP POLICY IF EXISTS "invites_public_read" ON workshop_invites;
+
+-- NOTE: workshops_public_read is intentionally KEPT — the public /w/<slug>
+-- tracker reads the workshop by slug as an anonymous visitor.
+
+NOTIFY pgrst, 'reload schema';
