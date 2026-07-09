@@ -254,6 +254,8 @@ function BillingToggle({ stats, loading }) {
       <div className="flex items-center justify-center gap-3 mb-8">
         <span className={`text-sm font-semibold transition-colors ${!annual ? 'text-ink' : 'text-mute'}`}>{t('land_monthly')}</span>
         <button onClick={() => setAnnual(a => !a)}
+          aria-label={annual ? t('land_monthly') : t('land_annual')}
+          aria-pressed={annual}
           className={`relative w-12 h-6 rounded-full transition-colors ${annual ? 'bg-primary' : 'bg-stone'}`}>
           <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${annual ? 'translate-x-[26px]' : 'translate-x-0.5'}`} />
         </button>
@@ -409,6 +411,8 @@ export function LandingPage() {
           </div>
         </div>
       </nav>
+
+      <main>
 
       {/* ── BETA NOTICE ── */}
       <div className="bg-amber-50 border-b border-amber-200">
@@ -676,6 +680,8 @@ export function LandingPage() {
       </section>
 
       <FeedbackWidget />
+
+      </main>
 
       {/* ── FOOTER ── */}
       <footer className="bg-surface-deep border-t border-white/5">
