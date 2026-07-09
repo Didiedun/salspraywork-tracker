@@ -95,7 +95,7 @@ serve(async (req) => {
       `Langganan Pro ${interval === 'annual' ? 'tahunan' : 'bulanan'} ${workshop.name}`
         .replace(/[^a-zA-Z0-9 _]/g, '').substring(0, 100))
     form.append('billPriceSetting', '1') // 1 = fixed amount; 0 would let the payer edit it
-    form.append('billPayorInfo', '1')
+    form.append('billPayorInfo', '0') // payer fills in their own details on ToyyibPay's page
     form.append('billAmount', String(Math.round(amountRM * 100)))
     form.append('billReturnUrl', returnUrl)
     form.append('billCallbackUrl', callbackUrl)
