@@ -30,7 +30,13 @@ function BillingCard() {
       const { data, error: err } = await supabase.functions.invoke('create-subscription-bill', {
         body: { interval, return_url: `${window.location.origin}/settings?sub=pending` },
       })
-      if (err || !data?.payment_url) throw new Error(data?.error || err?.message || t('st_bill_error'))
+      // Supabase client hides the real error body — unwrap it
+      if (err) {
+        let msg = t('st_bill_error')
+        try { const body = await err.context?.json?.(); msg = body?.error || err.message } catch { msg = err.message }
+        throw new Error(msg)
+      }
+      if (!data?.payment_url) throw new Error(data?.error || t('st_bill_error'))
       window.location.href = data.payment_url
     } catch (e) {
       setError(e.message)
