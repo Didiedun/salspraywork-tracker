@@ -21,3 +21,9 @@ export function planStatus(workshop) {
 export function planPrices(workshop) {
   return workshop?.early_bird ? { monthly: 20, annual: 200 } : { monthly: 30, annual: 300 }
 }
+
+// Feature limits apply only to the regular 14-day trial (early birds and Pro are unlimited)
+export const TRIAL_LIMITS = { jobs: 30, workers: 1, items: 20 }
+export function isLimitedTrial(workshop) {
+  return !workshop?.early_bird && planStatus(workshop).state === 'trial'
+}

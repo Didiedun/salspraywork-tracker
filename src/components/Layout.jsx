@@ -118,16 +118,23 @@ function Sidebar({ workshop, signOut, onClose, collapsed, onToggleCollapsed }) {
 function PlanBanner({ workshop }) {
   const { t } = useLang()
   const status = planStatus(workshop)
-  const expiring = status.state === 'trial' && status.daysLeft !== null && status.daysLeft <= 7
-  if (status.state !== 'expired' && !expiring) return null
-  const expired = status.state === 'expired'
+  const soon = status.daysLeft !== null && status.daysLeft <= 7
+  const trialExpiring = status.state === 'trial' && soon
+  const proExpiring   = status.state === 'pro' && soon
+  const expired       = status.state === 'expired'
+  if (!expired && !trialExpiring && !proExpiring) return null
+
+  const msg = expired ? t('plan_banner_expired')
+    : proExpiring ? t('plan_banner_pro_expiring', { days: status.daysLeft })
+    : t('plan_banner_expiring', { days: status.daysLeft })
+
   return (
     <div className={`px-4 py-2.5 flex items-center justify-between gap-3 text-xs font-semibold ${
       expired ? 'bg-red-50 text-red-700 border-b border-red-200' : 'bg-amber-50 text-amber-800 border-b border-amber-200'
     }`}>
-      <span>{expired ? t('plan_banner_expired') : t('plan_banner_expiring', { days: status.daysLeft })}</span>
+      <span>{msg}</span>
       <Link to="/settings" className={`flex-shrink-0 text-white px-3 py-1.5 rounded-full ${expired ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-500 hover:bg-amber-600'} transition-colors`}>
-        {t('plan_banner_cta')}
+        {proExpiring ? t('plan_banner_renew') : t('plan_banner_cta')}
       </Link>
     </div>
   )

@@ -51,6 +51,26 @@ export function CustomerView() {
   const [lightbox, setLightbox]     = useState(null)
   const [beforeAfter, setBeforeAfter] = useState(false)
   const [showReceipt, setShowReceipt] = useState(false)
+  const [payLoading, setPayLoading]   = useState(false)
+  const [payError, setPayError]       = useState('')
+
+  const payOnline = async (jobId) => {
+    setPayLoading(true); setPayError('')
+    try {
+      const { data, error } = await supabase.functions.invoke('create-bill-public', {
+        body: { job_id: jobId, return_url: window.location.href },
+      })
+      if (error || !data?.payment_url) {
+        let msg = t('cv_pay_err')
+        try { const body = await error?.context?.json?.(); msg = body?.error || msg } catch { /* keep default */ }
+        throw new Error(data?.error || msg)
+      }
+      window.location.href = data.payment_url
+    } catch (e) {
+      setPayError(e.message)
+      setPayLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (!slug) { setWsLoading(false); return }
@@ -300,6 +320,18 @@ export function CustomerView() {
                       <span className="text-charcoal font-semibold text-sm">{t('pay_balance')}</span>
                       <span className="text-ink font-display font-bold text-lg">{formatMoney(balance)}</span>
                     </div>
+                    {workshop.toyyibpay_secret_set && workshop.toyyibpay_category_code && (
+                      <>
+                        <button onClick={() => payOnline(job.id)} disabled={payLoading}
+                          className="w-full mt-3 flex items-center justify-center gap-2 bg-primary hover:bg-primary-deep disabled:opacity-60 text-white font-semibold rounded-full py-3 transition-colors text-sm">
+                          {payLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Globe className="w-4 h-4" />}
+                          {t('cv_pay_now')} — {formatMoney(balance)}
+                        </button>
+                        {payError && (
+                          <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2 mt-2">{payError}</p>
+                        )}
+                      </>
+                    )}
                   </>
                 )}
               </div>

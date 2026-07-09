@@ -9,7 +9,7 @@ import { TodaySummary } from './TodaySummary'
 import { RevenueChart } from './RevenueChart'
 import { EODReport } from './EODReport'
 import { paymentStatus, isStale } from '../constants'
-import { planStatus } from '../lib/plan'
+import { planStatus, isLimitedTrial, TRIAL_LIMITS } from '../lib/plan'
 import { useStages } from '../hooks/useStages'
 import { Plus, Search, RefreshCw, Archive, TrendingUp, BarChart2, Copy, Check, AlertTriangle, Bell, Download, ClipboardList } from 'lucide-react'
 import { TutorialModal } from './TutorialModal'
@@ -31,6 +31,9 @@ export function Dashboard() {
   const planExpired = planStatus(workshop).state === 'expired'
   const openAddJob = () => {
     if (planExpired) { alert(t('plan_expired_block')); return }
+    if (isLimitedTrial(workshop) && jobs.filter(j => !j.archived).length >= TRIAL_LIMITS.jobs) {
+      alert(t('plan_limit_jobs')); return
+    }
     setAdding(true)
   }
   const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('onboarding_done'))

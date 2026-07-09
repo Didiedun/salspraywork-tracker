@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LanguageContext'
 import { supabase } from '../lib/supabase'
+import { isLimitedTrial, TRIAL_LIMITS } from '../lib/plan'
 import { Users, RefreshCw, Copy, Check, Trash2, UserPlus, Pencil, X } from 'lucide-react'
 
 function randomCode() {
@@ -42,6 +43,11 @@ export function WorkersPage() {
   useEffect(() => { load() }, [workshop?.id])
 
   const generateInvite = async () => {
+    // Workers list includes the owner — only count worker accounts against the limit
+    const workerCount = workers.filter(w => w.role === 'worker').length
+    if (isLimitedTrial(workshop) && workerCount + invites.length >= TRIAL_LIMITS.workers) {
+      alert(t('plan_limit_workers')); return
+    }
     setGenerating(true)
     try {
       const code = randomCode()

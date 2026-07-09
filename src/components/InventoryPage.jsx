@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext'
+import { isLimitedTrial, TRIAL_LIMITS } from '../lib/plan'
 import { useLang } from '../context/LanguageContext'
 import { useInventory } from '../hooks/useInventory'
 import { useCatalog } from '../hooks/useCatalog'
@@ -595,9 +596,17 @@ function RestockForm({ item, onSave, onClose }) {
 
 function StockTab({ workshopId }) {
   const { t } = useLang()
+  const { workshop } = useApp()
   const { items, loading, addItem, updateItem, deleteItem } = useInventory(workshopId)
   const [search,     setSearch]     = useState('')
   const [editing,    setEditing]    = useState(null)
+
+  const openAddItem = () => {
+    if (isLimitedTrial(workshop) && items.length >= TRIAL_LIMITS.items) {
+      alert(t('plan_limit_items')); return
+    }
+    setEditing('new')
+  }
   const [restocking, setRestocking] = useState(null)
   const [filter,     setFilter]     = useState('all')
 
@@ -657,7 +666,7 @@ function StockTab({ workshopId }) {
           <option value="all">{t('inv_filter_all')}</option>
           <option value="low">{t('inv_filter_low')}</option>
         </select>
-        <button onClick={() => setEditing('new')}
+        <button onClick={openAddItem}
           className="flex items-center gap-2 bg-primary hover:bg-primary-deep text-white font-semibold rounded-full px-5 py-2.5 text-sm transition-colors">
           <Plus className="w-4 h-4" /> {t('inv_add')}
         </button>
@@ -670,7 +679,7 @@ function StockTab({ workshopId }) {
           <Package className="w-10 h-10 mx-auto mb-3 opacity-30" />
           <p className="font-semibold text-charcoal">{items.length === 0 ? t('inv_empty') : t('inv_no_match')}</p>
           {items.length === 0 && (
-            <button onClick={() => setEditing('new')} className="mt-3 text-primary text-sm font-semibold hover:underline">
+            <button onClick={openAddItem} className="mt-3 text-primary text-sm font-semibold hover:underline">
               {t('inv_add_first')}
             </button>
           )}

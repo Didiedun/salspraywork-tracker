@@ -274,7 +274,13 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
               </span>
             )}
             {job.phone && (
-              <a href={(() => { const d = job.phone.replace(/\D/g,''); const p = d.startsWith('60') ? d : '60'+d.replace(/^0/,''); return `https://wa.me/${p}?text=${encodeURIComponent(t('wa_msg') + ' ' + job.plate)}` })()}
+              <a href={(() => {
+                const d = job.phone.replace(/\D/g,''); const p = d.startsWith('60') ? d : '60'+d.replace(/^0/,'')
+                const msg = isLast
+                  ? `${t('wa_msg_ready')} (${job.plate})` + (!job.paid && balance > 0 ? ` — ${t('pay_balance')}: RM ${balance.toFixed(2)}` : '')
+                  : t('wa_msg') + ' ' + job.plate
+                return `https://wa.me/${p}?text=${encodeURIComponent(msg)}`
+              })()}
                 target="_blank" rel="noreferrer"
                 className="text-badge-success hover:text-emerald-700 font-semibold" onClick={e => e.stopPropagation()}>
                 {t('card_whatsapp')}

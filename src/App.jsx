@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AppProvider, useApp } from './context/AppContext'
 import { LanguageProvider } from './context/LanguageContext'
@@ -5,16 +6,19 @@ import { AuthScreen }    from './components/AuthScreen'
 import { Onboarding }    from './components/Onboarding'
 import { Layout }        from './components/Layout'
 import { Dashboard }     from './components/Dashboard'
-import { InventoryPage }     from './components/InventoryPage'
-import { WorkersPage }       from './components/WorkersPage'
 import { WorkerView }        from './components/WorkerView'
 import { CustomerView }      from './components/CustomerView'
-import { LandingPage }       from './components/LandingPage'
-import { WorkshopSettings }  from './components/WorkshopSettings'
-import { FinancePage }       from './components/FinancePage'
-import { PayrollPage }       from './components/PayrollPage'
 import { MaintenancePage }   from './components/MaintenancePage'
 import { RefreshCw }     from 'lucide-react'
+
+// Owner-only pages + landing: split out so the customer tracking page and
+// dashboard load fast on mobile data
+const InventoryPage    = lazy(() => import('./components/InventoryPage').then(m => ({ default: m.InventoryPage })))
+const WorkersPage      = lazy(() => import('./components/WorkersPage').then(m => ({ default: m.WorkersPage })))
+const LandingPage      = lazy(() => import('./components/LandingPage').then(m => ({ default: m.LandingPage })))
+const WorkshopSettings = lazy(() => import('./components/WorkshopSettings').then(m => ({ default: m.WorkshopSettings })))
+const FinancePage      = lazy(() => import('./components/FinancePage').then(m => ({ default: m.FinancePage })))
+const PayrollPage      = lazy(() => import('./components/PayrollPage').then(m => ({ default: m.PayrollPage })))
 
 const MAINTENANCE = import.meta.env.VITE_MAINTENANCE === 'true'
 
@@ -31,6 +35,7 @@ function AppRoutes() {
   if (loading) return <Spinner />
 
   return (
+    <Suspense fallback={<Spinner />}>
     <Routes>
       {/* Always-public: customer status page per workshop */}
       <Route path="/w/:slug" element={<CustomerView />} />
@@ -71,6 +76,7 @@ function AppRoutes() {
         </>
       )}
     </Routes>
+    </Suspense>
   )
 }
 
