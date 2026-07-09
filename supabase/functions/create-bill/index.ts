@@ -112,7 +112,7 @@ serve(async (req) => {
     form.append('categoryCode', categoryCode)
     form.append('billName', billName)
     form.append('billDescription', billDesc)
-    form.append('billPriceSetting', '0')
+    form.append('billPriceSetting', '1') // 1 = fixed amount; 0 (dynamic) would let the payer edit the amount
     form.append('billPayorInfo', '1')
     form.append('billAmount', String(amountCents))
     form.append('billReturnUrl', returnUrl)

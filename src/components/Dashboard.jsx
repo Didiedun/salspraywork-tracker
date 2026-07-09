@@ -9,6 +9,7 @@ import { TodaySummary } from './TodaySummary'
 import { RevenueChart } from './RevenueChart'
 import { EODReport } from './EODReport'
 import { paymentStatus, isStale } from '../constants'
+import { planStatus } from '../lib/plan'
 import { useStages } from '../hooks/useStages'
 import { Plus, Search, RefreshCw, Archive, TrendingUp, BarChart2, Copy, Check, AlertTriangle, Bell, Download, ClipboardList } from 'lucide-react'
 import { TutorialModal } from './TutorialModal'
@@ -26,6 +27,12 @@ export function Dashboard() {
   const [search,    setSearch]    = useState('')
   const [payFilter, setPayFilter] = useState('all')
   const [adding,    setAdding]    = useState(false)
+
+  const planExpired = planStatus(workshop).state === 'expired'
+  const openAddJob = () => {
+    if (planExpired) { alert(t('plan_expired_block')); return }
+    setAdding(true)
+  }
   const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('onboarding_done'))
 
   const closeOnboarding = () => {
@@ -287,7 +294,7 @@ export function Dashboard() {
           className="flex items-center gap-2 bg-canvas border border-hairline hover:bg-surface-bone text-charcoal font-semibold rounded-full px-4 py-2.5 text-sm transition-colors">
           <Download className="w-4 h-4" /> {t('dash_export')}
         </button>
-        <button onClick={() => setAdding(true)}
+        <button onClick={openAddJob}
           className="flex items-center gap-2 bg-primary hover:bg-primary-deep text-white font-semibold rounded-full px-5 py-2.5 text-sm transition-colors">
           <Plus className="w-4 h-4" /> {t('dash_new_job')}
         </button>
@@ -325,7 +332,7 @@ export function Dashboard() {
           <Archive className="w-10 h-10 mx-auto mb-3 opacity-30" />
           <p className="font-semibold text-charcoal">{tab === 'active' ? t('dash_empty_active') : t('dash_empty_arch')}</p>
           {tab === 'active' && (
-            <button onClick={() => setAdding(true)} className="mt-3 text-primary text-sm font-semibold hover:underline">
+            <button onClick={openAddJob} className="mt-3 text-primary text-sm font-semibold hover:underline">
               {t('dash_add_first')}
             </button>
           )}

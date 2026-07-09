@@ -316,7 +316,6 @@ function BillingToggle({ stats, loading }) {
           <div className="bg-surface-deep px-5 py-3 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <span className="text-on-dark font-bold text-sm">Pro</span>
-              <span className="text-[10px] bg-white/10 text-on-dark/60 px-2 py-0.5 rounded-full font-semibold tracking-wide">AKAN DATANG</span>
             </div>
             {earlyBird && (
               <span className="text-[10px] text-on-dark/60 hidden sm:block">
@@ -355,10 +354,13 @@ function BillingToggle({ stats, loading }) {
                 </div>
               ))}
             </div>
-            <button disabled
-              className="w-full inline-flex items-center justify-center gap-2 bg-stone/40 text-mute font-semibold rounded-full px-5 py-3 text-sm cursor-not-allowed">
-              Akan Datang
-            </button>
+            <Link to="/register"
+              className="w-full inline-flex items-center justify-center gap-2 bg-surface-deep hover:bg-ink text-on-dark font-bold rounded-full px-5 py-3 text-sm transition-colors">
+              Pilih Pro <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+            <p className="text-[10px] text-mute text-center mt-2">
+              Daftar dahulu, kemudian naik taraf di Tetapan → Langganan Pro.
+            </p>
           </div>
         </div>
 

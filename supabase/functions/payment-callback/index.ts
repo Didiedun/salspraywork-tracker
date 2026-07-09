@@ -51,7 +51,7 @@ serve(async (req) => {
     // Load local payment by gateway_ref
     const { data: payment } = await serviceClient
       .from('payments')
-      .select('id, job_id, workshop_id, amount_original, status')
+      .select('id, job_id, workshop_id, amount_original, status, purpose')
       .eq('provider', 'toyyibpay')
       .eq('gateway_ref', billCode)
       .single()
@@ -61,20 +61,32 @@ serve(async (req) => {
       return new Response('Payment not found', { status: 404 })
     }
 
-    // Resolve this workshop's gateway environment so we verify against the
-    // correct toyyibPay host (sandbox vs production). The secret lives in the
-    // service-role-only secret store.
-    const { data: workshopCfg } = await serviceClient
-      .from('workshops')
-      .select('toyyibpay_sandbox')
-      .eq('id', payment.workshop_id)
-      .single()
-    const { data: secretRow } = await serviceClient
-      .from('workshop_secrets')
-      .select('toyyibpay_secret_key')
-      .eq('workshop_id', payment.workshop_id)
-      .single()
-    const verifyBase = workshopCfg?.toyyibpay_sandbox !== false
+    // Two kinds of payments share this callback:
+    //   'job'              → customer pays the WORKSHOP's ToyyibPay account
+    //   'subscription_*'   → workshop pays the PLATFORM's ToyyibPay account
+    // Verification must use the matching secret + environment.
+    const isSubscription = (payment.purpose || 'job').startsWith('subscription')
+
+    let verifySecret: string | undefined
+    let verifySandbox: boolean
+    if (isSubscription) {
+      verifySecret  = Deno.env.get('PLATFORM_TOYYIBPAY_SECRET_KEY')
+      verifySandbox = Deno.env.get('PLATFORM_TOYYIBPAY_SANDBOX') !== 'false'
+    } else {
+      const { data: workshopCfg } = await serviceClient
+        .from('workshops')
+        .select('toyyibpay_sandbox')
+        .eq('id', payment.workshop_id)
+        .single()
+      const { data: secretRow } = await serviceClient
+        .from('workshop_secrets')
+        .select('toyyibpay_secret_key')
+        .eq('workshop_id', payment.workshop_id)
+        .single()
+      verifySecret  = secretRow?.toyyibpay_secret_key
+      verifySandbox = workshopCfg?.toyyibpay_sandbox !== false
+    }
+    const verifyBase = verifySandbox
       ? 'https://dev.toyyibpay.com'
       : 'https://toyyibpay.com'
 
@@ -104,7 +116,7 @@ serve(async (req) => {
     // can be forged. Re-fetch the real transaction status from toyyibPay and only
     // settle when an actual successful transaction exists for THIS payment.
     const vForm = new FormData()
-    if (secretRow?.toyyibpay_secret_key) vForm.append('userSecretKey', secretRow.toyyibpay_secret_key)
+    if (verifySecret) vForm.append('userSecretKey', verifySecret)
     vForm.append('billCode', billCode)
     vForm.append('billpaymentStatus', '1')
 
@@ -133,12 +145,23 @@ serve(async (req) => {
       return new Response('OK', { status: 200 })
     }
 
-    // Verify amount — ToyyibPay sends amount in cents
-    const paidCents = Math.round(parseFloat(billpaymentAmount))
+    // Verify amount — cents. Prefer the amount ToyyibPay itself confirmed over
+    // the (public, forgeable) callback body.
+    const paidCents = Math.round(parseFloat(verifiedTxn.billpaymentAmount || billpaymentAmount))
     const expectedCents = Math.round(Number(payment.amount_original) * 100)
     if (paidCents < expectedCents) {
       console.warn(`Amount short: paid ${paidCents} expected ${expectedCents} for payment ${payment.id}`)
-      // Still record as partial payment — log for reconciliation
+      if (isSubscription) {
+        // A short subscription payment must never grant Pro time
+        await serviceClient.from('payments').update({
+          gateway_status: 'underpaid',
+          amount_paid: paidCents / 100,
+          gateway_payload: Object.fromEntries(params.entries()),
+          updated_at: new Date().toISOString(),
+        }).eq('id', payment.id)
+        return new Response('OK', { status: 200 })
+      }
+      // Job payments: still record as partial — log for reconciliation
     }
 
     const paidAmount = paidCents / 100
@@ -152,6 +175,25 @@ serve(async (req) => {
       paid_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }).eq('id', payment.id)
+
+    if (isSubscription) {
+      // Extend Pro from whichever is later: now, or the current paid_until
+      const months = payment.purpose === 'subscription_annual' ? 12 : 1
+      const { data: ws } = await serviceClient
+        .from('workshops')
+        .select('paid_until')
+        .eq('id', payment.workshop_id)
+        .single()
+      const base = new Date(Math.max(Date.now(), ws?.paid_until ? Date.parse(ws.paid_until) : 0))
+      base.setMonth(base.getMonth() + months)
+
+      await serviceClient.from('workshops').update({
+        plan: 'pro',
+        paid_until: base.toISOString(),
+      }).eq('id', payment.workshop_id)
+
+      return new Response('OK', { status: 200 })
+    }
 
     // Update the job
     const { data: job } = await serviceClient

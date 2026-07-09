@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, Link } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LanguageContext'
+import { planStatus } from '../lib/plan'
 import { TutorialModal } from './TutorialModal'
 import { FeedbackWidget } from './FeedbackWidget'
 import {
@@ -114,6 +115,24 @@ function Sidebar({ workshop, signOut, onClose, collapsed, onToggleCollapsed }) {
   )
 }
 
+function PlanBanner({ workshop }) {
+  const { t } = useLang()
+  const status = planStatus(workshop)
+  const expiring = status.state === 'trial' && status.daysLeft !== null && status.daysLeft <= 7
+  if (status.state !== 'expired' && !expiring) return null
+  const expired = status.state === 'expired'
+  return (
+    <div className={`px-4 py-2.5 flex items-center justify-between gap-3 text-xs font-semibold ${
+      expired ? 'bg-red-50 text-red-700 border-b border-red-200' : 'bg-amber-50 text-amber-800 border-b border-amber-200'
+    }`}>
+      <span>{expired ? t('plan_banner_expired') : t('plan_banner_expiring', { days: status.daysLeft })}</span>
+      <Link to="/settings" className={`flex-shrink-0 text-white px-3 py-1.5 rounded-full ${expired ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-500 hover:bg-amber-600'} transition-colors`}>
+        {t('plan_banner_cta')}
+      </Link>
+    </div>
+  )
+}
+
 export function Layout({ children }) {
   const { workshop, signOut } = useApp()
   const [open,      setOpen]      = useState(false)
@@ -167,6 +186,8 @@ export function Layout({ children }) {
             <p className="font-display font-bold text-ink text-sm truncate">{workshop?.name}</p>
           </div>
         </div>
+
+        <PlanBanner workshop={workshop} />
 
         <main className="flex-1">
           {children}

@@ -3,7 +3,79 @@ import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LanguageContext'
 import { supabase } from '../lib/supabase'
 import { SPRAY_STAGES } from '../constants'
-import { Settings, Upload, Save, Loader, Plus, Trash2, ChevronUp, ChevronDown, Eye, EyeOff, Globe } from 'lucide-react'
+import { planStatus, planPrices } from '../lib/plan'
+import { Settings, Upload, Save, Loader, Plus, Trash2, ChevronUp, ChevronDown, Eye, EyeOff, Globe, Zap } from 'lucide-react'
+
+function BillingCard() {
+  const { workshop } = useApp()
+  const { t, lang } = useLang()
+  const [paying, setPaying] = useState('') // '' | 'monthly' | 'annual'
+  const [error,  setError]  = useState('')
+
+  const status = planStatus(workshop)
+  const prices = planPrices(workshop)
+
+  const fmtDate = (iso) =>
+    new Date(iso).toLocaleDateString(lang === 'ms' ? 'ms-MY' : 'en-MY', { day: 'numeric', month: 'short', year: 'numeric' })
+
+  const badge = status.state === 'pro'
+    ? { cls: 'bg-badge-success/10 text-badge-success', label: t('st_bill_pro_until', { date: fmtDate(status.until) }) }
+    : status.state === 'trial'
+      ? { cls: 'bg-amber-50 text-amber-700', label: status.daysLeft === null ? t('st_bill_trial_left', { days: '—' }) : t('st_bill_trial_left', { days: status.daysLeft }) }
+      : { cls: 'bg-red-50 text-red-600', label: t('st_bill_expired') }
+
+  const handlePay = async (interval) => {
+    setPaying(interval); setError('')
+    try {
+      const { data, error: err } = await supabase.functions.invoke('create-subscription-bill', {
+        body: { interval, return_url: `${window.location.origin}/settings?sub=pending` },
+      })
+      if (err || !data?.payment_url) throw new Error(data?.error || err?.message || t('st_bill_error'))
+      window.location.href = data.payment_url
+    } catch (e) {
+      setError(e.message)
+      setPaying('')
+    }
+  }
+
+  return (
+    <div className="bg-surface-card border border-hairline rounded-lg p-5 space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Zap className="w-3.5 h-3.5 text-primary" />
+          </div>
+          <div>
+            <h2 className="font-semibold text-ink text-sm">{t('st_bill_title')}</h2>
+            <p className="text-xs text-mute">{t('st_bill_sub')}</p>
+          </div>
+        </div>
+        <span className={`text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap ${badge.cls}`}>
+          {badge.label}
+        </span>
+      </div>
+
+      {workshop?.early_bird && (
+        <p className="text-xs text-badge-success font-semibold">{t('st_bill_eb_note')}</p>
+      )}
+
+      <div className="grid grid-cols-2 gap-2">
+        {[['monthly', prices.monthly, t('st_bill_monthly')], ['annual', prices.annual, t('st_bill_annual')]].map(([key, price, label]) => (
+          <button key={key} type="button" onClick={() => handlePay(key)} disabled={!!paying}
+            className="flex flex-col items-center gap-0.5 py-3 rounded-xl border-2 border-hairline hover:border-primary bg-canvas text-charcoal transition-all disabled:opacity-50">
+            <span className="text-xs font-semibold">{label}</span>
+            <span className="font-display font-bold text-lg text-ink">
+              {paying === key ? <Loader className="w-4 h-4 animate-spin inline" /> : `RM ${price}`}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {error && <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
+      <p className="text-[10px] text-mute">{t('st_bill_note')}</p>
+    </div>
+  )
+}
 
 function PaymentGatewayCard() {
   const { workshop, reloadWorkshop } = useApp()
@@ -376,6 +448,9 @@ export function WorkshopSettings() {
           {stagesSaving ? t('saving') : t('st_stages_save')}
         </button>
       </div>
+
+      {/* Subscription */}
+      <BillingCard />
 
       {/* Payment gateway */}
       <PaymentGatewayCard />
