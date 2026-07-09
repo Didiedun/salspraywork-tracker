@@ -6,7 +6,6 @@ import { supabase } from '../lib/supabase'
 
 const METHODS = [
   { key: 'cash',    labelKey: 'pay_cash',    Icon: Banknote  },
-  { key: 'card',    labelKey: 'pay_card',    Icon: CreditCard },
   { key: 'duitnow', labelKey: 'pay_duitnow', Icon: QrCode    },
   { key: 'online',  labelKey: 'pay_online',  Icon: Globe     },
 ]
@@ -21,7 +20,7 @@ export function PaymentModal({ job, onSave, onClose }) {
   const balance  = netTotal - deposit
 
   const [method,       setMethod]       = useState('cash')
-  const [amount,       setAmount]       = useState('')
+  const [amount,       setAmount]       = useState(() => balance > 0 ? balance.toFixed(2) : '')
   const [customerPays, setCustomerPays] = useState('')
   const [saving,       setSaving]       = useState(false)
 
@@ -226,7 +225,7 @@ export function PaymentModal({ job, onSave, onClose }) {
                   <button type="button"
                     onClick={() => setAmount(balance.toFixed(2))}
                     className="text-xs text-primary font-semibold bg-primary/8 hover:bg-primary/15 px-2.5 py-1 rounded-full transition-colors">
-                    {t('pay_quick_full')}: {fmt(balance)}
+                    {t('pay_quick_full')}
                   </button>
                 </div>
                 <div className="relative">

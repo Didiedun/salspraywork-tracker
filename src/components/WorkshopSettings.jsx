@@ -91,7 +91,6 @@ function PaymentGatewayCard() {
   // blank on load and is only submitted when the owner types a new key.
   const [secretKey,  setSecretKey]  = useState('')
   const [catCode,    setCatCode]    = useState(workshop?.toyyibpay_category_code  || '')
-  const [sandbox,    setSandbox]    = useState(workshop?.toyyibpay_sandbox !== false)
   const [showKey,    setShowKey]    = useState(false)
   const [saving,     setSaving]     = useState(false)
   const [saved,      setSaved]      = useState(false)
@@ -110,7 +109,7 @@ function PaymentGatewayCard() {
         p_workshop_id: workshop.id,
         p_secret:      secretKey.trim() || null,
         p_category:    catCode.trim(),
-        p_sandbox:     sandbox,
+        p_sandbox:     false,
       })
       if (err) throw err
       setSecretKey('')
@@ -176,21 +175,6 @@ function PaymentGatewayCard() {
         <input value={catCode} onChange={e => setCatCode(e.target.value)}
           placeholder={t('st_gw_cat_ph')} className={inputCls} />
       </div>
-
-      <label className="flex items-start gap-3 cursor-pointer select-none">
-        <div className="relative flex-shrink-0 mt-0.5">
-          <input type="checkbox" className="sr-only" checked={sandbox} onChange={e => setSandbox(e.target.checked)} />
-          <div className={`w-9 h-5 rounded-full transition-colors ${sandbox ? 'bg-amber-400' : 'bg-stone'}`} />
-          <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${sandbox ? 'translate-x-4' : 'translate-x-0'}`} />
-        </div>
-        <div>
-          <p className="text-sm font-semibold text-ink">{t('st_gw_sandbox')}</p>
-          <p className="text-xs text-mute">{t('st_gw_sandbox_sub')}</p>
-          {!sandbox && (
-            <p className="text-xs text-amber-600 font-semibold mt-1">⚠ Mod Sebenar — bayaran akan diproses.</p>
-          )}
-        </div>
-      </label>
 
       {error && <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
       {saved  && <p className="text-badge-success text-xs bg-green-50 border border-green-200 rounded-md px-3 py-2">{t('st_gw_saved')}</p>}
