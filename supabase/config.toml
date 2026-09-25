@@ -1,0 +1,15 @@
+# Authenticated handlers validate the bearer token with auth.getUser().
+# This also supports projects using asymmetric JWT signing keys.
+[functions.create-bill]
+verify_jwt = false
+
+[functions.create-subscription-bill]
+verify_jwt = false
+
+# Customer checkout is public; its amount is calculated on the server.
+[functions.create-bill-public]
+verify_jwt = false
+
+# ToyyibPay uses its callback hash, not a Supabase JWT.
+[functions.payment-callback]
+verify_jwt = false

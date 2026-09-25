@@ -253,11 +253,11 @@ function BillingToggle({ stats, loading }) {
       {/* ── Annual / Monthly toggle ── */}
       <div className="flex items-center justify-center gap-3 mb-8">
         <span className={`text-sm font-semibold transition-colors ${!annual ? 'text-ink' : 'text-mute'}`}>{t('land_monthly')}</span>
-        <button onClick={() => setAnnual(a => !a)}
-          aria-label={annual ? t('land_monthly') : t('land_annual')}
-          aria-pressed={annual}
-          className={`relative w-12 h-6 rounded-full transition-colors ${annual ? 'bg-primary' : 'bg-stone'}`}>
-          <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${annual ? 'translate-x-[26px]' : 'translate-x-0.5'}`} />
+        <button type="button" role="switch" onClick={() => setAnnual(a => !a)}
+          aria-label={t('land_annual')}
+          aria-checked={annual}
+          className={`relative flex-shrink-0 w-12 h-6 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${annual ? 'bg-primary' : 'bg-stone'}`}>
+          <span className={`absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${annual ? 'translate-x-6' : 'translate-x-0'}`} />
         </button>
         <span className={`inline-flex items-center gap-1.5 text-sm font-semibold transition-colors ${annual ? 'text-ink' : 'text-mute'}`}>
           {t('land_annual')}

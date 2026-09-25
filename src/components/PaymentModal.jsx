@@ -60,12 +60,17 @@ export function PaymentModal({ job, onSave, onClose }) {
     setOnlineError('')
     try {
       const return_url = workshop?.slug
-        ? `${window.location.origin}/w/${workshop.slug}?paid=1`
+        ? `${window.location.origin}/w/${workshop.slug}`
         : window.location.origin
       const { data, error } = await supabase.functions.invoke('create-bill', {
-        body: { job_id: job.id, amount: balance, return_url },
+        body: { job_id: job.id, return_url },
       })
-      if (error || !data?.payment_url) {
+      if (error) {
+        let message = error.message
+        try { message = (await error.context?.json?.())?.error || message } catch { /* Keep the client error. */ }
+        throw new Error(message || t('pay_online_error'))
+      }
+      if (!data?.payment_url) {
         throw new Error(data?.error || error?.message || t('pay_online_error'))
       }
       setPaymentUrl(data.payment_url)
@@ -180,7 +185,7 @@ export function PaymentModal({ job, onSave, onClose }) {
                   )}
                   <button
                     onClick={handleCreateLink}
-                    disabled={creating}
+                    disabled={creating || balance < 1 || job.paid}
                     className="w-full bg-primary hover:bg-primary-deep disabled:bg-stone disabled:cursor-not-allowed text-white font-semibold rounded-full py-3.5 flex items-center justify-center gap-2 transition-colors text-sm">
                     <Globe className="w-4 h-4" />
                     {creating ? t('pay_online_creating') : t('pay_online_create')}
