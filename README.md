@@ -69,8 +69,22 @@ group by provider, gateway_ref
 having count(*) > 1;
 ```
 
-From the project directory, after verifying the CLI is linked to the correct
-Supabase project, deploy all four updated functions:
+### What deploys automatically
+
+- **Website:** Cloudflare Pages builds every push (a preview for pull requests,
+  production for `main`).
+- **Edge Functions:** `.github/workflows/deploy-supabase-functions.yml` runs the
+  tests and then deploys every function whenever function code or
+  `supabase/config.toml` reaches `main`. It needs two repository secrets
+  (GitHub → Settings → Secrets and variables → Actions): `SUPABASE_ACCESS_TOKEN`
+  (from supabase.com/dashboard/account/tokens) and `SUPABASE_PROJECT_REF`. It can
+  also be started by hand from the Actions tab (**Run workflow**).
+- **Database migrations and function secrets:** never automatic. Apply
+  migrations deliberately (see above) and manage secrets with
+  `supabase secrets set`.
+
+To deploy by hand instead, from the project directory, after verifying the CLI
+is linked to the correct Supabase project, deploy the functions:
 
 ```sh
 supabase functions deploy create-bill
