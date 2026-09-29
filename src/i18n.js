@@ -730,6 +730,12 @@ export const translations = {
     st_gw_test_title:       'Mod ujian: pelanggan tidak boleh bayar online',
     st_gw_test_msg:         'Bayaran ujian tidak memindahkan wang sebenar, jadi ia disekat. Tampal User Secret Key dan Category Code dari akaun Live di toyyibpay.com, kemudian tekan Simpan.',
     st_gw_live_note:        'Guna kunci dari toyyibpay.com (akaun Live), bukan dev.toyyibpay.com (akaun ujian). Caj transaksi ToyyibPay ditanggung oleh bengkel.',
+    eod_by_method:     'Mengikut kaedah bayaran',
+    eod_col_count:     'Bil. transaksi',
+    eod_col_amount:    'Amaun',
+    eod_col_customer:  'Pelanggan',
+    eod_col_type:      'Jenis',
+    eod_printed_at:    'Dicetak {time}',
   },
 
   en: {
@@ -1463,5 +1469,11 @@ export const translations = {
     st_gw_test_title:       'Test mode: customers can\'t pay online',
     st_gw_test_msg:         'Test payments don\'t move real money, so they\'re blocked. Paste the User Secret Key and Category Code from your live toyyibpay.com account, then press Save.',
     st_gw_live_note:        'Use keys from toyyibpay.com (live account), not dev.toyyibpay.com (test account). ToyyibPay\'s transaction fees are paid by the workshop.',
+    eod_by_method:     'By payment method',
+    eod_col_count:     'Transactions',
+    eod_col_amount:    'Amount',
+    eod_col_customer:  'Customer',
+    eod_col_type:      'Type',
+    eod_printed_at:    'Printed {time}',
   },
 }
