@@ -2,7 +2,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.117.1'
 import { corsHeaders, corsResponse } from '../_shared/cors.ts'
 import { createCheckout } from '../_shared/create-checkout.ts'
-import { outstandingSen, returnUrl } from '../_shared/toyyibpay.ts'
+import { outstandingSen, returnUrl, sandboxAllowed, workshopSandbox } from '../_shared/toyyibpay.ts'
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
@@ -57,12 +57,19 @@ serve(async (req) => {
 
     const secretKey    = secretRow?.toyyibpay_secret_key
     const categoryCode = workshop?.toyyibpay_category_code
-    const isSandbox    = workshop?.toyyibpay_sandbox !== false
+    const isSandbox    = workshopSandbox(workshop)
 
     if (!secretKey || !categoryCode) {
       return corsResponse({
         error: 'Payment gateway not configured. Go to Settings → Payment Gateway and enter your ToyyibPay credentials.',
       }, 503)
+    }
+    // A test-mode bill moves no real money but would still mark the job as paid.
+    if (isSandbox && !sandboxAllowed(key => Deno.env.get(key))) {
+      return corsResponse({
+        error: 'ToyyibPay is in test mode. Save your live toyyibpay.com Secret Key and Category Code in Settings.',
+        code: 'gateway_test_mode',
+      }, 409)
     }
 
     const checkout = await createCheckout(serviceClient, {

@@ -5,10 +5,10 @@ import {
   ClipboardList, Package, Users, Smartphone, FileText,
   CheckCircle, ArrowRight, BarChart2, Shield, Zap,
   ChevronDown, Star, TrendingUp, Clock, Camera,
-  MessageSquare, BookOpen, AlertTriangle,
+  MessageSquare, BookOpen, AlertTriangle, Search,
 } from 'lucide-react'
 import { useState } from 'react'
-import { FeedbackWidget } from './FeedbackWidget'
+import { FeedbackWidget, openFeedback } from './FeedbackWidget'
 
 /* ─── helpers ─────────────────────────────────────────── */
 function scrollTo(id) {
@@ -36,9 +36,9 @@ function DashboardMockup() {
       {/* Browser chrome */}
       <div className="bg-surface-bone border-b border-hairline px-3 py-2 flex items-center gap-2.5">
         <div className="flex gap-1 flex-shrink-0">
-          <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
-          <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
-          <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
+          <div className="w-2.5 h-2.5 rounded-full bg-stone" />
+          <div className="w-2.5 h-2.5 rounded-full bg-stone" />
+          <div className="w-2.5 h-2.5 rounded-full bg-stone" />
         </div>
         <div className="flex-1 bg-canvas rounded px-2.5 py-0.5 text-[9px] text-mute font-mono truncate">
           app.digitaldepot.my/dashboard
@@ -55,20 +55,20 @@ function DashboardMockup() {
               </div>
               <div className="min-w-0">
                 <p className="text-on-dark text-[8px] font-bold leading-tight">Digital Depot</p>
-                <p className="text-on-dark/40 text-[7px] truncate leading-tight">Bengkel Maju Jaya</p>
+                <p className="text-on-dark/60 text-[7px] truncate leading-tight">Bengkel Maju Jaya</p>
               </div>
             </div>
           </div>
           <div className="flex-1 p-1.5 space-y-0.5">
             {[['Dashboard', true], ['Inventori', false], ['Pekerja', false], ['Tetapan', false]].map(([label, active]) => (
-              <div key={label} className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md text-[8px] font-semibold ${active ? 'bg-primary text-white' : 'text-on-dark/50'}`}>
-                <div className={`w-1 h-1 rounded-full flex-shrink-0 ${active ? 'bg-white' : 'bg-white/25'}`} />
+              <div key={label} className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md text-[8px] font-semibold ${active ? 'bg-on-dark text-ink' : 'text-on-dark/50'}`}>
+                <div className={`w-1 h-1 rounded-full flex-shrink-0 ${active ? 'bg-ink' : 'bg-white/25'}`} />
                 {label}
               </div>
             ))}
           </div>
           <div className="p-1.5 border-t border-white/10">
-            <div className="flex items-center gap-1.5 px-2 py-1.5 text-on-dark/30 text-[8px]">
+            <div className="flex items-center gap-1.5 px-2 py-1.5 text-on-dark/60 text-[8px]">
               <div className="w-1 h-1 rounded-full bg-white/15" /> Log Keluar
             </div>
           </div>
@@ -86,12 +86,12 @@ function DashboardMockup() {
           <p className="text-mute text-[8px] font-bold uppercase tracking-wide mb-1.5">Kerja Semasa</p>
           {[
             { plate: 'WXX 1234', car: 'Toyota Vios',   stage: 'Cat',    cls: 'text-primary bg-primary/10' },
-            { plate: 'BYD 5678', car: 'Honda Civic',   stage: 'Dempul', cls: 'text-amber-600 bg-amber-50' },
-            { plate: 'VXD 9012', car: 'Perodua Myvi',  stage: 'Polish', cls: 'text-emerald-600 bg-emerald-50' },
+            { plate: 'BYD 5678', car: 'Honda Civic',   stage: 'Dempul', cls: 'text-amber-700 bg-amber-50' },
+            { plate: 'VXD 9012', car: 'Perodua Myvi',  stage: 'Polish', cls: 'text-badge-success bg-emerald-50' },
           ].map(({ plate, car, stage, cls }) => (
             <div key={plate} className="bg-surface-card border border-hairline rounded-lg px-2.5 py-1.5 flex items-center justify-between mb-1">
               <div>
-                <p className="text-ink text-[9px] font-bold font-mono tracking-wider">{plate}</p>
+                <p className="plate text-[9px]">{plate}</p>
                 <p className="text-mute text-[8px]">{car}</p>
               </div>
               <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${cls}`}>{stage}</span>
@@ -129,14 +129,14 @@ function CustomerMockup() {
           </div>
           {/* Search */}
           <div className="px-2.5 py-2">
-            <div className="bg-surface-bone border border-hairline rounded-full px-2.5 py-1.5 text-[8px] text-mute">
-              🔍  No. plat anda...
+            <div className="flex items-center gap-1 bg-surface-bone border border-hairline rounded-full px-2.5 py-1.5 text-[8px] text-mute">
+              <Search className="w-2 h-2" /> No. plat anda...
             </div>
           </div>
           {/* Result */}
           <div className="px-2.5 pb-3">
-            <div className="bg-primary rounded-lg py-1.5 text-center mb-2">
-              <p className="text-white font-bold text-[10px] tracking-[0.15em]">WXX 1234</p>
+            <div className="bg-ink rounded py-1.5 text-center mb-2 ring-1 ring-inset ring-white/15">
+              <p className="font-display text-white font-bold text-[11px] tracking-[0.12em]">WXX 1234</p>
             </div>
             <div className="bg-surface-card border border-hairline rounded-lg p-2 space-y-1.5">
               {[
@@ -420,7 +420,7 @@ export function LandingPage() {
           <span className="font-bold bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded-full">BETA</span>
           <span>Sistem ini masih dalam pembangunan awal. Mungkin ada pepijat kecil — jika jumpa sebarang masalah, sila</span>
           <button
-            onClick={() => document.querySelector('[title="Hantar laporan / bug report"]')?.click()}
+            onClick={openFeedback}
             className="font-bold underline hover:text-amber-900 transition-colors whitespace-nowrap px-1">
             hantar laporan
           </button>
@@ -433,7 +433,7 @@ export function LandingPage() {
         <div className="landing-hero">
           {/* Text */}
           <div className="min-w-0 text-left">
-            <div className="inline-flex items-center gap-2 bg-red-50 border border-red-100 text-primary text-[11px] sm:text-xs font-bold px-3 py-2 rounded-lg mb-6 tracking-wide">
+            <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 text-primary text-[11px] sm:text-xs font-bold px-3 py-2 rounded-lg mb-6 tracking-wide">
               <Zap className="w-3.5 h-3.5" fill="currentColor" />
               {earlyBird ? 'EARLY BIRD — PERCUMA 12 BULAN' : 'PERCUMA 14 HARI · TIADA KAD KREDIT'}
             </div>
@@ -470,7 +470,7 @@ export function LandingPage() {
             </div>
             <DashboardMockup />
             <div className="mt-5 flex items-center gap-3">
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-white text-badge-success"><Smartphone className="h-5 w-5" /></div>
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-white text-primary"><Smartphone className="h-5 w-5" /></div>
               <p className="text-xs leading-relaxed text-charcoal">Pelanggan semak status sendiri.<br /><strong className="font-semibold text-ink">Kurang panggilan. Lebih fokus.</strong></p>
             </div>
           </div>
@@ -502,7 +502,7 @@ export function LandingPage() {
       {/* ── PAIN SECTION ── */}
       <section className="max-w-6xl mx-auto px-5 sm:px-8 py-16">
         <div className="text-center mb-10">
-          <p className="text-xs font-bold text-primary uppercase tracking-widest mb-3">Masalah Biasa</p>
+          <p className="text-xs font-bold text-mute uppercase tracking-widest mb-3">Masalah Biasa</p>
           <h2 className="font-display font-bold text-3xl sm:text-4xl text-ink mb-3">
             Masih guna cara lama?
           </h2>
@@ -511,10 +511,10 @@ export function LandingPage() {
         <div className="grid sm:grid-cols-3 gap-5">
           {painPoints.map(({ icon: Icon, title, desc, fix }) => (
             <div key={title} className="bg-surface-card border border-hairline rounded-xl p-5">
-              <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center mb-3">
-                <Icon className="w-5 h-5 text-primary" />
+              <div className="w-10 h-10 rounded-full bg-surface-bone flex items-center justify-center mb-3">
+                <Icon className="w-5 h-5 text-charcoal" />
               </div>
-              <h3 className="font-display font-bold text-ink text-sm mb-1.5">{title}</h3>
+              <h3 className="font-display font-bold text-ink text-base mb-1.5">{title}</h3>
               <p className="text-mute text-sm leading-relaxed mb-3">{desc}</p>
               <div className="flex items-start gap-1.5 pt-3 border-t border-hairline">
                 <CheckCircle className="w-3.5 h-3.5 text-badge-success flex-shrink-0 mt-0.5" />
@@ -529,17 +529,17 @@ export function LandingPage() {
       <section id="ciri" className="bg-surface-card border-y border-hairline">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 py-16">
           <div className="text-center mb-10">
-            <p className="text-xs font-bold text-primary uppercase tracking-widest mb-3">Ciri-ciri</p>
+            <p className="text-xs font-bold text-mute uppercase tracking-widest mb-3">Ciri-ciri</p>
             <h2 className="font-display font-bold text-3xl sm:text-4xl text-ink mb-3">Semua yang bengkel anda perlukan</h2>
             <p className="text-charcoal text-lg max-w-xl mx-auto">Direka untuk bengkel kereta Malaysia. Mudah digunakan, tiada latihan khas diperlukan.</p>
           </div>
           <div className="feature-grid">
             {features.map(({ icon: Icon, title, desc }) => (
               <div key={title} className="bg-canvas border border-hairline rounded-xl p-5 hover:shadow-sm hover:-translate-y-0.5 transition-all">
-                <div className="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center mb-3">
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
                   <Icon className="w-4 h-4 text-primary" />
                 </div>
-                <h3 className="font-display font-bold text-ink text-sm mb-1.5">{title}</h3>
+                <h3 className="font-display font-bold text-ink text-base mb-1.5">{title}</h3>
                 <p className="text-charcoal text-xs leading-relaxed">{desc}</p>
               </div>
             ))}
@@ -550,7 +550,7 @@ export function LandingPage() {
       {/* ── SCREENSHOTS ── */}
       <section className="max-w-6xl mx-auto px-5 sm:px-8 py-16">
         <div className="text-center mb-10">
-          <p className="text-xs font-bold text-primary uppercase tracking-widest mb-3">Antara Muka</p>
+          <p className="text-xs font-bold text-mute uppercase tracking-widest mb-3">Antara Muka</p>
           <h2 className="font-display font-bold text-3xl sm:text-4xl text-ink mb-3">Tengok sendiri</h2>
           <p className="text-charcoal text-lg max-w-xl mx-auto">Bersih, mudah dan berfungsi. Direka untuk digunakan di telefon mahupun komputer.</p>
         </div>
@@ -574,7 +574,7 @@ export function LandingPage() {
       <section id="cara" className="bg-surface-card border-y border-hairline">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 py-16">
           <div className="text-center mb-10">
-            <p className="text-xs font-bold text-primary uppercase tracking-widest mb-3">Cara Kerja</p>
+            <p className="text-xs font-bold text-mute uppercase tracking-widest mb-3">Cara Kerja</p>
             <h2 className="font-display font-bold text-3xl sm:text-4xl text-ink mb-3">Mula dalam 3 langkah</h2>
             <p className="text-charcoal text-lg">Sistem anda sedia dalam masa kurang dari 5 minit.</p>
           </div>
@@ -582,7 +582,7 @@ export function LandingPage() {
             {steps.map(({ num, title, desc }, i) => (
               <div key={num} className="relative text-center">
                 {i < steps.length - 1 && (
-                  <div className="hidden sm:block absolute top-7 left-[calc(50%+2rem)] right-0 border-t-2 border-dashed border-red-200" />
+                  <div className="hidden sm:block absolute top-7 left-[calc(50%+2rem)] right-0 border-t-2 border-dashed border-primary/30" />
                 )}
                 <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center mx-auto mb-4 relative z-10 shadow-sm">
                   <span className="font-display font-bold text-white text-lg">{num}</span>
@@ -598,7 +598,7 @@ export function LandingPage() {
       {/* ── PRICING ── */}
       <section id="harga" className="max-w-6xl mx-auto px-5 sm:px-8 py-16">
         <div className="text-center mb-8">
-          <p className="text-xs font-bold text-primary uppercase tracking-widest mb-3">Harga</p>
+          <p className="text-xs font-bold text-mute uppercase tracking-widest mb-3">Harga</p>
           <h2 className="font-display font-bold text-3xl sm:text-4xl text-ink mb-3">
             {earlyBird ? 'Percuma 12 bulan untuk pendaftar awal' : 'Bermula dengan RM 0'}
           </h2>
@@ -610,7 +610,7 @@ export function LandingPage() {
         {earlyBird && (
           <div className="max-w-4xl mx-auto mb-6">
             <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 flex items-center gap-4">
-              <Zap className="w-5 h-5 text-amber-600 flex-shrink-0" fill="currentColor" />
+              <Zap className="w-5 h-5 text-amber-700 flex-shrink-0" fill="currentColor" />
               <div className="flex-1">
                 <p className="text-amber-800 font-bold text-sm">
                   Tawaran Pengguna Awal — {10 - (stats?.workshops ?? 0)} tempat lagi!
@@ -653,7 +653,7 @@ export function LandingPage() {
       {/* ── FAQ ── */}
       <section id="faq" className="max-w-3xl mx-auto px-4 py-16">
         <div className="text-center mb-10">
-          <p className="text-xs font-bold text-primary uppercase tracking-widest mb-3">FAQ</p>
+          <p className="text-xs font-bold text-mute uppercase tracking-widest mb-3">FAQ</p>
           <h2 className="font-display font-bold text-3xl text-ink">Soalan Lazim</h2>
         </div>
         <div className="space-y-3">
@@ -673,14 +673,14 @@ export function LandingPage() {
             Batal bila-bila masa.
           </p>
           <Link to="/register"
-            className="inline-flex items-center gap-2 bg-primary hover:bg-primary-deep text-white font-bold rounded-full px-10 py-4 text-base transition-colors">
+            className="inline-flex items-center gap-2 bg-white hover:bg-canvas text-ink font-bold rounded-full px-10 py-4 text-base transition-colors">
             Mulakan Percuma Sekarang <ArrowRight className="w-4 h-4" />
           </Link>
-          <p className="text-on-dark/30 text-xs mt-4">Daftar dalam 30 saat · Guna Google · Tiada kad kredit</p>
+          <p className="text-on-dark/60 text-xs mt-4">Daftar dalam 30 saat · Guna Google · Tiada kad kredit</p>
         </div>
       </section>
 
-      <FeedbackWidget />
+      <FeedbackWidget launcher />
 
       </main>
 
@@ -695,23 +695,23 @@ export function LandingPage() {
                 </div>
                 <span className="font-display font-bold text-on-dark">Digital Depot</span>
               </div>
-              <p className="text-on-dark/40 text-xs max-w-xs">Sistem pengurusan bengkel digital untuk Malaysia. Mudah, pantas dan boleh dipercayai.</p>
+              <p className="text-on-dark/60 text-xs max-w-xs">Sistem pengurusan bengkel digital untuk Malaysia. Mudah, pantas dan boleh dipercayai.</p>
             </div>
             <div className="flex flex-col sm:items-end gap-3">
-              <div className="flex items-center gap-5 text-on-dark/40 text-xs">
+              <div className="flex items-center gap-5 text-on-dark/60 text-xs">
                 {[['Ciri-ciri','ciri'], ['Cara Kerja','cara'], ['Harga','harga'], ['FAQ','faq']].map(([label, id]) => (
                   <button key={id} onClick={() => scrollTo(id)} className="hover:text-on-dark transition-colors">{label}</button>
                 ))}
               </div>
               <div className="flex items-center gap-3">
-                <Link to="/login" className="text-on-dark/40 hover:text-on-dark text-xs transition-colors">Log Masuk</Link>
-                <Link to="/register" className="bg-primary hover:bg-primary-deep text-white text-xs font-semibold px-4 py-2 rounded-full transition-colors">Daftar Percuma</Link>
+                <Link to="/login" className="text-on-dark/60 hover:text-on-dark text-xs transition-colors">Log Masuk</Link>
+                <Link to="/register" className="bg-white hover:bg-canvas text-ink text-xs font-semibold px-4 py-2 rounded-full transition-colors">Daftar Percuma</Link>
               </div>
             </div>
           </div>
           <div className="border-t border-white/5 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2">
-            <p className="text-on-dark/25 text-xs">© {new Date().getFullYear()} Digital Depot. Hak cipta terpelihara.</p>
-            <p className="text-on-dark/25 text-xs">Dibina untuk bengkel Malaysia 🇲🇾</p>
+            <p className="text-on-dark/60 text-xs">© {new Date().getFullYear()} Digital Depot. Hak cipta terpelihara.</p>
+            <p className="text-on-dark/60 text-xs">Dibina untuk bengkel Malaysia</p>
           </div>
         </div>
       </footer>

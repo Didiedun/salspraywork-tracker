@@ -1,7 +1,8 @@
 import { useDialogFocus } from '../hooks/useDialogFocus'
-import { useState } from 'react'
-import { X, Banknote, CreditCard, QrCode, Globe, DollarSign, Copy, Check, ExternalLink } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { X, Banknote, CreditCard, QrCode, Globe, DollarSign, Copy, Check, ExternalLink, RefreshCw } from 'lucide-react'
 import { useLang } from '../context/LanguageContext'
+import { useNotify } from '../context/NotifyContext'
 import { useApp } from '../context/AppContext'
 import { supabase } from '../lib/supabase'
 
@@ -11,9 +12,10 @@ const METHODS = [
   { key: 'online',  labelKey: 'pay_online',  Icon: Globe     },
 ]
 
-export function PaymentModal({ job, onSave, onClose }) {
+export function PaymentModal({ job, onSave, onRefresh, onClose }) {
   const dialogRef = useDialogFocus(onClose)
   const { t } = useLang()
+  const { toast } = useNotify()
   const { workshop } = useApp()
   const total    = Number(job.total_amount) || 0
   const discount = Number(job.discount)     || 0
@@ -31,6 +33,16 @@ export function PaymentModal({ job, onSave, onClose }) {
   const [paymentUrl,  setPaymentUrl]  = useState('')
   const [copyDone,    setCopyDone]    = useState(false)
   const [onlineError, setOnlineError] = useState('')
+  // Online links ToyyibPay hasn't confirmed yet (e.g. the callback never arrived)
+  const [pendingOnline, setPendingOnline] = useState([])
+  const [checking,      setChecking]      = useState(false)
+
+  const loadPending = useCallback(async () => {
+    const { data } = await supabase.from('payments').select('id')
+      .eq('job_id', job.id).eq('status', 'pending').not('gateway_ref', 'is', null)
+    setPendingOnline(data || [])
+  }, [job.id])
+  useEffect(() => { loadPending() }, [loadPending])
 
   const raw       = parseFloat(amount) || 0
   const collected = Math.min(raw, balance + 0.005)
@@ -53,7 +65,7 @@ export function PaymentModal({ job, onSave, onClose }) {
         payment_method: method,
       })
       onClose()
-    } catch (e) { alert(e.message) }
+    } catch (e) { toast.error(e.message) }
     finally { setSaving(false) }
   }
 
@@ -69,17 +81,47 @@ export function PaymentModal({ job, onSave, onClose }) {
       })
       if (error) {
         let message = error.message
-        try { message = (await error.context?.json?.())?.error || message } catch { /* Keep the client error. */ }
+        try {
+          const body = await error.context?.json?.()
+          message = body?.code === 'gateway_test_mode' ? t('pay_online_test_mode') : body?.error || message
+        } catch { /* Keep the client error. */ }
         throw new Error(message || t('pay_online_error'))
       }
       if (!data?.payment_url) {
         throw new Error(data?.error || error?.message || t('pay_online_error'))
       }
       setPaymentUrl(data.payment_url)
+      loadPending()
     } catch (e) {
       setOnlineError(e.message)
     } finally {
       setCreating(false)
+    }
+  }
+
+  const checkStatus = async () => {
+    setChecking(true)
+    try {
+      const { data, error } = await supabase.functions.invoke('check-payment', { body: { job_id: job.id } })
+      if (error) {
+        let message = error.message
+        try { message = (await error.context?.json?.())?.error || message } catch { /* Keep the client error. */ }
+        throw new Error(message)
+      }
+      const confirmed = (data?.settled || []).reduce((sum, v) => sum + Number(v), 0)
+      if (confirmed > 0) {
+        toast.success(t('pay_check_paid', { amount: fmt(confirmed) }))
+        try { await onRefresh?.() } catch { /* The list catches up on the next load. */ }
+        onClose()
+        return
+      }
+      if (data?.unavailable) toast.error(t('pay_check_unavailable'))
+      else toast.info(t('pay_check_none'))
+      loadPending()
+    } catch (e) {
+      toast.error(e.message)
+    } finally {
+      setChecking(false)
     }
   }
 
@@ -151,9 +193,23 @@ export function PaymentModal({ job, onSave, onClose }) {
               </span>
             </div>
             {balance < -0.005 && (
-              <p className="text-xs text-amber-600 font-semibold">{t('pay_overpaid_note')}</p>
+              <p className="text-xs text-amber-700 font-semibold">{t('pay_overpaid_note')}</p>
             )}
           </div>
+
+          {pendingOnline.length > 0 && (
+            <div className="rounded-xl border border-primary/25 bg-primary/[.05] px-4 py-3 space-y-2.5">
+              <div>
+                <p className="text-sm font-semibold text-ink">{t('pay_pending_title')}</p>
+                <p className="text-xs text-mute mt-0.5">{t('pay_pending_sub')}</p>
+              </div>
+              <button type="button" onClick={checkStatus} disabled={checking}
+                className="ui-secondary min-h-10 w-full py-2 text-xs disabled:opacity-60">
+                <RefreshCw className={`w-4 h-4 ${checking ? 'animate-spin' : ''}`} aria-hidden="true" />
+                {checking ? t('pay_checking') : t('pay_check_status')}
+              </button>
+            </div>
+          )}
 
           {/* Payment method */}
           <div>
@@ -215,7 +271,7 @@ export function PaymentModal({ job, onSave, onClose }) {
                   </div>
                   {job.phone && (
                     <button onClick={() => whatsappShare(paymentUrl)}
-                      className="w-full flex items-center justify-center gap-2 bg-badge-success text-white text-xs font-semibold rounded-full py-2.5 hover:bg-emerald-600 transition-colors">
+                      className="w-full flex items-center justify-center gap-2 bg-badge-success text-white text-xs font-semibold rounded-full py-2.5 hover:bg-emerald-700 transition-colors">
                       {t('pay_wa_notify')}
                     </button>
                   )}
@@ -271,7 +327,7 @@ export function PaymentModal({ job, onSave, onClose }) {
                   </div>
                   {customerPaid > 0 && (
                     <div className={`mt-2 px-4 py-2.5 rounded-xl text-sm font-bold text-center ${
-                      change >= 0 ? 'bg-badge-success/10 text-badge-success' : 'bg-red-50 text-red-600'
+                      change >= 0 ? 'bg-badge-success/10 text-badge-success' : 'bg-red-50 text-red-700'
                     }`}>
                       {change >= 0
                         ? `${t('pay_change')}: RM ${change.toFixed(2)}`

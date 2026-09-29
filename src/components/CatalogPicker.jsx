@@ -9,7 +9,7 @@ function StockBadge({ item }) {
   const qty = item.quantity || 0
   const reorder = item.reorder_level || 0
   if (qty <= 0)
-    return <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-600">{qty} {item.unit}</span>
+    return <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700">{qty} {item.unit}</span>
   if (reorder > 0 && qty <= reorder)
     return <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700">{qty} {item.unit}</span>
   return <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700">{qty} {item.unit}</span>
@@ -70,6 +70,7 @@ export function CatalogPicker({ workshopId, onSelect, onClose }) {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ash" />
             <input value={search} onChange={e => setSearch(e.target.value)}
+              aria-label={t('cat_pick_search')}
               autoFocus
               placeholder={t('cat_pick_search')}
               className="w-full bg-canvas border border-hairline rounded-full pl-9 pr-4 py-2 text-sm text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
@@ -176,6 +177,7 @@ export function CatalogPicker({ workshopId, onSelect, onClose }) {
                       className="text-xs text-mute hover:text-charcoal transition-colors">{t('cat_pick_cancel')}</button>
                   </div>
                   <input value={manualDesc} onChange={e => setManualDesc(e.target.value)}
+                    aria-label={t('cat_pick_desc_lbl')}
                     autoFocus
                     placeholder={t('form_svc_desc_ph')}
                     className="w-full bg-canvas border border-hairline rounded-full px-4 py-2.5 text-sm text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
@@ -183,6 +185,7 @@ export function CatalogPicker({ workshopId, onSelect, onClose }) {
                     <div className="relative flex-1">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-mute font-medium pointer-events-none">RM</span>
                       <input value={manualAmt} onChange={e => setManualAmt(e.target.value)}
+                        aria-label={t('cat_pick_amount_lbl')}
                         placeholder="0.00" type="text" inputMode="decimal"
                         className="w-full bg-canvas border border-hairline rounded-full pl-11 pr-4 py-2.5 text-sm text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
                     </div>

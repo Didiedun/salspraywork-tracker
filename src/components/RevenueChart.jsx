@@ -60,7 +60,7 @@ export function RevenueChart({ jobs }) {
                 />
               </div>
               <p className="text-xs text-mute font-medium">{m.label}</p>
-              {m.count > 0 && <p className="text-xs text-stone">{m.count}j</p>}
+              {m.count > 0 && <p className="text-xs text-ash">{m.count}j</p>}
             </div>
           )
         })}

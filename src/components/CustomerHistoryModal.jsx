@@ -55,7 +55,7 @@ export function CustomerHistoryModal({ plate, onClose }) {
             <p className="font-semibold text-ink text-sm">{t('hist_title')}</p>
             <p className="text-xs text-mute font-mono mt-0.5">{plate}</p>
           </div>
-          <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
+          <button aria-label={t('ui_close')} onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
             <X className="w-5 h-5 text-ash" />
           </button>
         </div>
@@ -81,7 +81,7 @@ export function CustomerHistoryModal({ plate, onClose }) {
                 const isCurrent = idx === 0
 
                 return (
-                  <div key={job.id} className={`rounded-lg border p-4 ${isCurrent ? 'border-primary/30 bg-red-50/40' : 'border-hairline bg-surface-card'}`}>
+                  <div key={job.id} className={`rounded-lg border p-4 ${isCurrent ? 'border-primary/30 bg-primary/[.04]' : 'border-hairline bg-surface-card'}`}>
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="flex items-center gap-1 text-xs text-mute">
@@ -126,7 +126,7 @@ export function CustomerHistoryModal({ plate, onClose }) {
                       <span className="text-sm font-bold text-ink">
                         {fmtMoney(job.total_amount)}
                         {!job.paid && balance > 0 && (
-                          <span className="text-xs text-amber-600 font-medium ml-1">· Baki {fmtMoney(balance)}</span>
+                          <span className="text-xs text-amber-700 font-medium ml-1">· Baki {fmtMoney(balance)}</span>
                         )}
                       </span>
                     </div>

@@ -2,7 +2,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.117.1'
 import { corsHeaders, corsResponse } from '../_shared/cors.ts'
 import { createCheckout } from '../_shared/create-checkout.ts'
-import { outstandingSen, returnUrl } from '../_shared/toyyibpay.ts'
+import { outstandingSen, returnUrl, sandboxAllowed, workshopSandbox } from '../_shared/toyyibpay.ts'
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
@@ -40,9 +40,11 @@ serve(async (req) => {
 
     const secretKey    = secretRow?.toyyibpay_secret_key
     const categoryCode = workshop?.toyyibpay_category_code
-    const isSandbox    = workshop?.toyyibpay_sandbox !== false
+    const isSandbox    = workshopSandbox(workshop)
 
-    if (!secretKey || !categoryCode) {
+    // Customers are never sent to the test gateway: a simulated payment would
+    // mark the job as paid without any real money moving.
+    if (!secretKey || !categoryCode || (isSandbox && !sandboxAllowed(key => Deno.env.get(key)))) {
       return corsResponse({ error: 'Online payment not available for this workshop.' }, 503)
     }
 

@@ -42,7 +42,8 @@ export function paymentStatus(job) {
 }
 
 export const PAYMENT_LABEL = { unpaid: 'Belum Bayar', deposit: 'Deposit Diterima', paid: 'Lunas' }
-export const PAYMENT_COLOR = { unpaid: '#e22718', deposit: '#f4b400', paid: '#0fa336' }
+/* Pill backgrounds behind white text (invoice, history) — each clears 4.5:1. */
+export const PAYMENT_COLOR = { unpaid: '#B91C1C', deposit: '#B45309', paid: '#146C45' }
 
 export function daysIn(job) {
   const from = new Date(job.date_in || job.created_at)

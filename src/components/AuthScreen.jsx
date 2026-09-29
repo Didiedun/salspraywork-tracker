@@ -54,8 +54,8 @@ export function AuthScreen() {
           <ul className="space-y-4">
             {highlights.map(({ icon: Icon, text }) => (
               <li key={text} className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Icon className="w-3.5 h-3.5 text-primary" />
+                <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Icon className="w-3.5 h-3.5 text-on-dark" />
                 </div>
                 <span className="text-on-dark/70 text-sm leading-snug">{text}</span>
               </li>
@@ -72,7 +72,7 @@ export function AuthScreen() {
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center transition-opacity group-hover:opacity-80">
               <span className="font-display font-bold text-white text-sm">DD</span>
             </div>
-            <span className="font-display font-bold text-ink text-sm group-hover:text-primary transition-colors">
+            <span className="font-display font-bold text-ink text-base group-hover:text-primary transition-colors">
               Digital Depot
             </span>
           </Link>
@@ -97,7 +97,7 @@ export function AuthScreen() {
               </button>
 
               {error && (
-                <p role="alert" className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-center">
+                <p role="alert" className="text-red-700 text-xs bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-center">
                   {error}
                 </p>
               )}

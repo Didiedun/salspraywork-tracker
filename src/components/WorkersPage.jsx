@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LanguageContext'
+import { useNotify } from '../context/NotifyContext'
 import { supabase } from '../lib/supabase'
 import { isLimitedTrial, TRIAL_LIMITS } from '../lib/plan'
+import { usePlanGate } from '../hooks/usePlanGate'
 import { Users, RefreshCw, Copy, Check, Trash2, UserPlus, Pencil, X } from 'lucide-react'
 
 function randomCode() {
@@ -12,6 +14,8 @@ function randomCode() {
 export function WorkersPage() {
   const { workshop } = useApp()
   const { t } = useLang()
+  const { toast, confirm } = useNotify()
+  const planGate = usePlanGate()
 
   const [workers, setWorkers]       = useState([])
   const [invites, setInvites]       = useState([])
@@ -46,7 +50,7 @@ export function WorkersPage() {
     // Workers list includes the owner — only count worker accounts against the limit
     const workerCount = workers.filter(w => w.role === 'worker').length
     if (isLimitedTrial(workshop) && workerCount + invites.length >= TRIAL_LIMITS.workers) {
-      alert(t('plan_limit_workers')); return
+      planGate('plan_limit_workers'); return
     }
     setGenerating(true)
     try {
@@ -58,20 +62,20 @@ export function WorkersPage() {
         .select().single()
       if (error) throw error
       setInvites(prev => [data, ...prev])
-    } catch (err) { alert(err.message) }
+    } catch (err) { toast.error(err.message) }
     finally { setGenerating(false) }
   }
 
   const removeWorker = async (member) => {
-    if (!window.confirm(t('wk_remove'))) return
+    if (!(await confirm({ title: t('wk_remove'), message: member.name || member.email, confirmLabel: t('ui_remove'), tone: 'danger' }))) return
     const { error } = await supabase.from('workshop_members').delete().eq('id', member.id)
-    if (error) { alert(error.message); return }
+    if (error) { toast.error(error.message); return }
     setWorkers(prev => prev.filter(w => w.id !== member.id))
   }
 
   const revokeInvite = async (invite) => {
     const { error } = await supabase.from('workshop_invites').delete().eq('id', invite.id)
-    if (error) { alert(error.message); return }
+    if (error) { toast.error(error.message); return }
     setInvites(prev => prev.filter(i => i.id !== invite.id))
   }
 
@@ -85,7 +89,7 @@ export function WorkersPage() {
       if (error) throw error
       setWorkers(prev => prev.map(w => w.id === workerId ? { ...w, name: editName.trim() || null } : w))
       setEditingId(null)
-    } catch (err) { alert(err.message) }
+    } catch (err) { toast.error(err.message) }
     finally { setSavingEdit(false) }
   }
 
@@ -132,17 +136,18 @@ export function WorkersPage() {
                       <input
                         autoFocus
                         type="text"
+                        aria-label={t('pr_emp_name')}
                         value={editName}
                         onChange={e => setEditName(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter') saveWorkerName(w.id); if (e.key === 'Escape') setEditingId(null) }}
                         placeholder={w.email?.split('@')[0]}
                         className="flex-1 bg-canvas border border-hairline rounded-full px-3 py-1.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                       />
-                      <button onClick={() => saveWorkerName(w.id)} disabled={savingEdit}
+                      <button aria-label={t('save')} onClick={() => saveWorkerName(w.id)} disabled={savingEdit}
                         className="w-7 h-7 rounded-full bg-primary flex items-center justify-center flex-shrink-0 disabled:opacity-50">
                         <Check className="w-3.5 h-3.5 text-white" />
                       </button>
-                      <button onClick={() => setEditingId(null)}
+                      <button aria-label={t('ui_close')} onClick={() => setEditingId(null)}
                         className="w-7 h-7 rounded-full bg-canvas border border-hairline flex items-center justify-center flex-shrink-0 text-mute hover:text-ink">
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -150,7 +155,7 @@ export function WorkersPage() {
                   ) : (
                     <div className="flex items-center gap-1.5 group">
                       <p className="text-ink font-semibold text-sm">{w.name || w.email?.split('@')[0] || t('wk_no_name')}</p>
-                      <button onClick={() => startEdit(w)}
+                      <button aria-label={t('edit')} onClick={() => startEdit(w)}
                         className="opacity-0 group-hover:opacity-100 transition-opacity text-ash hover:text-charcoal">
                         <Pencil className="w-3 h-3" />
                       </button>
@@ -162,8 +167,8 @@ export function WorkersPage() {
                   {w.role}
                 </span>
                 {editingId !== w.id && (
-                  <button onClick={() => removeWorker(w)}
-                    className="w-8 h-8 flex items-center justify-center text-mute hover:text-red-500 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
+                  <button aria-label={t('delete')} onClick={() => removeWorker(w)}
+                    className="w-8 h-8 flex items-center justify-center text-mute hover:text-red-700 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 )}
@@ -212,8 +217,8 @@ export function WorkersPage() {
                     : <><Copy className="w-3.5 h-3.5" /> {t('wk_copy')}</>
                   }
                 </button>
-                <button onClick={() => revokeInvite(invite)}
-                  className="w-8 h-8 flex items-center justify-center text-mute hover:text-red-500 hover:bg-red-50 rounded-full transition-colors">
+                <button aria-label={t('delete')} onClick={() => revokeInvite(invite)}
+                  className="w-8 h-8 flex items-center justify-center text-mute hover:text-red-700 hover:bg-red-50 rounded-full transition-colors">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>

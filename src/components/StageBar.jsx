@@ -37,7 +37,7 @@ export function StageBar({ current, compact = false, stages = SPRAY_STAGES, useL
             <div className={`relative z-10 w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold border-2 transition-all ${
               i < safeIdx  ? 'bg-primary border-primary text-white' :
               i === safeIdx ? 'bg-white border-primary text-primary' :
-              'bg-white border-stone/50 text-stone'
+              'bg-white border-stone/70 text-ash'
             }`}>
               {i < safeIdx ? '✓' : i + 1}
             </div>
@@ -48,12 +48,6 @@ export function StageBar({ current, compact = false, stages = SPRAY_STAGES, useL
             }`}>{displayName(s)}</p>
           </div>
         ))}
-      </div>
-      <div className="mt-3 h-1 bg-stone/30 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-primary rounded-full transition-all duration-500"
-          style={{ width: `${(safeIdx / Math.max(stages.length - 1, 1)) * 100}%` }}
-        />
       </div>
     </div>
   )

@@ -1,4 +1,5 @@
-import { callbackHashValid, verifiedTransaction, myrToSen } from '../_shared/toyyibpay.ts'
+import { callbackHashValid, sandboxAllowed, workshopSandbox } from '../_shared/toyyibpay.ts'
+import { blockSandboxPayment, confirmAndSettle } from '../_shared/settle.ts'
 
 export async function handleCallback(req: Request, client: any, env: (key: string) => string | undefined, fetcher = fetch) {
   if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405 })
@@ -21,7 +22,7 @@ export async function handleCallback(req: Request, client: any, env: (key: strin
     let sandbox: boolean
     if (isSubscription) {
       secret = env('PLATFORM_TOYYIBPAY_SECRET_KEY')?.trim()
-      sandbox = payment.gateway_sandbox ?? (env('PLATFORM_TOYYIBPAY_SANDBOX') !== 'false')
+      sandbox = payment.gateway_sandbox ?? (env('PLATFORM_TOYYIBPAY_SANDBOX') === 'true')
     } else {
       const { data: config, error: configError } = await client.from('workshops')
         .select('toyyibpay_sandbox').eq('id', payment.workshop_id).single()
@@ -29,7 +30,7 @@ export async function handleCallback(req: Request, client: any, env: (key: strin
         .select('toyyibpay_secret_key').eq('workshop_id', payment.workshop_id).single()
       if (configError || secretError) return new Response('Gateway configuration unavailable', { status: 503 })
       secret = secrets?.toyyibpay_secret_key?.trim()
-      sandbox = payment.gateway_sandbox ?? (config?.toyyibpay_sandbox !== false)
+      sandbox = payment.gateway_sandbox ?? workshopSandbox(config)
     }
     if (!secret) return new Response('Gateway configuration unavailable', { status: 503 })
     if (!callbackHashValid(params, secret)) return new Response('Invalid callback hash', { status: 401 })
@@ -44,6 +45,10 @@ export async function handleCallback(req: Request, client: any, env: (key: strin
     if (eventError && eventError.code !== '23505') throw new Error('Could not record payment event')
     // Never short-circuit on duplicate events: a previous settlement may have failed.
     if (payment.status === 'paid') return new Response('OK')
+    if (sandbox && !sandboxAllowed(env)) {
+      await blockSandboxPayment(client, payment.id)
+      return new Response('OK')
+    }
     if (status !== '1') {
       const { error } = await client.from('payments').update({
         gateway_status: status === '2' ? 'pending' : 'rejected', gateway_payload: payload,
@@ -53,24 +58,10 @@ export async function handleCallback(req: Request, client: any, env: (key: strin
       return new Response('OK')
     }
 
-    const form = new FormData()
-    form.append('billCode', billCode)
-    form.append('billpaymentStatus', '1')
-    const base = sandbox ? 'https://dev.toyyibpay.com' : 'https://toyyibpay.com'
-    const response = await fetcher(`${base}/index.php/api/getBillTransactions`, {
-      method: 'POST', body: form, signal: AbortSignal.timeout(15000),
-    })
-    if (!response.ok) return new Response('Verification unavailable; retry', { status: 503 })
-    const transaction = verifiedTransaction(await response.json(), payment)
+    const result = await confirmAndSettle(client, payment, sandbox, { callback: payload }, fetcher)
+    if (result === 'unavailable') return new Response('Verification unavailable; retry', { status: 503 })
     // Do not acknowledge success when the provider has not confirmed it yet.
-    if (!transaction) return new Response('Payment verification incomplete; retry', { status: 503 })
-
-    const { error: settleError } = await client.rpc('settle_toyyibpay_payment', {
-      p_payment_id: payment.id, p_bill_code: billCode,
-      p_amount_sen: myrToSen(transaction.billpaymentAmount),
-      p_payload: { callback: payload, transaction },
-    })
-    if (settleError) throw new Error('Payment settlement failed')
+    if (result === 'unconfirmed') return new Response('Payment verification incomplete; retry', { status: 503 })
     return new Response('OK')
   } catch {
     // No raw provider payloads or secrets in logs.

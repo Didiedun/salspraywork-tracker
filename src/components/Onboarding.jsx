@@ -91,8 +91,8 @@ export function Onboarding() {
           <div className="bg-surface-card rounded-lg border border-hairline p-6">
             <form onSubmit={handleSaveName} className="space-y-4">
               <div>
-                <label className="text-charcoal text-xs font-semibold mb-1.5 block">{t('wv_your_name')}</label>
-                <input type="text" value={workerName}
+                <label htmlFor="ob-your-name" className="text-charcoal text-xs font-semibold mb-1.5 block">{t('wv_your_name')}</label>
+                <input id="ob-your-name" type="text" value={workerName}
                   onChange={e => setWorkerName(e.target.value)}
                   placeholder={t('ob_wname_ph')}
                   autoFocus
@@ -138,22 +138,22 @@ export function Onboarding() {
           {tab === 'create' ? (
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <label className="text-charcoal text-xs font-semibold mb-1.5 block">{t('ob_name_lbl')}</label>
-                <input type="text" value={name} onChange={handleNameChange} required
+                <label htmlFor="ob-workshop-name" className="text-charcoal text-xs font-semibold mb-1.5 block">{t('ob_name_lbl')}</label>
+                <input id="ob-workshop-name" type="text" value={name} onChange={handleNameChange} required
                   placeholder={t('ob_name_ph')}
                   className={inputCls} />
               </div>
               <div>
-                <label className="text-charcoal text-xs font-semibold mb-1.5 block">{t('ob_url_lbl')}</label>
+                <label htmlFor="ob-slug" className="text-charcoal text-xs font-semibold mb-1.5 block">{t('ob_url_lbl')}</label>
                 <div className="flex items-center border border-hairline rounded-full overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary bg-canvas">
                   <span className="pl-5 pr-0.5 text-ash text-sm whitespace-nowrap select-none">/w/</span>
-                  <input type="text" value={slug} required
+                  <input id="ob-slug" type="text" value={slug} required
                     onChange={e => { setSlug(toSlug(e.target.value)); setSlugEdited(true) }}
                     className="flex-1 bg-transparent py-3 pr-5 text-ink text-sm focus:outline-none" />
                 </div>
                 <p className="text-ash text-xs mt-1.5 px-1">{t('ob_url_hint')}</p>
               </div>
-              {error && <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
+              {error && <p className="text-red-700 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
               <button type="submit" disabled={saving || !name.trim() || !slug.trim()} className={btnCls}>
                 {saving ? t('ob_creating') : <><span>{t('ob_open_btn')}</span><ArrowRight className="w-4 h-4" /></>}
               </button>
@@ -162,14 +162,14 @@ export function Onboarding() {
             <form onSubmit={handleJoin} className="space-y-4">
               <p className="text-charcoal text-sm">{t('ob_inv_sub')}</p>
               <div>
-                <label className="flex items-center gap-1.5 text-charcoal text-xs font-semibold mb-1.5">
+                <label htmlFor="ob-invite-code" className="flex items-center gap-1.5 text-charcoal text-xs font-semibold mb-1.5">
                   <Key className="w-3.5 h-3.5" /> {t('ob_inv_label')}
                 </label>
-                <input type="text" value={inviteCode}
+                <input id="ob-invite-code" type="text" value={inviteCode}
                   onChange={e => setInviteCode(e.target.value.toUpperCase())}
                   required placeholder={t('ob_inv_ph')} className={inputCls} />
               </div>
-              {error && <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
+              {error && <p className="text-red-700 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
               <button type="submit" disabled={saving || !inviteCode.trim()} className={btnCls}>
                 {saving ? t('ob_joining') : <><span>{t('ob_join_btn')}</span><ArrowRight className="w-4 h-4" /></>}
               </button>

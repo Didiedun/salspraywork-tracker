@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { useLang } from '../context/LanguageContext'
 import { Printer, X, Loader, ChevronLeft, FileText } from 'lucide-react'
 
 const fmt = (v) => `RM ${Number(v || 0).toFixed(2)}`
@@ -17,6 +18,7 @@ export function EAFormModal({ workshopId, workshop, year, onClose }) {
   const [loading, setLoading] = useState(true)
   const [rows, setRows]       = useState([]) // [{ employee, ...totals }]
   const [selected, setSelected] = useState(null)
+  const { t } = useLang()
 
   useEffect(() => {
     if (!workshopId) return
@@ -66,11 +68,11 @@ export function EAFormModal({ workshopId, workshop, year, onClose }) {
         <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-hairline print:hidden">
           <div className="flex items-center gap-2">
             {selected && (
-              <button onClick={() => setSelected(null)} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
+              <button onClick={() => setSelected(null)} aria-label={t('ui_back')} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
                 <ChevronLeft className="w-4 h-4 text-ash" />
               </button>
             )}
-            <h3 className="font-display font-bold text-ink text-sm">Penyata EA {year}</h3>
+            <h3 className="font-display font-bold text-ink text-base">Penyata EA {year}</h3>
           </div>
           <div className="flex gap-2">
             {selected && (
@@ -78,7 +80,7 @@ export function EAFormModal({ workshopId, workshop, year, onClose }) {
                 <Printer className="w-3.5 h-3.5" /> Cetak
               </button>
             )}
-            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
+            <button aria-label={t('ui_close')} onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
               <X className="w-4 h-4 text-ash" />
             </button>
           </div>
@@ -138,11 +140,11 @@ export function EAFormModal({ workshopId, workshop, year, onClose }) {
             <div>
               <p className="text-xs font-bold text-charcoal mb-2 uppercase tracking-wide">Potongan Pekerja (Setahun)</p>
               <div className="space-y-1 text-xs">
-                <div className="flex justify-between"><span>KWSP</span><span className="text-red-600">− {fmt(selected.epf_employee)}</span></div>
-                <div className="flex justify-between"><span>PERKESO</span><span className="text-red-600">− {fmt(selected.socso_employee)}</span></div>
-                <div className="flex justify-between"><span>EIS/SIP</span><span className="text-red-600">− {fmt(selected.eis_employee)}</span></div>
-                <div className="flex justify-between"><span>PCB / Cukai Pendapatan (MTD)</span><span className="text-red-600">− {fmt(selected.pcb)}</span></div>
-                {selected.other_deductions > 0 && <div className="flex justify-between"><span>Potongan Lain</span><span className="text-red-600">− {fmt(selected.other_deductions)}</span></div>}
+                <div className="flex justify-between"><span>KWSP</span><span className="text-red-700">− {fmt(selected.epf_employee)}</span></div>
+                <div className="flex justify-between"><span>PERKESO</span><span className="text-red-700">− {fmt(selected.socso_employee)}</span></div>
+                <div className="flex justify-between"><span>EIS/SIP</span><span className="text-red-700">− {fmt(selected.eis_employee)}</span></div>
+                <div className="flex justify-between"><span>PCB / Cukai Pendapatan (MTD)</span><span className="text-red-700">− {fmt(selected.pcb)}</span></div>
+                {selected.other_deductions > 0 && <div className="flex justify-between"><span>Potongan Lain</span><span className="text-red-700">− {fmt(selected.other_deductions)}</span></div>}
               </div>
             </div>
 

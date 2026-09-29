@@ -115,6 +115,13 @@ export function useJobs(workshopId) {
     const next = jobs.map(j => j.id === id ? data : j); setJobs(next); lsSave(workshopId, next); return data
   }
 
+  // Re-read one job the server changed, e.g. after an online payment was confirmed.
+  const refreshJob = async (id) => {
+    const { data, error: err } = await supabase.from('jobs').select('*, job_attachments(*)').eq('id', id).single()
+    if (err) throw err
+    const next = jobs.map(j => j.id === id ? data : j); setJobs(next); lsSave(workshopId, next); return data
+  }
+
   const deleteJob = async (id) => {
     if (offline) {
       const next = lsLoad(workshopId).filter(j => j.id !== id)
@@ -165,5 +172,5 @@ export function useJobs(workshopId) {
     setJobs(next); lsSave(workshopId, next)
   }
 
-  return { jobs, loading, error, offline, fetchJobs, addJob, updateJob, deleteJob, addAttachment, deleteAttachment }
+  return { jobs, loading, error, offline, fetchJobs, addJob, updateJob, refreshJob, deleteJob, addAttachment, deleteAttachment }
 }

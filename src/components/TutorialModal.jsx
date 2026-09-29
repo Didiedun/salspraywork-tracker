@@ -4,12 +4,12 @@ import { X, ChevronLeft, ChevronRight, LayoutDashboard, PlusCircle, ArrowRightLe
 import { useLang } from '../context/LanguageContext'
 
 const STEPS = [
-  { icon: LayoutDashboard, color: 'bg-blue-50 text-blue-600',   titleKey: 'tut_s1_title', descKey: 'tut_s1_desc' },
-  { icon: PlusCircle,      color: 'bg-green-50 text-green-600', titleKey: 'tut_s2_title', descKey: 'tut_s2_desc' },
-  { icon: ArrowRightLeft,  color: 'bg-amber-50 text-amber-600', titleKey: 'tut_s3_title', descKey: 'tut_s3_desc' },
-  { icon: Printer,         color: 'bg-purple-50 text-purple-600', titleKey: 'tut_s4_title', descKey: 'tut_s4_desc' },
-  { icon: ExternalLink,    color: 'bg-teal-50 text-teal-600',   titleKey: 'tut_s5_title', descKey: 'tut_s5_desc' },
-  { icon: Settings,        color: 'bg-rose-50 text-rose-600',   titleKey: 'tut_s6_title', descKey: 'tut_s6_desc' },
+  { icon: LayoutDashboard, color: 'bg-primary/10 text-primary', titleKey: 'tut_s1_title', descKey: 'tut_s1_desc' },
+  { icon: PlusCircle,      color: 'bg-primary/10 text-primary', titleKey: 'tut_s2_title', descKey: 'tut_s2_desc' },
+  { icon: ArrowRightLeft,  color: 'bg-primary/10 text-primary', titleKey: 'tut_s3_title', descKey: 'tut_s3_desc' },
+  { icon: Printer,         color: 'bg-primary/10 text-primary', titleKey: 'tut_s4_title', descKey: 'tut_s4_desc' },
+  { icon: ExternalLink,    color: 'bg-primary/10 text-primary', titleKey: 'tut_s5_title', descKey: 'tut_s5_desc' },
+  { icon: Settings,        color: 'bg-primary/10 text-primary', titleKey: 'tut_s6_title', descKey: 'tut_s6_desc' },
 ]
 
 export function TutorialModal({ onClose }) {
@@ -25,7 +25,7 @@ export function TutorialModal({ onClose }) {
 
         <div className="flex items-center justify-between px-5 py-4 border-b border-hairline flex-shrink-0">
           <p className="font-semibold text-ink text-sm">{t('tut_title')} · {step + 1}/{STEPS.length}</p>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
+          <button aria-label={t('ui_close')} onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
             <X className="w-4 h-4 text-ash" />
           </button>
         </div>
@@ -40,8 +40,9 @@ export function TutorialModal({ onClose }) {
 
         <div className="flex justify-center gap-1 pb-2">
           {STEPS.map((_, i) => (
-            <button key={i} onClick={() => setStep(i)}
-              className="w-6 h-4 flex items-center justify-center">
+            <button key={i} type="button" onClick={() => setStep(i)}
+              aria-label={t('cv_step_of', { n: i + 1, total: STEPS.length })} aria-current={i === step ? 'step' : undefined}
+              className="w-7 h-7 flex items-center justify-center">
               <div className={`h-2 rounded-full transition-all ${i === step ? 'w-5 bg-primary' : 'w-2 bg-hairline hover:bg-ash'}`} />
             </button>
           ))}

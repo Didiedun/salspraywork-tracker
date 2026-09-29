@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { X, Undo2, Loader } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { useLang } from '../context/LanguageContext'
 
 const METHODS = [
   ['cash', 'Tunai'], ['card', 'Kad'], ['duitnow', 'DuitNow'], ['online', 'Online'],
@@ -20,6 +21,7 @@ export function RefundModal({ job, onSave, onClose }) {
   const [notes,  setNotes]  = useState('')
   const [saving, setSaving] = useState(false)
   const [error,  setError]  = useState('')
+  const { t } = useLang()
 
   const fmt = (v) => `RM ${Number(v).toFixed(2)}`
   const amt = parseFloat(amount) || 0
@@ -51,10 +53,10 @@ export function RefundModal({ job, onSave, onClose }) {
       <div className="bg-surface-card rounded-t-2xl sm:rounded-2xl w-full sm:max-w-sm flex flex-col">
         <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-hairline">
           <div className="flex items-center gap-2">
-            <Undo2 className="w-4 h-4 text-amber-600" />
+            <Undo2 className="w-4 h-4 text-amber-700" />
             <h3 className="font-display font-bold text-ink">Bayar Balik / Refund</h3>
           </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
+          <button aria-label={t('ui_close')} onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
             <X className="w-4 h-4 text-ash" />
           </button>
         </div>
@@ -67,15 +69,15 @@ export function RefundModal({ job, onSave, onClose }) {
             <div className="flex justify-between"><span className="text-mute">Telah dibayar</span><span className="font-medium">{fmt(deposit)}</span></div>
             <div className="flex justify-between border-t border-hairline pt-1.5 font-bold">
               <span className="text-charcoal">Bayaran berlebih</span>
-              <span className="text-amber-600">{fmt(overpaid)}</span>
+              <span className="text-amber-700">{fmt(overpaid)}</span>
             </div>
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-charcoal mb-1.5 block">Jumlah Bayar Balik (RM)</label>
+            <label htmlFor="refund-amount" className="text-xs font-semibold text-charcoal mb-1.5 block">Jumlah Bayar Balik (RM)</label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-mute pointer-events-none font-medium">RM</span>
-              <input autoFocus type="text" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)}
+              <input id="refund-amount" autoFocus type="text" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)}
                 placeholder="0.00" className={inputCls + ' pl-12 font-bold'} />
             </div>
           </div>
@@ -93,16 +95,16 @@ export function RefundModal({ job, onSave, onClose }) {
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-charcoal mb-1.5 block">Nota (pilihan)</label>
-            <input value={notes} onChange={e => setNotes(e.target.value)} placeholder="cth: diskaun selepas bayaran" className={inputCls} />
+            <label htmlFor="refund-note" className="text-xs font-semibold text-charcoal mb-1.5 block">Nota (pilihan)</label>
+            <input id="refund-note" value={notes} onChange={e => setNotes(e.target.value)} placeholder="cth: diskaun selepas bayaran" className={inputCls} />
           </div>
 
-          {error && <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
+          {error && <p className="text-red-700 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
         </div>
 
         <div className="px-5 pb-5 pt-3 border-t border-hairline">
           <button onClick={handleRefund} disabled={saving || amt <= 0}
-            className="w-full bg-amber-600 hover:bg-amber-700 disabled:bg-stone text-white font-semibold rounded-full py-3 flex items-center justify-center gap-2 transition-colors text-sm">
+            className="w-full bg-amber-700 hover:bg-amber-800 disabled:bg-stone text-white font-semibold rounded-full py-3 flex items-center justify-center gap-2 transition-colors text-sm">
             {saving ? <Loader className="w-4 h-4 animate-spin" /> : <Undo2 className="w-4 h-4" />}
             {saving ? 'Menyimpan…' : `Rekod Bayar Balik ${amt > 0 ? fmt(amt) : ''}`}
           </button>

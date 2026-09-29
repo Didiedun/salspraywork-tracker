@@ -3,10 +3,11 @@ import { X, Banknote, CreditCard, QrCode, TrendingUp, Printer, Calendar } from '
 import { useLang } from '../context/LanguageContext'
 
 const METHOD_META = {
-  cash:    { labelKey: 'pay_cash',    Icon: Banknote,   color: 'text-badge-success' },
-  card:    { labelKey: 'pay_card',    Icon: CreditCard, color: 'text-primary'       },
-  duitnow: { labelKey: 'pay_duitnow', Icon: QrCode,     color: 'text-amber-600'     },
-  other:   { labelKey: 'eod_other',   Icon: TrendingUp, color: 'text-mute'          },
+  // Methods are told apart by icon and label; status colours stay reserved for paid/deposit.
+  cash:    { labelKey: 'pay_cash',    Icon: Banknote,   color: 'text-ink' },
+  card:    { labelKey: 'pay_card',    Icon: CreditCard, color: 'text-ink' },
+  duitnow: { labelKey: 'pay_duitnow', Icon: QrCode,     color: 'text-ink' },
+  other:   { labelKey: 'eod_other',   Icon: TrendingUp, color: 'text-ink' },
 }
 
 export function EODReport({ jobs, workshop, onClose }) {
@@ -54,11 +55,11 @@ export function EODReport({ jobs, workshop, onClose }) {
             {workshop?.name && <span className="text-xs text-mute">· {workshop.name}</span>}
           </div>
           <div className="flex items-center gap-1">
-            <button onClick={() => window.print()}
+            <button aria-label={t('rc_print')} onClick={() => window.print()}
               className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors text-mute hover:text-ink">
               <Printer className="w-4 h-4" />
             </button>
-            <button onClick={onClose}
+            <button aria-label={t('ui_close')} onClick={onClose}
               className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
               <X className="w-4 h-4 text-ash" />
             </button>
@@ -70,6 +71,7 @@ export function EODReport({ jobs, workshop, onClose }) {
           <div className="px-5 py-3 border-b border-hairline flex items-center gap-2">
             <Calendar className="w-4 h-4 text-mute flex-shrink-0" />
             <input type="date" value={date} onChange={e => setDate(e.target.value)}
+              aria-label={t('eod_date_label')}
               max={todayStr}
               className="flex-1 bg-canvas border border-hairline rounded-lg px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
           </div>
@@ -80,7 +82,7 @@ export function EODReport({ jobs, workshop, onClose }) {
             <div className="bg-primary rounded-xl p-5 text-white text-center">
               <p className="text-sm opacity-80 mb-1">{t('eod_total_collected')}</p>
               <p className="font-display font-bold text-4xl">{fmt(grandTotal)}</p>
-              <p className="text-sm opacity-70 mt-1">{transactions.length} {t('eod_transactions')}</p>
+              <p className="text-sm opacity-80 mt-1">{transactions.length} {t('eod_transactions')}</p>
             </div>
 
             {/* Method breakdown */}
@@ -120,12 +122,12 @@ export function EODReport({ jobs, workshop, onClose }) {
                         className={`flex items-center gap-3 px-4 py-3 ${i < transactions.length - 1 ? 'border-b border-hairline' : ''}`}>
                         <Icon className={`w-4 h-4 flex-shrink-0 ${color}`} />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-ink font-mono">{job.plate}</p>
+                          <p className="plate text-[13px] mb-1">{job.plate}</p>
                           <p className="text-xs text-mute truncate">{job.owner} · {job.car}</p>
                         </div>
                         <div className="text-right flex-shrink-0">
                           <p className="text-sm font-bold text-ink">{fmt(amt)}</p>
-                          <p className={`text-xs font-semibold ${type === 'paid' ? 'text-badge-success' : 'text-amber-600'}`}>
+                          <p className={`text-xs font-semibold ${type === 'paid' ? 'text-badge-success' : 'text-amber-700'}`}>
                             {type === 'paid' ? t('pay_paid') : t('pay_deposit')}
                           </p>
                         </div>
