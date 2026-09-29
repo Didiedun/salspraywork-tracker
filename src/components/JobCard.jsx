@@ -145,21 +145,21 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
           <div className="bg-surface-card rounded-2xl w-full max-w-xs p-5 space-y-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
-                <Trash2 className="w-4 h-4 text-red-500" />
+                <Trash2 className="w-4 h-4 text-red-700" />
               </div>
               <div className="min-w-0">
                 <p className="font-semibold text-ink text-sm">{t('card_confirm_delete')}</p>
                 <p className="text-xs text-mute truncate">{job.plate} — {job.owner}</p>
               </div>
             </div>
-            {deleteErr && <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{deleteErr}</p>}
+            {deleteErr && <p className="text-red-700 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{deleteErr}</p>}
             <div className="flex gap-2">
               <button onClick={() => setConfirmDelete(false)} disabled={deleting}
                 className="flex-1 py-2.5 rounded-full border border-hairline text-charcoal text-sm font-semibold hover:bg-canvas transition-colors disabled:opacity-50">
                 {t('no')}
               </button>
               <button onClick={doDelete} disabled={deleting}
-                className="flex-1 py-2.5 rounded-full bg-red-500 hover:bg-red-600 text-white text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50">
+                className="flex-1 py-2.5 rounded-full bg-red-600 hover:bg-red-700 text-white text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50">
                 {deleting ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                 {t('delete')}
               </button>
@@ -182,13 +182,13 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
       }`}>
         {overdue && (
           <div className="bg-red-50 border-b border-red-100 px-4 py-1.5 flex items-center gap-2">
-            <Clock className="w-3.5 h-3.5 text-red-500" />
-            <p className="text-red-600 text-xs font-semibold">{t('overdue_label')} — {days} {t('card_overdue')}</p>
+            <Clock className="w-3.5 h-3.5 text-red-700" />
+            <p className="text-red-700 text-xs font-semibold">{t('overdue_label')} — {days} {t('card_overdue')}</p>
           </div>
         )}
         {stale && (
           <div className="bg-amber-50 border-b border-amber-100 px-4 py-1.5 flex items-center gap-2">
-            <Clock className="w-3.5 h-3.5 text-amber-500" />
+            <Clock className="w-3.5 h-3.5 text-amber-600" />
             <p className="text-amber-700 text-xs font-semibold">{t('stale_label')}</p>
           </div>
         )}
@@ -197,7 +197,7 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-display font-bold text-ink text-2xl tracking-tight">{job.plate}</span>
+                <span className="plate text-2xl">{job.plate}</span>
                 <TypeBadge type={job.type} />
                 {visitCount > 1 && (
                   <button onClick={() => setShowHistory(true)}
@@ -236,7 +236,7 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
             <button
               onClick={() => advanceStage('next')}
               disabled={isLast || advancing}
-              className="flex items-center gap-1 text-xs text-primary hover:text-primary-deep disabled:opacity-30 bg-red-50 hover:bg-red-100 border border-red-200 px-2.5 py-1.5 rounded-full transition-colors font-semibold"
+              className="flex items-center gap-1 text-xs text-primary hover:text-primary-deep disabled:opacity-30 bg-primary/10 hover:bg-primary/15 border border-primary/25 px-2.5 py-1.5 rounded-full transition-colors font-semibold"
             >
               {t('card_advance')} <ChevronRight className="w-3.5 h-3.5" />
             </button>
@@ -260,14 +260,14 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
                 {!job.paid && balance > 0 && (
                   <button
                     onClick={() => setShowPayment(true)}
-                    className="ml-1 text-amber-600 hover:text-amber-700 font-semibold underline underline-offset-2 transition-colors">
+                    className="ml-1 text-amber-700 hover:text-amber-800 font-semibold underline underline-offset-2 transition-colors">
                     · {t('pay_balance').split(' ')[0]} {formatMoney(balance)}
                   </button>
                 )}
                 {balance < -0.005 && (
                   <button
                     onClick={() => setShowRefund(true)}
-                    className="ml-1 text-amber-600 hover:text-amber-700 font-semibold underline underline-offset-2 transition-colors">
+                    className="ml-1 text-amber-700 hover:text-amber-800 font-semibold underline underline-offset-2 transition-colors">
                     · {t('rc_overpaid')} {formatMoney(-balance)}
                   </button>
                 )}
@@ -328,7 +328,7 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
                           <span className="absolute bottom-1 left-1 bg-ink/60 text-white text-xs px-1 rounded truncate max-w-[90%]">{img.stage}</span>
                         )}
                         <button onClick={() => window.confirm(t('delete') + '?') && onDeleteAttachment(job.id, img.id)}
-                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <X className="w-3 h-3" />
                         </button>
                       </div>
@@ -354,7 +354,7 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
               <Printer className="w-3.5 h-3.5" /> {t('card_invoice')}
             </button>
           )}
-          <button onClick={() => { setDeleteErr(''); setConfirmDelete(true) }} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs text-red-500 hover:bg-red-50 transition-colors font-semibold">
+          <button onClick={() => { setDeleteErr(''); setConfirmDelete(true) }} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs text-red-700 hover:bg-red-50 transition-colors font-semibold">
             <Trash2 className="w-3.5 h-3.5" /> {t('delete')}
           </button>
         </div>

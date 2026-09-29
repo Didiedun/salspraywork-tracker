@@ -77,7 +77,7 @@ export function PayslipModal({ entry, run, workshop, onClose }) {
     <div className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl w-full max-w-2xl shadow-xl flex flex-col max-h-[90vh]">
         <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-hairline print:hidden">
-          <h3 className="font-display font-bold text-ink text-sm">Slip Gaji — {period}</h3>
+          <h3 className="font-display font-bold text-ink text-base">Slip Gaji — {period}</h3>
           <div className="flex gap-2">
             <button onClick={() => window.print()} className="flex items-center gap-1.5 bg-primary text-white text-xs font-semibold px-3 py-2 rounded-full hover:bg-primary-deep transition-colors">
               <Printer className="w-3.5 h-3.5" /> Cetak

@@ -228,9 +228,9 @@ function EmployeeModal({ initial, onSave, onClose }) {
               <p className="text-xs font-semibold text-charcoal mb-2">{t('pr_preview_title')}</p>
               <div className="bg-surface-bone rounded-lg p-3 space-y-1.5 text-xs">
                 <div className="flex justify-between"><span className="text-mute">{t('pr_basic')}</span><span className="font-semibold text-ink">{fmt(salaryNum)}</span></div>
-                {preview.epf_employee > 0   && <div className="flex justify-between"><span className="text-mute">KWSP (11%)</span><span className="text-red-600">− {fmt(preview.epf_employee)}</span></div>}
-                {preview.socso_employee > 0 && <div className="flex justify-between"><span className="text-mute">PERKESO (0.5%)</span><span className="text-red-600">− {fmt(preview.socso_employee)}</span></div>}
-                {preview.eis_employee > 0   && <div className="flex justify-between"><span className="text-mute">EIS (0.2%)</span><span className="text-red-600">− {fmt(preview.eis_employee)}</span></div>}
+                {preview.epf_employee > 0   && <div className="flex justify-between"><span className="text-mute">KWSP (11%)</span><span className="text-red-700">− {fmt(preview.epf_employee)}</span></div>}
+                {preview.socso_employee > 0 && <div className="flex justify-between"><span className="text-mute">PERKESO (0.5%)</span><span className="text-red-700">− {fmt(preview.socso_employee)}</span></div>}
+                {preview.eis_employee > 0   && <div className="flex justify-between"><span className="text-mute">EIS (0.2%)</span><span className="text-red-700">− {fmt(preview.eis_employee)}</span></div>}
                 <div className="flex justify-between font-bold border-t border-hairline pt-1.5 mt-1">
                   <span className="text-charcoal">{t('pr_net')}</span><span className="text-primary">{fmt(preview.net_salary)}</span>
                 </div>
@@ -242,7 +242,7 @@ function EmployeeModal({ initial, onSave, onClose }) {
             </div>
           )}
 
-          {error && <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
+          {error && <p className="text-red-700 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
         </div>
 
         <div className="px-5 pb-5 pt-3 border-t border-hairline flex-shrink-0">
@@ -337,7 +337,7 @@ function EmployeesTab({ workshopId }) {
   if (needsMigration) return (
     <div className="bg-amber-50 border border-amber-200 rounded-lg p-5 space-y-3">
       <div className="flex items-start gap-3">
-        <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+        <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
         <div>
           <p className="text-sm font-semibold text-amber-800">{t('pr_migrate_title')}</p>
           <p className="text-xs text-amber-700 mt-0.5">{t('pr_migrate_sub')}</p>
@@ -385,7 +385,7 @@ function EmployeesTab({ workshopId }) {
                       {copied === inv.code ? <><Check className="w-3 h-3 text-badge-success" /> {t('copied')}</> : <><Copy className="w-3 h-3" /> {t('copy')}</>}
                     </button>
                     <button onClick={() => revokeInvite(inv.id)}
-                      className="w-7 h-7 flex items-center justify-center text-mute hover:text-red-500 hover:bg-red-50 rounded-full transition-colors">
+                      className="w-7 h-7 flex items-center justify-center text-mute hover:text-red-700 hover:bg-red-50 rounded-full transition-colors">
                       <Trash2 className="w-3 h-3" />
                     </button>
                   </div>
@@ -402,20 +402,20 @@ function EmployeesTab({ workshopId }) {
         const unlinked = members.filter(m => !linkedIds.has(m.user_id))
         if (unlinked.length === 0) return null
         return (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg overflow-hidden">
-            <div className="px-4 py-2.5 border-b border-blue-200">
-              <p className="text-xs font-semibold text-blue-800">{t('pr_unlinked_title')}</p>
-              <p className="text-xs text-blue-600 mt-0.5">{t('pr_unlinked_sub')}</p>
+          <div className="bg-primary/[.05] border border-primary/20 rounded-lg overflow-hidden">
+            <div className="px-4 py-2.5 border-b border-primary/20">
+              <p className="text-xs font-semibold text-ink">{t('pr_unlinked_title')}</p>
+              <p className="text-xs text-mute mt-0.5">{t('pr_unlinked_sub')}</p>
             </div>
             {unlinked.map((m, i) => (
               <div key={m.user_id}
-                className={`flex items-center gap-3 px-4 py-3 ${i < unlinked.length - 1 ? 'border-b border-blue-200' : ''}`}>
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                  <span className="font-bold text-blue-600 text-sm">{(m.name || '?')[0].toUpperCase()}</span>
+                className={`flex items-center gap-3 px-4 py-3 ${i < unlinked.length - 1 ? 'border-b border-primary/20' : ''}`}>
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <span className="font-bold text-primary text-sm">{(m.name || '?')[0].toUpperCase()}</span>
                 </div>
                 <p className="flex-1 text-sm font-semibold text-ink">{m.name || t('wk_no_name')}</p>
                 <button onClick={() => addMemberAsEmployee(m)} disabled={addingMem === m.user_id}
-                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-blue-600 hover:bg-blue-700 disabled:bg-stone text-white transition-colors flex-shrink-0">
+                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-primary hover:bg-primary-deep disabled:bg-stone text-white transition-colors flex-shrink-0">
                   {addingMem === m.user_id ? <Loader className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
                   {t('pr_add_to_payroll')}
                 </button>
@@ -498,7 +498,7 @@ function EmployeesTab({ workshopId }) {
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
                     <button onClick={() => { if (window.confirm(t('pr_emp_del_confirm'))) deactivateEmployee(emp.id) }}
-                      className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-red-50 text-ash hover:text-red-500 transition-colors">
+                      className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-red-50 text-ash hover:text-red-700 transition-colors">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -506,9 +506,9 @@ function EmployeesTab({ workshopId }) {
 
                 {!salaryEdit && (
                   <div className="flex gap-1.5 mt-2 pl-12">
-                    {emp.is_epf   && <span className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded font-bold">EPF</span>}
-                    {emp.is_socso && <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-bold">SOCSO</span>}
-                    {emp.is_eis   && <span className="text-[10px] bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded font-bold">EIS</span>}
+                    {emp.is_epf   && <span className="text-[10px] bg-surface-bone text-charcoal px-1.5 py-0.5 rounded font-bold">EPF</span>}
+                    {emp.is_socso && <span className="text-[10px] bg-surface-bone text-charcoal px-1.5 py-0.5 rounded font-bold">SOCSO</span>}
+                    {emp.is_eis   && <span className="text-[10px] bg-surface-bone text-charcoal px-1.5 py-0.5 rounded font-bold">EIS</span>}
                     {noSalary     && <span className="text-[10px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded font-bold">⚠ {t('pr_salary_needed')}</span>}
                   </div>
                 )}
@@ -639,7 +639,7 @@ function PayrollTab({ workshopId }) {
   if (needsMigration) return (
     <div className="bg-amber-50 border border-amber-200 rounded-lg p-5 space-y-3">
       <div className="flex items-start gap-3">
-        <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+        <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
         <div>
           <p className="text-sm font-semibold text-amber-800">{t('pr_migrate_title')}</p>
           <p className="text-xs text-amber-700 mt-0.5">{t('pr_migrate_sub')}</p>
@@ -689,7 +689,7 @@ function PayrollTab({ workshopId }) {
             {processing ? <Loader className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
             {processing ? t('pr_processing') : t('pr_process')}
           </button>
-          {employees.length === 0 && <p className="text-xs text-amber-600">{t('pr_add_emp_first')}</p>}
+          {employees.length === 0 && <p className="text-xs text-amber-700">{t('pr_add_emp_first')}</p>}
         </div>
       ) : (
         <>
@@ -698,8 +698,8 @@ function PayrollTab({ workshopId }) {
             {[
               { label: t('pr_total_gross'), value: totalGross, cls: 'text-ink' },
               { label: t('pr_total_net'),   value: totalNet,   cls: 'text-primary' },
-              { label: 'EPF (E+M)',          value: totalEPF,   cls: 'text-blue-600' },
-              { label: 'SOCSO + EIS',        value: totalSOCSO + totalEIS, cls: 'text-emerald-600' },
+              { label: 'EPF (E+M)',          value: totalEPF,   cls: 'text-charcoal' },
+              { label: 'SOCSO + EIS',        value: totalSOCSO + totalEIS, cls: 'text-charcoal' },
             ].map(({ label, value, cls }) => (
               <div key={label} className="bg-surface-card border border-hairline rounded-lg p-3">
                 <p className="text-xs text-mute">{label}</p>
@@ -745,8 +745,8 @@ function PayrollTab({ workshopId }) {
                         )}
                       </td>
                       <td className="px-3 py-3 text-right font-semibold">{fmtCompact(entry.gross_salary)}</td>
-                      <td className="px-3 py-3 text-right text-red-600">{fmtCompact(entry.epf_employee)}</td>
-                      <td className="px-3 py-3 text-right text-blue-600">{fmtCompact(entry.epf_employer)}</td>
+                      <td className="px-3 py-3 text-right text-red-700">{fmtCompact(entry.epf_employee)}</td>
+                      <td className="px-3 py-3 text-right text-charcoal">{fmtCompact(entry.epf_employer)}</td>
                       <td className="px-3 py-3 text-right text-mute">
                         {fmtCompact(entry.socso_employee)} / {fmtCompact(entry.socso_employer)}
                       </td>
@@ -831,8 +831,8 @@ function PayrollTab({ workshopId }) {
                       ) : <span className="text-charcoal">{fmtCompact(entry.allowances)}</span>}
                     </div>
                     {figure(t('pr_gross'), fmtCompact(entry.gross_salary))}
-                    {figure('EPF (P)', fmtCompact(entry.epf_employee), 'text-red-600')}
-                    {figure('EPF (M)', fmtCompact(entry.epf_employer), 'text-blue-600')}
+                    {figure('EPF (P)', fmtCompact(entry.epf_employee), 'text-red-700')}
+                    {figure('EPF (M)', fmtCompact(entry.epf_employer), 'text-charcoal')}
                     {figure('SOCSO', `${fmtCompact(entry.socso_employee)} / ${fmtCompact(entry.socso_employer)}`, 'text-mute')}
                     {figure('EIS', `${fmtCompact(entry.eis_employee)} / ${fmtCompact(entry.eis_employer)}`, 'text-mute')}
                     <div className="flex justify-between items-center gap-2">
@@ -875,11 +875,11 @@ function PayrollTab({ workshopId }) {
           {/* Actions */}
           <div className="flex flex-wrap gap-2">
             <button onClick={exportKWSP}
-              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-full px-4 py-2.5 transition-colors">
+              className="flex items-center gap-1.5 bg-surface-card hover:bg-surface-bone border border-hairline text-charcoal text-xs font-semibold rounded-full px-4 py-2.5 transition-colors">
               <Download className="w-3.5 h-3.5" /> {t('pr_export_kwsp')}
             </button>
             <button onClick={exportPERKESO}
-              className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-full px-4 py-2.5 transition-colors">
+              className="flex items-center gap-1.5 bg-surface-card hover:bg-surface-bone border border-hairline text-charcoal text-xs font-semibold rounded-full px-4 py-2.5 transition-colors">
               <Download className="w-3.5 h-3.5" /> {t('pr_export_perkeso')}
             </button>
             {!isFinal && (
@@ -890,7 +890,7 @@ function PayrollTab({ workshopId }) {
                   {t('pr_finalise')}
                 </button>
                 <button onClick={() => { if (window.confirm(t('pr_del_confirm'))) deleteRun() }}
-                  className="flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold rounded-full px-4 py-2.5 transition-colors">
+                  className="flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold rounded-full px-4 py-2.5 transition-colors">
                   <RotateCcw className="w-3.5 h-3.5" /> {t('pr_reset')}
                 </button>
               </>
@@ -928,19 +928,19 @@ export function PayrollPage() {
 
   const tabCls = (key) =>
     `px-4 py-2.5 text-sm font-semibold rounded-full transition-colors ${
-      tab === key ? 'bg-primary text-white' : 'text-charcoal hover:bg-canvas'
+      tab === key ? 'bg-surface-dark text-on-dark' : 'text-mute hover:text-charcoal'
     }`
 
   return (
     <div className="app-page">
       <div className="flex items-center gap-3 mb-2">
-        <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center">
-          <Users className="w-4 h-4 text-blue-600" />
+        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
+          <Users className="w-4 h-4 text-primary" />
         </div>
         <div><h1 className="font-display font-bold text-ink text-3xl">{t('pr_title')}</h1><p className="page-description">{t('ui_staff_sub')}</p></div>
       </div>
 
-      <div className="flex gap-1 bg-surface-bone rounded-full p-1 w-fit">
+      <div className="flex gap-1 bg-surface-bone border border-hairline rounded-full p-1 w-fit">
         <button onClick={() => setTab('employees')} className={tabCls('employees')}>{t('pr_tab_emp')}</button>
         <button onClick={() => setTab('payroll')}   className={tabCls('payroll')}>{t('pr_tab_pay')}</button>
       </div>

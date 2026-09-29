@@ -51,7 +51,7 @@ export function RefundModal({ job, onSave, onClose }) {
       <div className="bg-surface-card rounded-t-2xl sm:rounded-2xl w-full sm:max-w-sm flex flex-col">
         <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-hairline">
           <div className="flex items-center gap-2">
-            <Undo2 className="w-4 h-4 text-amber-600" />
+            <Undo2 className="w-4 h-4 text-amber-700" />
             <h3 className="font-display font-bold text-ink">Bayar Balik / Refund</h3>
           </div>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
@@ -67,7 +67,7 @@ export function RefundModal({ job, onSave, onClose }) {
             <div className="flex justify-between"><span className="text-mute">Telah dibayar</span><span className="font-medium">{fmt(deposit)}</span></div>
             <div className="flex justify-between border-t border-hairline pt-1.5 font-bold">
               <span className="text-charcoal">Bayaran berlebih</span>
-              <span className="text-amber-600">{fmt(overpaid)}</span>
+              <span className="text-amber-700">{fmt(overpaid)}</span>
             </div>
           </div>
 
@@ -97,12 +97,12 @@ export function RefundModal({ job, onSave, onClose }) {
             <input value={notes} onChange={e => setNotes(e.target.value)} placeholder="cth: diskaun selepas bayaran" className={inputCls} />
           </div>
 
-          {error && <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
+          {error && <p className="text-red-700 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
         </div>
 
         <div className="px-5 pb-5 pt-3 border-t border-hairline">
           <button onClick={handleRefund} disabled={saving || amt <= 0}
-            className="w-full bg-amber-600 hover:bg-amber-700 disabled:bg-stone text-white font-semibold rounded-full py-3 flex items-center justify-center gap-2 transition-colors text-sm">
+            className="w-full bg-amber-700 hover:bg-amber-800 disabled:bg-stone text-white font-semibold rounded-full py-3 flex items-center justify-center gap-2 transition-colors text-sm">
             {saving ? <Loader className="w-4 h-4 animate-spin" /> : <Undo2 className="w-4 h-4" />}
             {saving ? 'Menyimpan…' : `Rekod Bayar Balik ${amt > 0 ? fmt(amt) : ''}`}
           </button>

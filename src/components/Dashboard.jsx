@@ -154,8 +154,8 @@ export function Dashboard() {
       <div className="dashboard-metrics">
         {[
           { label: t('dash_active'),   value: activeJobs.length, color: 'text-primary'      },
-          { label: t('dash_unpaid'),   value: unpaid,            color: 'text-red-600'       },
-          { label: t('dash_deposit'),  value: deposit,           color: 'text-amber-600'     },
+          { label: t('dash_unpaid'),   value: unpaid,            color: 'text-red-700'       },
+          { label: t('dash_deposit'),  value: deposit,           color: 'text-amber-700'     },
           { label: t('dash_paid'),     value: paid,              color: 'text-badge-success' },
         ].map(({ label, value, color }) => (
           <div key={label} className="dashboard-metric">
@@ -179,7 +179,7 @@ export function Dashboard() {
 
       {!loading && staleCount > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-md px-4 py-3 flex items-center gap-3 text-sm">
-          <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+          <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
           <div>
             <p className="font-semibold text-amber-800">{staleCount} {t('dash_stale_label')}</p>
             <p className="text-amber-700 text-xs mt-0.5">{t('dash_stale_sub')}</p>
@@ -189,7 +189,7 @@ export function Dashboard() {
 
       {lowStockItems.length > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-md px-4 py-3 flex items-center gap-3 text-sm">
-          <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+          <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
           <div>
             <p className="font-semibold text-amber-800">{lowStockItems.length} {t('dash_low_stock_label')}</p>
             <p className="text-amber-700 text-xs mt-0.5">{t('dash_low_stock_sub')}</p>
@@ -212,9 +212,9 @@ export function Dashboard() {
               return (
                 <div key={j.id} className="px-4 py-2.5 flex items-center gap-3 text-sm">
                   <div className="flex-1 min-w-0">
-                    <span className="font-semibold text-ink font-mono">{j.plate}</span>
+                    <span className="plate text-[13px]">{j.plate}</span>
                     <span className="text-mute ml-2">{j.owner}</span>
-                    <span className={`ml-2 text-xs font-medium ${days <= 3 ? 'text-red-500' : days <= 7 ? 'text-amber-600' : 'text-charcoal'}`}>
+                    <span className={`ml-2 text-xs font-medium ${days <= 3 ? 'text-red-700' : days <= 7 ? 'text-amber-700' : 'text-charcoal'}`}>
                       · {t('remind_due')} {days === 0 ? 'hari ini' : `${days}h`}
                     </span>
                   </div>
@@ -282,8 +282,8 @@ export function Dashboard() {
         </div>
       ) : error ? (
         <div className="bg-red-50 border border-red-200 rounded-md p-6 text-center">
-          <p className="text-red-600 font-medium">{t('error_prefix')} {error}</p>
-          <button onClick={fetchJobs} className="mt-3 text-sm text-red-600 font-semibold underline">{t('retry')}</button>
+          <p className="text-red-700 font-medium">{t('error_prefix')} {error}</p>
+          <button onClick={fetchJobs} className="mt-3 text-sm text-red-700 font-semibold underline">{t('retry')}</button>
         </div>
       ) : filtered.length === 0 ? (
         <div className="ui-empty text-ash">

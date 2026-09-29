@@ -4,12 +4,12 @@ import { X, ChevronLeft, ChevronRight, LayoutDashboard, PlusCircle, ArrowRightLe
 import { useLang } from '../context/LanguageContext'
 
 const STEPS = [
-  { icon: LayoutDashboard, color: 'bg-blue-50 text-blue-600',   titleKey: 'tut_s1_title', descKey: 'tut_s1_desc' },
-  { icon: PlusCircle,      color: 'bg-green-50 text-green-600', titleKey: 'tut_s2_title', descKey: 'tut_s2_desc' },
-  { icon: ArrowRightLeft,  color: 'bg-amber-50 text-amber-600', titleKey: 'tut_s3_title', descKey: 'tut_s3_desc' },
-  { icon: Printer,         color: 'bg-purple-50 text-purple-600', titleKey: 'tut_s4_title', descKey: 'tut_s4_desc' },
-  { icon: ExternalLink,    color: 'bg-teal-50 text-teal-600',   titleKey: 'tut_s5_title', descKey: 'tut_s5_desc' },
-  { icon: Settings,        color: 'bg-rose-50 text-rose-600',   titleKey: 'tut_s6_title', descKey: 'tut_s6_desc' },
+  { icon: LayoutDashboard, color: 'bg-primary/10 text-primary', titleKey: 'tut_s1_title', descKey: 'tut_s1_desc' },
+  { icon: PlusCircle,      color: 'bg-primary/10 text-primary', titleKey: 'tut_s2_title', descKey: 'tut_s2_desc' },
+  { icon: ArrowRightLeft,  color: 'bg-primary/10 text-primary', titleKey: 'tut_s3_title', descKey: 'tut_s3_desc' },
+  { icon: Printer,         color: 'bg-primary/10 text-primary', titleKey: 'tut_s4_title', descKey: 'tut_s4_desc' },
+  { icon: ExternalLink,    color: 'bg-primary/10 text-primary', titleKey: 'tut_s5_title', descKey: 'tut_s5_desc' },
+  { icon: Settings,        color: 'bg-primary/10 text-primary', titleKey: 'tut_s6_title', descKey: 'tut_s6_desc' },
 ]
 
 export function TutorialModal({ onClose }) {

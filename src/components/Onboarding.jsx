@@ -153,7 +153,7 @@ export function Onboarding() {
                 </div>
                 <p className="text-ash text-xs mt-1.5 px-1">{t('ob_url_hint')}</p>
               </div>
-              {error && <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
+              {error && <p className="text-red-700 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
               <button type="submit" disabled={saving || !name.trim() || !slug.trim()} className={btnCls}>
                 {saving ? t('ob_creating') : <><span>{t('ob_open_btn')}</span><ArrowRight className="w-4 h-4" /></>}
               </button>
@@ -169,7 +169,7 @@ export function Onboarding() {
                   onChange={e => setInviteCode(e.target.value.toUpperCase())}
                   required placeholder={t('ob_inv_ph')} className={inputCls} />
               </div>
-              {error && <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
+              {error && <p className="text-red-700 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
               <button type="submit" disabled={saving || !inviteCode.trim()} className={btnCls}>
                 {saving ? t('ob_joining') : <><span>{t('ob_join_btn')}</span><ArrowRight className="w-4 h-4" /></>}
               </button>

@@ -70,7 +70,7 @@ export function EAFormModal({ workshopId, workshop, year, onClose }) {
                 <ChevronLeft className="w-4 h-4 text-ash" />
               </button>
             )}
-            <h3 className="font-display font-bold text-ink text-sm">Penyata EA {year}</h3>
+            <h3 className="font-display font-bold text-ink text-base">Penyata EA {year}</h3>
           </div>
           <div className="flex gap-2">
             {selected && (
@@ -138,11 +138,11 @@ export function EAFormModal({ workshopId, workshop, year, onClose }) {
             <div>
               <p className="text-xs font-bold text-charcoal mb-2 uppercase tracking-wide">Potongan Pekerja (Setahun)</p>
               <div className="space-y-1 text-xs">
-                <div className="flex justify-between"><span>KWSP</span><span className="text-red-600">− {fmt(selected.epf_employee)}</span></div>
-                <div className="flex justify-between"><span>PERKESO</span><span className="text-red-600">− {fmt(selected.socso_employee)}</span></div>
-                <div className="flex justify-between"><span>EIS/SIP</span><span className="text-red-600">− {fmt(selected.eis_employee)}</span></div>
-                <div className="flex justify-between"><span>PCB / Cukai Pendapatan (MTD)</span><span className="text-red-600">− {fmt(selected.pcb)}</span></div>
-                {selected.other_deductions > 0 && <div className="flex justify-between"><span>Potongan Lain</span><span className="text-red-600">− {fmt(selected.other_deductions)}</span></div>}
+                <div className="flex justify-between"><span>KWSP</span><span className="text-red-700">− {fmt(selected.epf_employee)}</span></div>
+                <div className="flex justify-between"><span>PERKESO</span><span className="text-red-700">− {fmt(selected.socso_employee)}</span></div>
+                <div className="flex justify-between"><span>EIS/SIP</span><span className="text-red-700">− {fmt(selected.eis_employee)}</span></div>
+                <div className="flex justify-between"><span>PCB / Cukai Pendapatan (MTD)</span><span className="text-red-700">− {fmt(selected.pcb)}</span></div>
+                {selected.other_deductions > 0 && <div className="flex justify-between"><span>Potongan Lain</span><span className="text-red-700">− {fmt(selected.other_deductions)}</span></div>}
               </div>
             </div>
 

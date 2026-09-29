@@ -34,7 +34,7 @@ export function TodaySummary({ jobs, onSelectJob }) {
 
       {overdueList.length > 0 && (
         <div className="bg-surface-card rounded-md border border-red-200 p-4">
-          <p className="text-red-600 font-bold text-2xl font-display">{overdueList.length}</p>
+          <p className="text-red-700 font-bold text-2xl font-display">{overdueList.length}</p>
           <p className="text-charcoal text-xs font-semibold mt-0.5">{t('ui_overdue')} (&gt;{OVERDUE_DAYS} {t('days_short')})</p>
           <div className="mt-2 space-y-1">
             {overdueList.slice(0, 3).map(j => (

@@ -163,7 +163,7 @@ export function WorkersPage() {
                 </span>
                 {editingId !== w.id && (
                   <button onClick={() => removeWorker(w)}
-                    className="w-8 h-8 flex items-center justify-center text-mute hover:text-red-500 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
+                    className="w-8 h-8 flex items-center justify-center text-mute hover:text-red-700 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 )}
@@ -213,7 +213,7 @@ export function WorkersPage() {
                   }
                 </button>
                 <button onClick={() => revokeInvite(invite)}
-                  className="w-8 h-8 flex items-center justify-center text-mute hover:text-red-500 hover:bg-red-50 rounded-full transition-colors">
+                  className="w-8 h-8 flex items-center justify-center text-mute hover:text-red-700 hover:bg-red-50 rounded-full transition-colors">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>

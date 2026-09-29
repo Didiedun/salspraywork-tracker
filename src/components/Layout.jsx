@@ -28,7 +28,7 @@ function Sidebar({ workshop, signOut, onClose, collapsed, onToggleCollapsed }) {
 
   const navCls = ({ isActive }) =>
     `app-nav-link flex items-center rounded-xl text-sm font-semibold transition-colors ${
-      isActive ? 'bg-white/10 text-white ring-1 ring-white/10' : 'text-on-dark/70 hover:text-on-dark hover:bg-white/5'
+      isActive ? 'bg-on-dark text-ink' : 'text-on-dark/70 hover:text-on-dark hover:bg-white/5'
     } ${collapsed ? 'justify-center p-2.5 gap-0' : 'gap-3 px-3 py-2.5'}`
 
   const footerCls = `w-full flex items-center rounded-lg text-sm font-semibold text-on-dark/70 hover:text-on-dark hover:bg-white/5 transition-colors ${
@@ -52,8 +52,8 @@ function Sidebar({ workshop, signOut, onClose, collapsed, onToggleCollapsed }) {
               {logoEl}
             </div>
             <div className="min-w-0">
-              <p className="text-on-dark font-display font-bold text-sm leading-tight truncate">{workshop?.name || 'Digital Depot'}</p>
-              <p className="text-on-dark/40 text-xs leading-tight">Digital Depot</p>
+              <p className="text-on-dark font-display font-bold text-base leading-tight truncate">{workshop?.name || 'Digital Depot'}</p>
+              <p className="text-on-dark/60 text-xs leading-tight">Digital Depot</p>
             </div>
           </div>
         )}
@@ -133,7 +133,7 @@ function PlanBanner({ workshop }) {
       expired ? 'bg-red-50 text-red-700 border-b border-red-200' : 'bg-amber-50 text-amber-800 border-b border-amber-200'
     }`}>
       <span>{msg}</span>
-      <Link to="/settings" className={`flex-shrink-0 text-white px-3 py-1.5 rounded-full ${expired ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-500 hover:bg-amber-600'} transition-colors`}>
+      <Link to="/settings" className={`flex-shrink-0 text-white px-3 py-1.5 rounded-full ${expired ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-700 hover:bg-amber-800'} transition-colors`}>
         {proExpiring ? t('plan_banner_renew') : t('plan_banner_cta')}
       </Link>
     </div>

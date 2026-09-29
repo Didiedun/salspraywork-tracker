@@ -37,7 +37,7 @@ export function StageBar({ current, compact = false, stages = SPRAY_STAGES, useL
             <div className={`relative z-10 w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold border-2 transition-all ${
               i < safeIdx  ? 'bg-primary border-primary text-white' :
               i === safeIdx ? 'bg-white border-primary text-primary' :
-              'bg-white border-stone/50 text-stone'
+              'bg-white border-stone/70 text-ash'
             }`}>
               {i < safeIdx ? '✓' : i + 1}
             </div>

@@ -45,8 +45,8 @@ function VariantStockRow({ variant, catId, itemId, stockItems, onUpdate }) {
         className="text-xs mt-0.5 text-left hover:opacity-75 transition-opacity block">
         {inv ? (
           <span className="text-primary flex items-center gap-1 flex-wrap">
-            📦 {inv.name} × {variant.qty_per_service} {inv.unit}
-            <span className={`font-semibold ${inv.quantity <= 0 ? 'text-red-500' : inv.quantity <= (inv.reorder_level || 0) ? 'text-amber-600' : 'text-badge-success'}`}>
+            <Package className="w-3 h-3" /> {inv.name} × {variant.qty_per_service} {inv.unit}
+            <span className={`font-semibold ${inv.quantity <= 0 ? 'text-red-700' : inv.quantity <= (inv.reorder_level || 0) ? 'text-amber-800' : 'text-badge-success'}`}>
               ({inv.quantity} {t('cat_in_stock')})
             </span>
           </span>
@@ -182,7 +182,7 @@ function CatalogModal({ modal, onClose, onSave, stockItems = [], addStockItem })
               <button type="button" onClick={() => setLinkStock(v => !v)}
                 className="flex items-center gap-2 text-xs font-semibold text-charcoal hover:text-ink transition-colors">
                 <div className={`w-8 h-4 rounded-full transition-colors relative flex-shrink-0 ${linkStock ? 'bg-primary' : 'bg-stone'}`}>
-                  <span className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow-sm transition-transform ${linkStock ? 'left-4.5 translate-x-0.5' : 'left-0.5'}`} />
+                  <span className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow-sm transition-transform ${linkStock ? 'left-[18px]' : 'left-0.5'}`} />
                 </div>
                 {t('cat_link_stock')}
               </button>
@@ -230,7 +230,7 @@ function CatalogModal({ modal, onClose, onSave, stockItems = [], addStockItem })
             </div>
           )}
 
-          {err && <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{err}</p>}
+          {err && <p className="text-red-700 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{err}</p>}
         </div>
 
         <div className="p-4 border-t border-hairline flex-shrink-0">
@@ -303,7 +303,7 @@ function CatalogTab({ workshopId }) {
                 <button onClick={async () => {
                   if (!window.confirm(`${t('delete')} "${cat.name}"?`)) return
                   try { await deleteCategory(cat.id) } catch (e) { alert(e.message) }
-                }} className="w-7 h-7 flex items-center justify-center text-mute hover:text-red-500 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
+                }} className="w-7 h-7 flex items-center justify-center text-mute hover:text-red-700 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -331,7 +331,7 @@ function CatalogTab({ workshopId }) {
                         <button onClick={async () => {
                           if (!window.confirm(`${t('delete')} "${item.name}"?`)) return
                           try { await deleteItem(cat.id, item.id) } catch (e) { alert(e.message) }
-                        }} className="w-7 h-7 flex items-center justify-center text-mute hover:text-red-500 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
+                        }} className="w-7 h-7 flex items-center justify-center text-mute hover:text-red-700 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
                           <Trash2 className="w-3 h-3" />
                         </button>
                       </div>
@@ -364,7 +364,7 @@ function CatalogTab({ workshopId }) {
                               <button onClick={async () => {
                                 if (!window.confirm(`${t('delete')} "${v.name}"?`)) return
                                 try { await deleteVariant(cat.id, item.id, v.id) } catch (e) { alert(e.message) }
-                              }} className="w-6 h-6 flex items-center justify-center text-mute hover:text-red-500 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
+                              }} className="w-6 h-6 flex items-center justify-center text-mute hover:text-red-700 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
                                 <Trash2 className="w-3 h-3" />
                               </button>
                             </div>
@@ -510,7 +510,7 @@ function ItemForm({ initial, onSave, onClose }) {
               <label className={labelCls}>{t('inv_cost')}</label>
               <input type="text" inputMode="decimal" value={form.unit_cost} onChange={set('unit_cost')} placeholder="0.00" className={inputCls} />
             </div>
-            {error && <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
+            {error && <p className="text-red-700 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
           </div>
           <div className="p-4 border-t border-hairline flex-shrink-0">
             <button type="submit" disabled={saving}
@@ -643,7 +643,7 @@ function StockTab({ workshopId }) {
           <p className="text-charcoal text-xs mt-0.5 font-medium">{t('inv_types')}</p>
         </div>
         <div className={`rounded-md border p-4 ${lowStock.length > 0 ? 'bg-amber-50 border-amber-200' : 'bg-surface-card border-hairline'}`}>
-          <p className={`text-2xl font-bold font-display ${lowStock.length > 0 ? 'text-amber-600' : 'text-charcoal'}`}>{lowStock.length}</p>
+          <p className={`text-2xl font-bold font-display ${lowStock.length > 0 ? 'text-amber-700' : 'text-charcoal'}`}>{lowStock.length}</p>
           <p className={`text-xs mt-0.5 font-medium ${lowStock.length > 0 ? 'text-amber-700' : 'text-charcoal'}`}>{t('inv_low')}</p>
         </div>
         <div className="bg-surface-card rounded-md border border-hairline p-4 col-span-2 sm:col-span-1">
@@ -694,7 +694,7 @@ function StockTab({ workshopId }) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="text-ink font-semibold text-sm">{item.name}</p>
-                    {isLow && <AlertTriangle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />}
+                    {isLow && <AlertTriangle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />}
                   </div>
                   {item.sku && <p className="text-ash text-xs mt-0.5">{item.sku}</p>}
                 </div>
@@ -702,7 +702,7 @@ function StockTab({ workshopId }) {
                   <button onClick={() => handleQtyChange(item, -1)}
                     className="w-7 h-7 flex items-center justify-center rounded-full border border-hairline hover:bg-surface-bone text-charcoal font-bold text-base leading-none transition-colors">−</button>
                   <div className="text-center min-w-[3rem]">
-                    <p className={`font-bold font-display text-sm leading-tight ${isLow ? 'text-amber-600' : 'text-ink'}`}>
+                    <p className={`font-bold font-display text-base leading-tight ${isLow ? 'text-amber-700' : 'text-ink'}`}>
                       {item.quantity} <span className="text-xs font-normal text-mute">{item.unit}</span>
                     </p>
                     {item.unit_cost && (
@@ -723,7 +723,7 @@ function StockTab({ workshopId }) {
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
                   <button onClick={() => handleDelete(item)}
-                    className="w-8 h-8 flex items-center justify-center text-mute hover:text-red-500 hover:bg-red-50 rounded-full transition-colors">
+                    className="w-8 h-8 flex items-center justify-center text-mute hover:text-red-700 hover:bg-red-50 rounded-full transition-colors">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -765,7 +765,7 @@ export function InventoryPage() {
         {[['catalog', t('cat_tab_catalog')], ['stock', t('cat_tab_stock')]].map(([val, label]) => (
           <button key={val} aria-pressed={tab === val} onClick={() => setTab(val)}
             className={`px-5 py-1.5 rounded-full text-sm font-semibold transition-colors ${
-              tab === val ? 'bg-white shadow-sm text-ink' : 'text-mute hover:text-charcoal'
+              tab === val ? 'bg-surface-dark text-on-dark' : 'text-mute hover:text-charcoal'
             }`}>{label}</button>
         ))}
       </div>

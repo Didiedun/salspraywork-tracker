@@ -9,7 +9,7 @@ function StockBadge({ item }) {
   const qty = item.quantity || 0
   const reorder = item.reorder_level || 0
   if (qty <= 0)
-    return <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-600">{qty} {item.unit}</span>
+    return <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700">{qty} {item.unit}</span>
   if (reorder > 0 && qty <= reorder)
     return <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700">{qty} {item.unit}</span>
   return <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700">{qty} {item.unit}</span>

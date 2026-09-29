@@ -205,8 +205,8 @@ export function CustomerView() {
                 className="w-full bg-surface-card hover:bg-surface-bone border border-hairline rounded-md p-4 text-left transition-colors">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-ink font-display font-bold tracking-tight">{j.plate}</p>
-                    <p className="text-charcoal text-sm">{j.car}</p>
+                    <p className="plate text-base">{j.plate}</p>
+                    <p className="text-charcoal text-sm mt-1">{j.car}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-mute text-xs">{formatDate(j.date_in || j.created_at)}</p>
@@ -257,8 +257,8 @@ export function CustomerView() {
             <div className="bg-surface-card rounded-lg border border-hairline p-5">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <p className="text-ink font-display font-bold text-2xl tracking-tight">{job.plate}</p>
-                  <p className="text-charcoal text-sm mt-0.5">{job.car}</p>
+                  <p className="plate text-2xl">{job.plate}</p>
+                  <p className="text-charcoal text-sm mt-1.5">{job.car}</p>
                 </div>
                 <TypeBadge type={job.type} />
               </div>
@@ -273,7 +273,7 @@ export function CustomerView() {
                 )}
               </div>
               {job.est_completion && (
-                <div className="mt-3 bg-red-50 border border-red-200 rounded-md px-4 py-3">
+                <div className="mt-3 bg-primary/[.06] border border-primary/20 rounded-md px-4 py-3">
                   <p className="text-primary text-xs font-semibold">{t('cv_est')}</p>
                   <p className="text-ink font-bold">{formatDate(job.est_completion)}</p>
                 </div>
@@ -328,7 +328,7 @@ export function CustomerView() {
                           {t('cv_pay_now')} — {formatMoney(balance)}
                         </button>
                         {payError && (
-                          <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2 mt-2">{payError}</p>
+                          <p className="text-red-700 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2 mt-2">{payError}</p>
                         )}
                       </>
                     )}
@@ -415,7 +415,7 @@ export function CustomerView() {
                 : <Wrench className="w-4 h-4 text-white" />
               }
             </div>
-            <p className="font-display font-bold text-on-dark text-sm">{workshop.name}</p>
+            <p className="font-display font-bold text-on-dark text-base">{workshop.name}</p>
           </div>
           <div className="border-t border-divider-dark pt-4 flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-3">

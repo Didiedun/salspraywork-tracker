@@ -151,7 +151,7 @@ export function PaymentModal({ job, onSave, onClose }) {
               </span>
             </div>
             {balance < -0.005 && (
-              <p className="text-xs text-amber-600 font-semibold">{t('pay_overpaid_note')}</p>
+              <p className="text-xs text-amber-700 font-semibold">{t('pay_overpaid_note')}</p>
             )}
           </div>
 
@@ -215,7 +215,7 @@ export function PaymentModal({ job, onSave, onClose }) {
                   </div>
                   {job.phone && (
                     <button onClick={() => whatsappShare(paymentUrl)}
-                      className="w-full flex items-center justify-center gap-2 bg-badge-success text-white text-xs font-semibold rounded-full py-2.5 hover:bg-emerald-600 transition-colors">
+                      className="w-full flex items-center justify-center gap-2 bg-badge-success text-white text-xs font-semibold rounded-full py-2.5 hover:bg-emerald-700 transition-colors">
                       {t('pay_wa_notify')}
                     </button>
                   )}
@@ -271,7 +271,7 @@ export function PaymentModal({ job, onSave, onClose }) {
                   </div>
                   {customerPaid > 0 && (
                     <div className={`mt-2 px-4 py-2.5 rounded-xl text-sm font-bold text-center ${
-                      change >= 0 ? 'bg-badge-success/10 text-badge-success' : 'bg-red-50 text-red-600'
+                      change >= 0 ? 'bg-badge-success/10 text-badge-success' : 'bg-red-50 text-red-700'
                     }`}>
                       {change >= 0
                         ? `${t('pay_change')}: RM ${change.toFixed(2)}`

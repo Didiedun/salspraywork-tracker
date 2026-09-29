@@ -180,7 +180,7 @@ export function WorkerView() {
               <Wrench className="w-4 h-4 text-white" />
             </div>
             <div className="min-w-0">
-              <p className="font-display font-bold text-ink text-sm leading-tight truncate">{workshop?.name}</p>
+              <p className="font-display font-bold text-ink text-base leading-tight truncate">{workshop?.name}</p>
               {editingName ? (
                 <div className="flex items-center gap-1 mt-0.5">
                   <input
@@ -232,7 +232,7 @@ export function WorkerView() {
         <div className="grid grid-cols-3 gap-3">
           {[
             { label: t('wv_active'),      value: jobs.filter(j => !j.archived).length,           color: 'text-primary'  },
-            { label: t('wv_in_progress'), value: jobs.filter(j => !j.archived && j.stage !== lastValue && j.stage !== stages[0]?.value).length, color: 'text-amber-600' },
+            { label: t('wv_in_progress'), value: jobs.filter(j => !j.archived && j.stage !== lastValue && j.stage !== stages[0]?.value).length, color: 'text-amber-700' },
             { label: t('wv_done_today'),  value: jobs.filter(j => {
               if (j.stage !== lastValue) return false
               const d = new Date(j.updated_at || j.created_at)
@@ -252,13 +252,13 @@ export function WorkerView() {
             <button onClick={() => setShowProfileForm(v => !v)}
               className="w-full flex items-center justify-between px-4 py-3 hover:bg-amber-100/50 transition-colors">
               <div className="flex items-center gap-2.5">
-                <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                <AlertTriangle className="w-4 h-4 text-amber-700 flex-shrink-0" />
                 <div className="text-left">
                   <p className="text-sm font-semibold text-amber-800">{t('wv_profile_title')}</p>
-                  <p className="text-xs text-amber-600">{t('wv_profile_sub')}</p>
+                  <p className="text-xs text-amber-700">{t('wv_profile_sub')}</p>
                 </div>
               </div>
-              <ChevronRight className={`w-4 h-4 text-amber-500 transition-transform flex-shrink-0 ${showProfileForm ? 'rotate-90' : ''}`} />
+              <ChevronRight className={`w-4 h-4 text-amber-600 transition-transform flex-shrink-0 ${showProfileForm ? 'rotate-90' : ''}`} />
             </button>
             {showProfileForm && (
               <div className="border-t border-amber-200 px-4 pb-4 pt-3 space-y-3 bg-white/60">
@@ -298,7 +298,7 @@ export function WorkerView() {
                   </div>
                 </div>
                 <button onClick={saveProfile} disabled={savingProfile}
-                  className="flex items-center gap-2 bg-amber-600 hover:bg-amber-700 disabled:bg-stone text-white font-semibold rounded-full px-5 py-2.5 text-sm transition-colors">
+                  className="flex items-center gap-2 bg-amber-700 hover:bg-amber-800 disabled:bg-stone text-white font-semibold rounded-full px-5 py-2.5 text-sm transition-colors">
                   {savingProfile ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                   {savingProfile ? t('saving') : t('wv_profile_save')}
                 </button>
@@ -432,13 +432,13 @@ export function WorkerView() {
                   className={`bg-surface-card rounded-lg border overflow-hidden ${overdue ? 'border-red-200' : stale ? 'border-amber-200' : 'border-hairline'}`}>
                   {overdue && (
                     <div className="bg-red-50 border-b border-red-100 px-4 py-1.5 flex items-center gap-2">
-                      <Clock className="w-3.5 h-3.5 text-red-500" />
-                      <p className="text-red-600 text-xs font-semibold">{t('overdue_label')} — {days} {t('overdue_days')}</p>
+                      <Clock className="w-3.5 h-3.5 text-red-700" />
+                      <p className="text-red-700 text-xs font-semibold">{t('overdue_label')} — {days} {t('overdue_days')}</p>
                     </div>
                   )}
                   {stale && (
                     <div className="bg-amber-50 border-b border-amber-100 px-4 py-1.5 flex items-center gap-2">
-                      <Clock className="w-3.5 h-3.5 text-amber-500" />
+                      <Clock className="w-3.5 h-3.5 text-amber-600" />
                       <p className="text-amber-700 text-xs font-semibold">{t('stale_label')}</p>
                     </div>
                   )}
@@ -446,14 +446,14 @@ export function WorkerView() {
                     <div className="flex items-start justify-between gap-3 mb-3">
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className="font-display font-bold text-ink text-lg tracking-tight">{job.plate}</p>
+                          <p className="plate text-lg">{job.plate}</p>
                           {days > 0 && (
-                            <span className={`text-xs flex items-center gap-0.5 font-semibold ${overdue ? 'text-red-500' : stale ? 'text-amber-600' : 'text-mute'}`}>
+                            <span className={`text-xs flex items-center gap-0.5 font-semibold ${overdue ? 'text-red-700' : stale ? 'text-amber-700' : 'text-mute'}`}>
                               <Clock className="w-3 h-3" />{days}{t('days_short')}
                             </span>
                           )}
                         </div>
-                        <p className="text-charcoal text-sm">{job.car} — {job.owner}</p>
+                        <p className="text-charcoal text-sm mt-1">{job.car} — {job.owner}</p>
                         <p className="text-mute text-xs mt-0.5">{t('wv_date_in')} {formatDate(job.date_in || job.created_at)}</p>
                       </div>
                       <PaymentBadge job={job} />
@@ -486,7 +486,7 @@ export function WorkerView() {
                       <button
                         onClick={() => advanceStage(job, 'next')}
                         disabled={isLast || isBusy}
-                        className="flex items-center gap-1 text-xs text-primary hover:text-primary-deep disabled:opacity-30 bg-red-50 hover:bg-red-100 border border-red-200 px-2.5 py-1.5 rounded-full transition-colors font-semibold">
+                        className="flex items-center gap-1 text-xs text-primary hover:text-primary-deep disabled:opacity-30 bg-primary/10 hover:bg-primary/15 border border-primary/25 px-2.5 py-1.5 rounded-full transition-colors font-semibold">
                         {t('card_advance')} <ChevronRight className="w-3.5 h-3.5" />
                       </button>
                     </div>

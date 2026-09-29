@@ -22,7 +22,7 @@ function BillingCard() {
     ? { cls: 'bg-badge-success/10 text-badge-success', label: t('st_bill_pro_until', { date: fmtDate(status.until) }) }
     : status.state === 'trial'
       ? { cls: 'bg-amber-50 text-amber-700', label: status.daysLeft === null ? t('st_bill_trial_left', { days: '—' }) : t('st_bill_trial_left', { days: status.daysLeft }) }
-      : { cls: 'bg-red-50 text-red-600', label: t('st_bill_expired') }
+      : { cls: 'bg-red-50 text-red-700', label: t('st_bill_expired') }
 
   const handlePay = async (interval) => {
     setPaying(interval); setError('')
@@ -77,7 +77,7 @@ function BillingCard() {
         ))}
       </div>
 
-      {error && <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
+      {error && <p className="text-red-700 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
       <p className="text-[10px] text-mute">{t('st_bill_note')}</p>
     </div>
   )
@@ -142,10 +142,10 @@ function PaymentGatewayCard() {
         </span>
       </div>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 space-y-1">
-        <p className="text-xs text-blue-800">{t('st_gw_hint')}</p>
+      <div className="bg-primary/[.05] border border-primary/20 rounded-lg px-4 py-3 space-y-1">
+        <p className="text-xs text-body">{t('st_gw_hint')}</p>
         <a href="https://toyyibpay.com" target="_blank" rel="noreferrer"
-          className="text-xs font-semibold text-blue-700 underline hover:text-blue-900">
+          className="text-xs font-semibold text-primary underline hover:text-primary-deep">
           {t('st_gw_register')}
         </a>
       </div>
@@ -176,7 +176,7 @@ function PaymentGatewayCard() {
           placeholder={t('st_gw_cat_ph')} className={inputCls} />
       </div>
 
-      {error && <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
+      {error && <p className="text-red-700 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
       {saved  && <p className="text-badge-success text-xs bg-green-50 border border-green-200 rounded-md px-3 py-2">{t('st_gw_saved')}</p>}
 
       <button type="button" onClick={handleSave} disabled={saving}
@@ -309,7 +309,7 @@ export function WorkshopSettings() {
   return (
     <div className="app-page app-page-narrow">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center">
+        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
           <Settings className="w-4 h-4 text-primary" />
         </div>
         <div><h1 className="font-display font-bold text-ink text-3xl">{t('st_title')}</h1><p className="page-description">{t('ui_settings_sub')}</p></div>
@@ -338,7 +338,7 @@ export function WorkshopSettings() {
           </div>
         </div>
         {workshop?.logo_url && <p className="text-xs text-badge-success mt-3">{t('st_logo_ok')}</p>}
-        {error && <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2 mt-3">{error}</p>}
+        {error && <p className="text-red-700 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2 mt-3">{error}</p>}
       </div>
 
       {/* Details */}
@@ -417,7 +417,7 @@ export function WorkshopSettings() {
                   className="w-20 bg-canvas border border-hairline rounded-lg px-3 py-2 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors flex-shrink-0" />
                 <button type="button" onClick={() => removeStage(i)} disabled={!canDelete}
                   className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 disabled:opacity-20 transition-colors flex-shrink-0">
-                  <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                  <Trash2 className="w-3.5 h-3.5 text-red-700" />
                 </button>
               </div>
             )
@@ -429,7 +429,7 @@ export function WorkshopSettings() {
           <Plus className="w-4 h-4" /> {t('st_add_stage')}
         </button>
 
-        {stagesError && <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2 mb-3">{stagesError}</p>}
+        {stagesError && <p className="text-red-700 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2 mb-3">{stagesError}</p>}
         {stagesSaved && <p className="text-badge-success text-xs bg-green-50 border border-green-200 rounded-md px-3 py-2 mb-3">{t('st_stages_saved')}</p>}
 
         <button type="button" onClick={saveStages} disabled={stagesSaving}

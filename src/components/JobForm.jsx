@@ -1,6 +1,6 @@
 import { useDialogFocus } from '../hooks/useDialogFocus'
 import { useState, useEffect, useRef } from 'react'
-import { X, Save, Car, User, Phone, FileText, DollarSign, Calendar, Flag, Mail, Plus, Trash2, UserCheck, Bell } from 'lucide-react'
+import { X, Save, Car, User, Phone, FileText, DollarSign, Calendar, Flag, Mail, Plus, Trash2, UserCheck, Bell, Package } from 'lucide-react'
 import { useStages } from '../hooks/useStages'
 import { useLang } from '../context/LanguageContext'
 import { useApp } from '../context/AppContext'
@@ -299,7 +299,7 @@ export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
                             className="w-20 bg-canvas border border-hairline rounded-full px-3 py-2.5 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors text-right"
                           />
                           <button type="button" onClick={() => removeService(i)}
-                            className="w-8 h-8 flex items-center justify-center rounded-full text-mute hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0">
+                            className="w-8 h-8 flex items-center justify-center rounded-full text-mute hover:text-red-700 hover:bg-red-50 transition-colors flex-shrink-0">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
@@ -308,7 +308,7 @@ export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
                             <span className="text-[11px] text-mute">= RM {total.toFixed(2)}</span>
                           )}
                           {svc.inventory_item_id && (
-                            <span className="text-[11px] text-badge-success flex items-center gap-0.5">📦 {t('form_svc_linked')}</span>
+                            <span className="text-[11px] text-badge-success flex items-center gap-1"><Package className="w-3 h-3" /> {t('form_svc_linked')}</span>
                           )}
                         </div>
                       </div>
@@ -394,7 +394,7 @@ export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
               )}
             </div>
 
-            {err && <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-xl px-3 py-2">{err}</p>}
+            {err && <p className="text-red-700 text-xs bg-red-50 border border-red-200 rounded-xl px-3 py-2">{err}</p>}
           </div>
 
           <div className="p-4 border-t border-hairline flex-shrink-0 bg-surface-card rounded-b-2xl">

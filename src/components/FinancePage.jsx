@@ -11,13 +11,14 @@ import {
 
 const CATEGORIES = ['sewa', 'utiliti', 'alat', 'petrol', 'gaji', 'lain']
 
+// Categories are told apart by their label; colour stays reserved for money states.
 const CAT_COLORS = {
-  sewa:    'bg-blue-100 text-blue-700',
-  utiliti: 'bg-amber-100 text-amber-700',
-  alat:    'bg-purple-100 text-purple-700',
-  petrol:  'bg-orange-100 text-orange-700',
-  gaji:    'bg-emerald-100 text-emerald-700',
-  lain:    'bg-stone-100 text-stone-600',
+  sewa:    'bg-surface-bone text-charcoal',
+  utiliti: 'bg-surface-bone text-charcoal',
+  alat:    'bg-surface-bone text-charcoal',
+  petrol:  'bg-surface-bone text-charcoal',
+  gaji:    'bg-surface-bone text-charcoal',
+  lain:    'bg-surface-bone text-charcoal',
 }
 
 const MONTH_MS = ['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogs','Sep','Okt','Nov','Dis']
@@ -80,7 +81,7 @@ function AddExpenseModal({ onSave, onClose }) {
                 className="w-full bg-canvas border border-hairline rounded-full pl-12 pr-4 py-2.5 text-sm text-ink font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
             </div>
           </div>
-          {err && <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{err}</p>}
+          {err && <p className="text-red-700 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{err}</p>}
           <button type="submit" disabled={saving}
             className="w-full bg-primary hover:bg-primary-deep disabled:bg-stone disabled:cursor-not-allowed text-white font-semibold rounded-full py-3 flex items-center justify-center gap-2 transition-colors text-sm">
             <Save className="w-4 h-4" />
@@ -229,7 +230,7 @@ CREATE POLICY "service_manage_events" ON payment_events FOR ALL USING (true);`
       {needsMigration && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-3">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+            <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-semibold text-amber-800">{t('fin_migration_title')}</p>
               <p className="text-xs text-amber-700 mt-0.5">{t('fin_migration_sub')}</p>
@@ -266,18 +267,18 @@ CREATE POLICY "service_manage_events" ON payment_events FOR ALL USING (true);`
           <p className="text-xs text-mute mt-0.5 font-medium">{t('fin_revenue')}</p>
         </div>
         <div className="bg-surface-card border border-hairline rounded-xl p-4 text-center">
-          <TrendingDown className="w-4 h-4 text-red-500 mx-auto mb-1.5" />
-          <p className="font-display font-bold text-base text-red-500">
+          <TrendingDown className="w-4 h-4 text-red-700 mx-auto mb-1.5" />
+          <p className="font-display font-bold text-base text-red-700">
             RM {totalExpenses.toLocaleString('ms-MY', { minimumFractionDigits: 0 })}
           </p>
           <p className="text-xs text-mute mt-0.5 font-medium">{t('fin_expenses_total')}</p>
         </div>
         <div className={`border rounded-xl p-4 text-center ${isProfit ? 'bg-badge-success/5 border-badge-success/30' : 'bg-red-50 border-red-200'}`}>
-          <Minus className={`w-4 h-4 mx-auto mb-1.5 ${isProfit ? 'text-badge-success' : 'text-red-500'}`} />
-          <p className={`font-display font-bold text-base ${isProfit ? 'text-badge-success' : 'text-red-500'}`}>
+          <Minus className={`w-4 h-4 mx-auto mb-1.5 ${isProfit ? 'text-badge-success' : 'text-red-700'}`} />
+          <p className={`font-display font-bold text-base ${isProfit ? 'text-badge-success' : 'text-red-700'}`}>
             {isProfit ? '' : '−'}{fmt(profit)}
           </p>
-          <p className={`text-xs mt-0.5 font-medium ${isProfit ? 'text-badge-success' : 'text-red-500'}`}>
+          <p className={`text-xs mt-0.5 font-medium ${isProfit ? 'text-badge-success' : 'text-red-700'}`}>
             {isProfit ? t('fin_profit') : t('fin_loss')}
           </p>
         </div>
@@ -291,7 +292,7 @@ CREATE POLICY "service_manage_events" ON payment_events FOR ALL USING (true);`
         ].map(({ key, label }) => (
           <button key={key} onClick={() => setTab(key)}
             className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
-              tab === key ? 'bg-white shadow-sm text-ink' : 'text-mute hover:text-charcoal'
+              tab === key ? 'bg-surface-dark text-on-dark' : 'text-mute hover:text-charcoal'
             }`}>{label}</button>
         ))}
       </div>
@@ -300,7 +301,7 @@ CREATE POLICY "service_manage_events" ON payment_events FOR ALL USING (true);`
       {tab === 'expenses' && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-mute font-medium">{t('fin_expenses_total')}: <span className="font-bold text-red-500">{fmt(totalExpenses)}</span></p>
+            <p className="text-xs text-mute font-medium">{t('fin_expenses_total')}: <span className="font-bold text-red-700">{fmt(totalExpenses)}</span></p>
             <div className="flex items-center gap-2">
               <button onClick={exportCSV}
                 className="flex items-center gap-1.5 text-xs font-semibold bg-canvas border border-hairline hover:bg-surface-bone text-charcoal px-3 py-2 rounded-full transition-colors">
@@ -337,11 +338,11 @@ CREATE POLICY "service_manage_events" ON payment_events FOR ALL USING (true);`
                     </div>
                     <p className="text-xs text-mute mt-0.5">{exp.date}</p>
                   </div>
-                  <p className="text-sm font-bold text-red-500 flex-shrink-0">−{fmt(exp.amount)}</p>
+                  <p className="text-sm font-bold text-red-700 flex-shrink-0">−{fmt(exp.amount)}</p>
                   <button onClick={async () => {
                     if (!window.confirm(t('delete') + '?')) return
                     try { await deleteExpense(exp.id) } catch (e) { alert(e.message) }
-                  }} className="w-7 h-7 flex items-center justify-center text-mute hover:text-red-500 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
+                  }} className="w-7 h-7 flex items-center justify-center text-mute hover:text-red-700 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
                     <Trash2 className="w-3 h-3" />
                   </button>
                 </div>
@@ -366,7 +367,7 @@ CREATE POLICY "service_manage_events" ON payment_events FOR ALL USING (true);`
                 <div key={j.id}
                   className={`flex items-center gap-3 px-4 py-3.5 ${i < paidJobs.length - 1 ? 'border-b border-hairline' : ''}`}>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-ink font-mono">{j.plate}</p>
+                    <p className="plate text-[13px] mb-1">{j.plate}</p>
                     <p className="text-xs text-mute truncate">{j.owner} · {j.car}</p>
                   </div>
                   <div className="text-right flex-shrink-0">
