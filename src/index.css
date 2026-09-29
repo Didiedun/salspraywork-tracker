@@ -113,9 +113,11 @@ body {
   /* Widths follow the labels so "Kutip Bayaran" stays on one line on 360px phones */
   .job-action { @apply inline-flex min-h-11 flex-auto items-center justify-center gap-1 rounded-lg px-1.5 text-sm font-semibold text-charcoal transition-colors hover:bg-surface-card sm:gap-1.5 sm:px-2; }
   .job-action-primary { @apply bg-primary text-white hover:bg-primary-deep; }
-  .app-topbar { @apply flex min-h-16 items-center justify-between gap-3 border-b border-hairline bg-canvas/95 px-4 backdrop-blur-sm sm:px-7 lg:px-10; }
+  /* No backdrop-filter on the sticky bar or the fixed tab bar: on Safari 26 a fixed/sticky box that also blurs loses
+     its viewport anchoring and drifts away from the screen edge. Near-solid (not opaque) fills paint correctly there. */
+  .app-topbar { @apply flex min-h-16 items-center justify-between gap-3 border-b border-hairline bg-canvas/[.98] px-4 sm:px-7 lg:px-10; }
   .app-nav-link { @apply min-h-12; }
-  .app-tabbar { @apply fixed inset-x-0 bottom-0 z-30 border-t border-hairline bg-surface-card/95 backdrop-blur-sm; padding-bottom: env(safe-area-inset-bottom); }
+  .app-tabbar { @apply fixed inset-x-0 bottom-0 z-30 border-t border-hairline bg-surface-card/[.98]; padding-bottom: env(safe-area-inset-bottom); }
   .app-tab { @apply relative flex min-h-[3.75rem] flex-col items-center justify-center gap-1 text-[11px] font-semibold text-mute transition-colors; }
   .app-tab-active { @apply text-primary; }
   .app-tab-active::before { content: ''; position: absolute; top: 0; left: 1.25rem; right: 1.25rem; height: 3px; border-radius: 0 0 3px 3px; background: theme('colors.primary'); }
@@ -141,6 +143,11 @@ body {
   input:not([type='checkbox']):not([type='radio']), select, textarea { font-size: 16px; }
   .app-shell .app-page { padding-bottom: 8.5rem; }
   .landing-page nav .landing-brand { font-size: .875rem; }
+}
+/* iPhone/iPad Safari only (-webkit-touch-callout exists nowhere else): fixed overlays must not carry a
+   backdrop blur either, for the same Safari 26 reason. The dim colour stays; only the subtle blur goes. */
+@supports (-webkit-touch-callout: none) {
+  .backdrop-blur-sm { -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
