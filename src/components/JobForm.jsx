@@ -1,3 +1,4 @@
+import { useDialogFocus } from '../hooks/useDialogFocus'
 import { useState, useEffect, useRef } from 'react'
 import { X, Save, Car, User, Phone, FileText, DollarSign, Calendar, Flag, Mail, Plus, Trash2, UserCheck, Bell } from 'lucide-react'
 import { useStages } from '../hooks/useStages'
@@ -8,13 +9,13 @@ import { useWorkers } from '../hooks/useWorkers'
 
 function Toggle({ checked, onToggle, label }) {
   return (
-    <div className="flex items-center gap-3 cursor-pointer select-none" onClick={() => onToggle(!checked)}>
-      <div role="switch" aria-checked={checked}
+    <button type="button" role="switch" aria-checked={checked} aria-label={label} className="flex min-h-11 items-center gap-3 text-left select-none" onClick={() => onToggle(!checked)}>
+      <span aria-hidden="true"
         className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 overflow-hidden ${checked ? 'bg-badge-success' : 'bg-stone'}`}>
         <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
-      </div>
+      </span>
       <span className="text-sm font-medium text-body">{label}</span>
-    </div>
+    </button>
   )
 }
 
@@ -29,6 +30,7 @@ const EMPTY = {
 }
 
 export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
+  const dialogRef = useDialogFocus(onClose)
   const { stages } = useStages()
   const { t } = useLang()
   const { workshop } = useApp()
@@ -178,10 +180,10 @@ export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
   return (
     <>
     <div className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-[60] flex items-end sm:items-center justify-center pt-16 px-0 pb-0 sm:p-4">
-      <div className="bg-surface-card rounded-t-2xl sm:rounded-2xl border border-hairline w-full sm:max-w-lg max-h-[calc(100dvh-4rem)] sm:max-h-[90vh] flex flex-col">
+      <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="job-form-title" className="bg-surface-card rounded-t-2xl sm:rounded-2xl border border-hairline w-full sm:max-w-lg max-h-[calc(100dvh-4rem)] sm:max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between p-5 border-b border-hairline flex-shrink-0">
-          <h2 className="font-display font-bold text-ink text-lg">{title || (initial ? t('form_edit_title') : t('form_new_title'))}</h2>
-          <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
+          <h2 id="job-form-title" className="font-display font-bold text-ink text-lg">{title || (initial ? t('form_edit_title') : t('form_new_title'))}</h2>
+          <button aria-label={t('ui_close')} onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
             <X className="w-5 h-5 text-ash" />
           </button>
         </div>
@@ -218,16 +220,16 @@ export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className={labelCls}><Calendar className="w-3.5 h-3.5" /> {t('form_date_in')}</label>
-                <input type="date" value={form.date_in} onChange={set('date_in')} className={dateCls} />
+                <input aria-label={t('form_date_in')} type="date" value={form.date_in} onChange={set('date_in')} className={dateCls} />
               </div>
               <div>
                 <label className={labelCls}><Flag className="w-3.5 h-3.5" /> {t('form_est')}</label>
-                <input type="date" value={form.est_completion} onChange={set('est_completion')} className={dateCls} />
+                <input aria-label={t('form_est')} type="date" value={form.est_completion} onChange={set('est_completion')} className={dateCls} />
               </div>
             </div>
             <div>
               <label className={labelCls}><Bell className="w-3.5 h-3.5" /> {t('form_next_service')}</label>
-              <input type="date" value={form.next_service_date || ''} onChange={set('next_service_date')} className={dateCls} />
+              <input aria-label={t('form_next_service')} type="date" value={form.next_service_date || ''} onChange={set('next_service_date')} className={dateCls} />
               <p className="text-xs text-ash mt-1 px-1">{t('form_next_svc_hint')}</p>
             </div>
 
@@ -240,8 +242,8 @@ export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
               { key: 'car',   label: t('form_car'),   icon: Car,   placeholder: t('form_car_ph') },
             ].map(({ key, label, icon: Icon, placeholder, upper, type }) => (
               <div key={key}>
-                <label className={labelCls}><Icon className="w-3.5 h-3.5" /> {label}</label>
-                <input type={type || 'text'} value={form[key]}
+                <label htmlFor={`job-${key}`} className={labelCls}><Icon className="w-3.5 h-3.5" /> {label}</label>
+                <input id={`job-${key}`} type={type || 'text'} value={form[key]}
                   onChange={e => setForm(f => ({ ...f, [key]: upper ? e.target.value.toUpperCase() : e.target.value }))}
                   placeholder={placeholder}
                   className={inputCls} />
@@ -251,7 +253,7 @@ export function JobForm({ initial, onSave, onClose, title, jobs = [] }) {
             {/* Notes */}
             <div>
               <label className={labelCls}><FileText className="w-3.5 h-3.5" /> {t('form_notes')}</label>
-              <textarea value={form.notes} onChange={set('notes')} rows={3} placeholder={t('form_notes_ph')}
+              <textarea aria-label={t('form_notes')} value={form.notes} onChange={set('notes')} rows={3} placeholder={t('form_notes_ph')}
                 className="w-full bg-canvas border border-hairline rounded-xl px-4 py-3 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors resize-none" />
             </div>
 

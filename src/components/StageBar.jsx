@@ -44,7 +44,7 @@ export function StageBar({ current, compact = false, stages = SPRAY_STAGES, useL
             <p className={`text-xs mt-1.5 text-center leading-tight ${
               i === safeIdx ? 'text-primary font-semibold' :
               i < safeIdx   ? 'text-charcoal font-medium' :
-              'text-stone'
+              'text-mute'
             }`}>{displayName(s)}</p>
           </div>
         ))}

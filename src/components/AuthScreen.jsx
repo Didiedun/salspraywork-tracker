@@ -36,8 +36,8 @@ export function AuthScreen() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
-      <div className="hidden lg:flex lg:w-[45%] bg-surface-deep flex-col justify-between p-12">
+    <div className="min-h-dvh flex flex-col lg:flex-row">
+      <div className="hidden lg:flex lg:w-[45%] auth-panel flex-col justify-between p-12 xl:p-16">
         <Link to="/" className="inline-flex items-center gap-2.5 group w-fit">
           <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
             <span className="font-display font-bold text-white text-sm">DD</span>
@@ -63,7 +63,7 @@ export function AuthScreen() {
           </ul>
         </div>
 
-        <p className="text-on-dark/25 text-xs">© {new Date().getFullYear()} Digital Depot.</p>
+        <p className="text-on-dark/60 text-xs">© {new Date().getFullYear()} Digital Depot.</p>
       </div>
 
       <div className="flex-1 bg-canvas flex flex-col">
@@ -78,25 +78,26 @@ export function AuthScreen() {
           </Link>
         </div>
 
-        <div className="flex-1 flex items-center justify-center p-8">
-          <div className="w-full max-w-sm">
+        <div className="flex-1 flex items-center justify-center px-6 py-12 sm:p-12">
+          <div className="w-full max-w-md">
             <div className="mb-8">
-              <h1 className="font-display font-bold text-2xl text-ink">{t('auth_welcome')}</h1>
-              <p className="text-mute text-sm mt-1.5">{t('auth_subtitle')}</p>
+              <Link to="/" className="mb-6 inline-flex min-h-11 items-center text-sm font-semibold text-mute hover:text-primary">← {t('ui_back_home')}</Link>
+              <h1 className="font-display font-bold text-4xl text-ink">{t('auth_welcome')}</h1>
+              <p className="text-mute text-base leading-relaxed mt-3">{t('auth_subtitle')}</p>
             </div>
 
-            <div className="bg-surface-card rounded-2xl border border-hairline p-6 shadow-sm space-y-4">
+            <div className="bg-surface-card rounded-2xl border border-hairline p-6 sm:p-8 space-y-4">
               <button
                 onClick={handleGoogle}
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-3 bg-white hover:bg-surface-bone disabled:opacity-60 border border-hairline rounded-full py-3.5 text-sm font-semibold text-ink transition-colors shadow-sm"
+                className="w-full flex items-center justify-center gap-3 bg-white hover:bg-surface-bone disabled:opacity-60 border border-hairline rounded-xl py-4 text-sm font-semibold text-ink transition-colors shadow-sm"
               >
                 {loading ? <Loader className="w-5 h-5 animate-spin text-ash" /> : <GoogleIcon />}
                 {loading ? t('auth_redir') : t('auth_google')}
               </button>
 
               {error && (
-                <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-center">
+                <p role="alert" className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-center">
                   {error}
                 </p>
               )}

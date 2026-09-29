@@ -759,10 +759,11 @@ export function InventoryPage() {
   const [tab, setTab] = useState('catalog')
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-5 space-y-4">
+    <div className="app-page">
+      <header className="page-heading"><div><p className="page-kicker">{t('ui_workspace')}</p><h1>{t('nav_inventory')}</h1><p className="page-description">{t('ui_catalog_sub')}</p></div></header>
       <div className="flex gap-1 bg-surface-bone border border-hairline rounded-full p-1 w-fit">
         {[['catalog', t('cat_tab_catalog')], ['stock', t('cat_tab_stock')]].map(([val, label]) => (
-          <button key={val} onClick={() => setTab(val)}
+          <button key={val} aria-pressed={tab === val} onClick={() => setTab(val)}
             className={`px-5 py-1.5 rounded-full text-sm font-semibold transition-colors ${
               tab === val ? 'bg-white shadow-sm text-ink' : 'text-mute hover:text-charcoal'
             }`}>{label}</button>

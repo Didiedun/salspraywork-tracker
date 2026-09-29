@@ -932,12 +932,12 @@ export function PayrollPage() {
     }`
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-5 space-y-5">
+    <div className="app-page">
       <div className="flex items-center gap-3 mb-2">
         <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center">
           <Users className="w-4 h-4 text-blue-600" />
         </div>
-        <h1 className="font-display font-bold text-ink text-xl">{t('pr_title')}</h1>
+        <div><h1 className="font-display font-bold text-ink text-3xl">{t('pr_title')}</h1><p className="page-description">{t('ui_staff_sub')}</p></div>
       </div>
 
       <div className="flex gap-1 bg-surface-bone rounded-full p-1 w-fit">

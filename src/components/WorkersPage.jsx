@@ -97,7 +97,7 @@ export function WorkersPage() {
   const joinUrl = (code) => `${window.location.origin}/register?invite=${code}`
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-5 space-y-6">
+    <div className="app-page">
       {/* Workers list */}
       <div>
         <div className="flex items-center justify-between mb-3">

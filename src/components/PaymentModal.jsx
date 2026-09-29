@@ -1,3 +1,4 @@
+import { useDialogFocus } from '../hooks/useDialogFocus'
 import { useState } from 'react'
 import { X, Banknote, CreditCard, QrCode, Globe, DollarSign, Copy, Check, ExternalLink } from 'lucide-react'
 import { useLang } from '../context/LanguageContext'
@@ -11,6 +12,7 @@ const METHODS = [
 ]
 
 export function PaymentModal({ job, onSave, onClose }) {
+  const dialogRef = useDialogFocus(onClose)
   const { t } = useLang()
   const { workshop } = useApp()
   const total    = Number(job.total_amount) || 0
@@ -98,19 +100,19 @@ export function PaymentModal({ job, onSave, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-[70] flex items-end sm:items-center justify-center pt-16 px-0 pb-0 sm:p-4">
-      <div className="bg-surface-card rounded-t-2xl sm:rounded-2xl w-full sm:max-w-sm flex flex-col">
+      <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="payment-modal-title" className="bg-surface-card rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[calc(100dvh-4rem)] flex flex-col shadow-xl">
 
         <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-hairline flex-shrink-0">
           <div className="flex items-center gap-2">
             <DollarSign className="w-4 h-4 text-primary" />
-            <h3 className="font-display font-bold text-ink">{t('pay_collect')}</h3>
+            <h3 id="payment-modal-title" className="font-display font-bold text-ink">{t('pay_collect')}</h3>
           </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
+          <button aria-label={t('ui_close')} onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
             <X className="w-4 h-4 text-ash" />
           </button>
         </div>
 
-        <div className="p-5 space-y-5 overflow-y-auto">
+        <div className="p-5 space-y-5 overflow-y-auto min-h-0">
 
           {/* Bill summary */}
           <div className="bg-surface-bone rounded-xl p-4 space-y-2">
@@ -156,11 +158,11 @@ export function PaymentModal({ job, onSave, onClose }) {
           {/* Payment method */}
           <div>
             <p className="text-xs font-semibold text-charcoal mb-2">{t('pay_method')}</p>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {METHODS.map(({ key, labelKey, Icon }) => (
                 <button key={key} type="button"
                   onClick={() => { setMethod(key); setPaymentUrl(''); setOnlineError('') }}
-                  className={`flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 text-[10px] font-semibold transition-all ${
+                  className={`flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 text-xs font-semibold transition-all ${
                     method === key
                       ? 'border-primary bg-primary/5 text-primary'
                       : 'border-hairline bg-canvas text-mute hover:border-primary/30 hover:text-charcoal'
@@ -238,7 +240,7 @@ export function PaymentModal({ job, onSave, onClose }) {
                   <input
                     autoFocus
                     type="text" inputMode="decimal"
-                    value={amount}
+                    aria-label={t('pay_amount')} value={amount}
                     onChange={e => setAmount(e.target.value)}
                     placeholder="0.00"
                     className="w-full bg-canvas border border-hairline rounded-full pl-12 pr-4 py-3 text-ink text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
@@ -261,7 +263,7 @@ export function PaymentModal({ job, onSave, onClose }) {
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-mute pointer-events-none">RM</span>
                     <input
                       type="text" inputMode="decimal"
-                      value={customerPays}
+                      aria-label={t('pay_customer_pays')} value={customerPays}
                       onChange={e => setCustomerPays(e.target.value)}
                       placeholder="0.00"
                       className="w-full bg-canvas border border-hairline rounded-full pl-12 pr-4 py-3 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"

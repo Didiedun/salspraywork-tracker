@@ -307,12 +307,12 @@ export function WorkshopSettings() {
   const inputCls = 'w-full bg-canvas border border-hairline rounded-lg px-4 py-3 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors'
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-8 space-y-4">
+    <div className="app-page app-page-narrow">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center">
           <Settings className="w-4 h-4 text-primary" />
         </div>
-        <h1 className="font-display font-bold text-ink text-xl">{t('st_title')}</h1>
+        <div><h1 className="font-display font-bold text-ink text-3xl">{t('st_title')}</h1><p className="page-description">{t('ui_settings_sub')}</p></div>
       </div>
 
       {/* Logo */}

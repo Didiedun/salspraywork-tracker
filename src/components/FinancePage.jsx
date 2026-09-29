@@ -222,7 +222,8 @@ ALTER TABLE payment_events ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_manage_events" ON payment_events FOR ALL USING (true);`
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-5 space-y-5">
+    <div className="app-page">
+      <header className="page-heading"><div><p className="page-kicker">{t('ui_workspace')}</p><h1>{t('nav_finance')}</h1><p className="page-description">{t('ui_finance_sub')}</p></div></header>
 
       {/* Migration notice */}
       {needsMigration && (

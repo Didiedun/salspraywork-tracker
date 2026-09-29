@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { NavLink, Link } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { NavLink, Link, useLocation } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LanguageContext'
 import { planStatus } from '../lib/plan'
@@ -27,19 +27,19 @@ function Sidebar({ workshop, signOut, onClose, collapsed, onToggleCollapsed }) {
     : <span className="font-display font-bold text-white text-xs">{workshop?.name?.[0]?.toUpperCase() || 'D'}</span>
 
   const navCls = ({ isActive }) =>
-    `flex items-center rounded-lg text-sm font-semibold transition-colors ${
-      isActive ? 'bg-primary text-white' : 'text-on-dark/60 hover:text-on-dark hover:bg-white/5'
+    `app-nav-link flex items-center rounded-xl text-sm font-semibold transition-colors ${
+      isActive ? 'bg-white/10 text-white ring-1 ring-white/10' : 'text-on-dark/70 hover:text-on-dark hover:bg-white/5'
     } ${collapsed ? 'justify-center p-2.5 gap-0' : 'gap-3 px-3 py-2.5'}`
 
-  const footerCls = `w-full flex items-center rounded-lg text-sm font-semibold text-on-dark/60 hover:text-on-dark hover:bg-white/5 transition-colors ${
+  const footerCls = `w-full flex items-center rounded-lg text-sm font-semibold text-on-dark/70 hover:text-on-dark hover:bg-white/5 transition-colors ${
     collapsed ? 'justify-center p-2.5 gap-0' : 'gap-3 px-3 py-2.5'
   }`
 
   return (
-    <div className="bg-surface-deep h-full flex flex-col w-full overflow-hidden">
+    <div className="app-sidebar h-full flex flex-col w-full overflow-hidden">
 
       {/* Brand */}
-      <div className={`py-4 border-b border-white/10 flex items-center flex-shrink-0 ${
+      <div className={`py-6 border-b border-white/10 flex items-center flex-shrink-0 ${
         collapsed ? 'justify-center px-2' : 'px-4 justify-between gap-2'
       }`}>
         {collapsed ? (
@@ -59,7 +59,7 @@ function Sidebar({ workshop, signOut, onClose, collapsed, onToggleCollapsed }) {
         )}
         {/* Mobile close */}
         {onClose && (
-          <button onClick={onClose} className="sm:hidden text-on-dark/50 hover:text-on-dark transition-colors">
+          <button onClick={onClose} aria-label={t('ui_close')} className="sm:hidden min-h-11 min-w-11 flex items-center justify-center text-on-dark/50 hover:text-on-dark transition-colors">
             <X className="w-4 h-4" />
           </button>
         )}
@@ -67,8 +67,8 @@ function Sidebar({ workshop, signOut, onClose, collapsed, onToggleCollapsed }) {
 
       {/* Desktop collapse toggle */}
       {!onClose && (
-        <button onClick={onToggleCollapsed}
-          className={`hidden sm:flex items-center py-2 text-on-dark/30 hover:text-on-dark/60 transition-colors ${
+        <button onClick={onToggleCollapsed} aria-label={collapsed ? t('ui_expand') : t('ui_collapse')} title={collapsed ? t('ui_expand') : t('ui_collapse')} aria-expanded={!collapsed}
+          className={`hidden sm:flex items-center min-h-11 py-2 text-on-dark/60 hover:text-on-dark/70 transition-colors ${
             collapsed ? 'justify-center px-2' : 'justify-end px-3'
           }`}>
           {collapsed
@@ -79,9 +79,9 @@ function Sidebar({ workshop, signOut, onClose, collapsed, onToggleCollapsed }) {
       )}
 
       {/* Nav */}
-      <nav className="flex-1 px-2 py-1 space-y-0.5 overflow-y-auto">
+      <nav aria-label={t('ui_workspace')} className="flex-1 px-3 py-3 space-y-1 overflow-y-auto">
         {navItems.map(({ to, label, icon: Icon }) => (
-          <NavLink key={to} to={to} onClick={onClose} className={navCls}>
+          <NavLink key={to} to={to} aria-label={label} title={collapsed ? label : undefined} onClick={onClose} className={navCls}>
             <Icon className="w-4 h-4 flex-shrink-0" />
             {!collapsed && label}
           </NavLink>
@@ -91,20 +91,20 @@ function Sidebar({ workshop, signOut, onClose, collapsed, onToggleCollapsed }) {
       {/* Footer */}
       <div className="px-2 py-3 border-t border-white/10 space-y-0.5 flex-shrink-0">
         {workshop?.slug && (
-          <a href={`/w/${workshop.slug}`} target="_blank" rel="noreferrer" className={footerCls}>
+          <a href={`/w/${workshop.slug}`} target="_blank" rel="noreferrer" aria-label={t('nav_portal')} title={collapsed ? t('nav_portal') : undefined} className={footerCls}>
             <ExternalLink className="w-4 h-4 flex-shrink-0" />
             {!collapsed && t('nav_portal')}
           </a>
         )}
-        <button onClick={() => setShowTutorial(true)} className={footerCls}>
+        <button onClick={() => setShowTutorial(true)} aria-label={t('nav_tutorial')} title={collapsed ? t('nav_tutorial') : undefined} className={footerCls}>
           <HelpCircle className="w-4 h-4 flex-shrink-0" />
           {!collapsed && t('nav_tutorial')}
         </button>
-        <button onClick={() => setLang(lang === 'ms' ? 'en' : 'ms')} className={footerCls}>
+        <button onClick={() => setLang(lang === 'ms' ? 'en' : 'ms')} aria-label={t('lang_other')} title={collapsed ? t('lang_other') : undefined} className={footerCls}>
           <Globe className="w-4 h-4 flex-shrink-0" />
           {!collapsed && t('lang_other')}
         </button>
-        <button onClick={signOut} className={footerCls}>
+        <button onClick={signOut} aria-label={t('nav_logout')} title={collapsed ? t('nav_logout') : undefined} className={footerCls}>
           <LogOut className="w-4 h-4 flex-shrink-0" />
           {!collapsed && t('nav_logout')}
         </button>
@@ -153,50 +153,58 @@ export function Layout({ children }) {
     })
   }
 
-  const sidebarW  = collapsed ? 'w-14' : 'w-56'
-  const contentMl = collapsed ? 'sm:ml-14' : 'sm:ml-56'
+  const sidebarW  = collapsed ? 'w-20' : 'w-60'
+  const contentMl = collapsed ? 'sm:ml-20' : 'sm:ml-60'
+
+  const { t } = useLang()
+  const { pathname } = useLocation()
+  const drawer = useRef(null)
+  const currentPage = { '/dashboard': 'nav_dashboard', '/inventory': 'nav_inventory', '/finance': 'nav_finance', '/payroll': 'nav_payroll', '/settings': 'nav_settings' }[pathname] || 'nav_dashboard'
+
+  useEffect(() => {
+    const dialog = drawer.current
+    if (!open) { dialog?.close(); return }
+    dialog?.showModal()
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const desktop = matchMedia('(min-width: 640px)')
+    const closeOnDesktop = () => { if (desktop.matches) setOpen(false) }
+    desktop.addEventListener('change', closeOnDesktop)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      desktop.removeEventListener('change', closeOnDesktop)
+      dialog?.close()
+    }
+  }, [open])
 
   return (
-    <div className="min-h-screen bg-canvas flex">
-
-      {/* Desktop sidebar */}
-      <aside className={`hidden sm:flex fixed inset-y-0 left-0 z-30 ${sidebarW} shadow-lg transition-all duration-200`}>
+    <div className="app-shell min-h-dvh bg-canvas flex">
+      <a href="#main-content" className="skip-link">{t('ui_skip')}</a>
+      <aside className={`hidden sm:flex fixed inset-y-0 left-0 z-30 ${sidebarW} transition-[width] duration-200`}>
         <Sidebar workshop={workshop} signOut={signOut} onClose={null} collapsed={collapsed} onToggleCollapsed={toggleCollapsed} />
       </aside>
 
-      {/* Mobile off-canvas sidebar */}
-      {open && (
-        <div className="sm:hidden fixed inset-0 z-40 flex">
-          <div className="fixed inset-0 bg-ink/60" onClick={() => setOpen(false)} />
-          <aside className="relative z-50 flex w-56 shadow-xl">
-            <Sidebar workshop={workshop} signOut={signOut} onClose={() => setOpen(false)} collapsed={false} onToggleCollapsed={() => {}} />
-          </aside>
-        </div>
-      )}
+      <dialog ref={drawer} className="app-drawer" aria-label={t('ui_workspace')}
+        onCancel={() => setOpen(false)} onClose={() => setOpen(false)}
+        onClick={e => { if (e.target === e.currentTarget) setOpen(false) }}>
+        <Sidebar workshop={workshop} signOut={signOut} onClose={() => setOpen(false)} collapsed={false} onToggleCollapsed={() => {}} />
+      </dialog>
 
-      {/* Main content */}
-      <div className={`flex-1 flex flex-col min-w-0 ${contentMl} transition-all duration-200`}>
-        {/* Mobile top bar */}
-        <div className="sm:hidden sticky top-0 z-20 bg-canvas border-b border-hairline px-4 py-3 flex items-center gap-3">
-          <button onClick={() => setOpen(true)} className="p-1.5 rounded-lg hover:bg-surface-bone transition-colors">
-            <Menu className="w-5 h-5 text-charcoal" />
-          </button>
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center flex-shrink-0 overflow-hidden">
-              {workshop?.logo_url
-                ? <img src={workshop.logo_url} alt="logo" className="w-full h-full object-cover" />
-                : <span className="font-display font-bold text-white text-[10px]">
-                    {workshop?.name?.[0]?.toUpperCase() || 'D'}
-                  </span>
-              }
-            </div>
-            <p className="font-display font-bold text-ink text-sm truncate">{workshop?.name}</p>
+      <div className={`flex-1 flex flex-col min-w-0 ${contentMl} transition-[margin] duration-200`}>
+        <header className="app-topbar sticky top-0 z-20 sm:static">
+          <div className="flex items-center gap-3 min-w-0">
+            <button onClick={() => setOpen(true)} aria-label={t('ui_menu')} aria-expanded={open}
+              className="sm:hidden min-h-11 min-w-11 flex items-center justify-center rounded-xl border border-hairline bg-white">
+              <Menu className="w-5 h-5 text-charcoal" />
+            </button>
+            <span className="hidden sm:inline text-xs text-mute">Digital Depot</span>
+            <span className="hidden sm:inline text-stone" aria-hidden="true">/</span>
+            <span className="text-sm font-semibold text-ink truncate">{t(currentPage)}</span>
           </div>
-        </div>
-
+          <span className="max-w-[45%] truncate text-xs font-medium text-mute">{workshop?.name}</span>
+        </header>
         <PlanBanner workshop={workshop} />
-
-        <main className="flex-1">
+        <main id="main-content" tabIndex={-1} className="flex-1 focus:outline-none">
           {children}
         </main>
       </div>

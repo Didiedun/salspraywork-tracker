@@ -1,3 +1,4 @@
+import { useDialogFocus } from '../hooks/useDialogFocus'
 import { useState } from 'react'
 import { X, Search, ChevronDown, ChevronRight, Tag, Plus, Pencil } from 'lucide-react'
 import { useCatalog } from '../hooks/useCatalog'
@@ -15,6 +16,7 @@ function StockBadge({ item }) {
 }
 
 export function CatalogPicker({ workshopId, onSelect, onClose }) {
+  const dialogRef = useDialogFocus(onClose)
   const { t } = useLang()
   const { categories, loading } = useCatalog(workshopId)
   const [search, setSearch] = useState('')
@@ -52,14 +54,14 @@ export function CatalogPicker({ workshopId, onSelect, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-[70] flex items-end sm:items-center justify-center pt-16 px-0 pb-0 sm:p-4">
-      <div className="bg-surface-card rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[calc(100dvh-4rem)] sm:max-h-[90vh] flex flex-col">
+      <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={t('cat_tab_catalog')} className="bg-surface-card rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[calc(100dvh-4rem)] sm:max-h-[90vh] flex flex-col">
 
         <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-hairline flex-shrink-0">
           <div className="flex items-center gap-2">
             <Tag className="w-4 h-4 text-primary" />
             <h3 className="font-display font-bold text-ink">{t('cat_pick_title')}</h3>
           </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
+          <button aria-label={t('ui_close')} onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
             <X className="w-4 h-4 text-ash" />
           </button>
         </div>

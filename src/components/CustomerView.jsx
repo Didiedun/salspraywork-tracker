@@ -128,13 +128,13 @@ export function CustomerView() {
   }
 
   if (wsLoading) return (
-    <div className="min-h-screen bg-canvas flex items-center justify-center">
+    <div className="min-h-dvh bg-canvas flex items-center justify-center">
       <RefreshCw className="w-6 h-6 text-mute animate-spin" />
     </div>
   )
 
   if (!workshop) return (
-    <div className="min-h-screen bg-canvas flex flex-col items-center justify-center p-4 text-center">
+    <div className="min-h-dvh bg-canvas flex flex-col items-center justify-center p-4 text-center">
       <Wrench className="w-12 h-12 text-ash mb-4 opacity-40" />
       <p className="font-display font-bold text-ink text-lg">{t('cv_ws_missing')}</p>
       <p className="text-mute text-sm mt-1">{t('cv_ws_gone')}</p>
@@ -142,18 +142,18 @@ export function CustomerView() {
   )
 
   return (
-    <div className="min-h-screen bg-canvas flex flex-col">
+    <div className="min-h-dvh bg-canvas flex flex-col">
       {/* Header */}
       <div className="bg-canvas border-b border-hairline">
         <div className="max-w-xl mx-auto px-4 py-5 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0 overflow-hidden">
+          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center flex-shrink-0 overflow-hidden">
             {workshop.logo_url
               ? <img src={workshop.logo_url} alt="logo" className="w-full h-full object-cover" />
               : <Wrench className="w-5 h-5 text-white" />
             }
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="font-display font-bold text-ink text-base leading-tight">{workshop.name}</h1>
+            <h1 className="font-display font-bold text-ink text-xl leading-tight">{workshop.name}</h1>
             <p className="text-mute text-xs">{t('cv_subtitle')}</p>
           </div>
           <button onClick={() => setLang(lang === 'ms' ? 'en' : 'ms')}
@@ -163,11 +163,11 @@ export function CustomerView() {
         </div>
       </div>
 
-      <div className="flex-1 max-w-xl mx-auto w-full px-4 py-8 space-y-5">
+      <div className="flex-1 max-w-xl mx-auto w-full px-5 py-8 sm:py-12 space-y-6">
         {/* Mode toggle */}
         <div className="flex gap-2 bg-surface-card border border-hairline rounded-full p-1 w-fit">
           {[['plate', t('cv_plate_tab')], ['phone', t('cv_phone_tab')]].map(([m, label]) => (
-            <button key={m}
+            <button key={m} aria-pressed={mode === m}
               onClick={() => { setMode(m); setQuery(''); setSearched(false); setActiveJob(null); setJobs([]) }}
               className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
                 mode === m
@@ -184,7 +184,7 @@ export function CustomerView() {
               ? <Car   className="absolute left-4 top-1/2 -translate-y-1/2 text-ash w-4 h-4" />
               : <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-ash w-4 h-4" />
             }
-            <input value={query}
+            <input aria-label={mode === 'plate' ? t('cv_plate_ph') : t('cv_phone_ph')} value={query}
               onChange={e => setQuery(mode === 'plate' ? e.target.value.toUpperCase() : e.target.value)}
               placeholder={mode === 'plate' ? t('cv_plate_ph') : t('cv_phone_ph')}
               className="w-full bg-surface-card border border-hairline rounded-full pl-11 pr-5 py-3 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors" />

@@ -177,7 +177,7 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
         </div>
       )}
 
-      <div className={`bg-surface-card rounded-lg border overflow-hidden transition-shadow hover:shadow-sm ${
+      <div className={`job-card border overflow-hidden transition-shadow hover:shadow-md ${
         overdue ? 'border-red-200' : stale ? 'border-amber-200' : 'border-hairline'
       }`}>
         {overdue && (
@@ -193,11 +193,11 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
           </div>
         )}
 
-        <div className="p-4">
-          <div className="flex items-start justify-between gap-3">
+        <div className="job-card-body">
+          <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-display font-bold text-ink text-lg tracking-tight">{job.plate}</span>
+                <span className="font-display font-bold text-ink text-2xl tracking-tight">{job.plate}</span>
                 <TypeBadge type={job.type} />
                 {visitCount > 1 && (
                   <button onClick={() => setShowHistory(true)}
@@ -220,7 +220,7 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
             <StageBar current={job.stage} stages={stages} />
           </div>
 
-          <div className="flex items-center gap-2 mt-3">
+          <div className="stage-controls flex items-center gap-2 mt-4">
             <button
               onClick={() => advanceStage('prev')}
               disabled={isFirst || advancing}
@@ -242,7 +242,7 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
             </button>
           </div>
 
-          <div className="flex items-center gap-3 mt-2.5 text-xs text-mute flex-wrap">
+          <div className="flex items-center gap-3 mt-4 text-xs text-mute flex-wrap">
             <span>{formatDate(job.date_in || job.created_at)}</span>
             {job.updated_by && (
               <span className="flex items-center gap-1">
@@ -290,8 +290,8 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
         </div>
 
         <div className="border-t border-hairline">
-          <button onClick={() => setExpanded(x => !x)}
-            className="w-full flex items-center justify-between px-4 py-2 text-xs text-mute hover:bg-canvas transition-colors">
+          <button aria-expanded={expanded} onClick={() => setExpanded(x => !x)}
+            className="w-full flex items-center justify-between px-5 py-3 text-xs text-mute hover:bg-canvas transition-colors">
             <span>{photos.length} {t('card_photos')}</span>
             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
@@ -341,7 +341,7 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
           )}
         </div>
 
-        <div className="flex border-t border-hairline">
+        <div className="job-card-actions flex border-t border-hairline">
           <button onClick={() => setEditing(true)} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs text-mute hover:bg-canvas hover:text-ink transition-colors font-semibold">
             <Edit2 className="w-3.5 h-3.5" /> {t('edit')}
           </button>

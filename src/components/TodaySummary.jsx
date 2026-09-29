@@ -1,8 +1,10 @@
 import { useMemo } from 'react'
 import { daysIn, OVERDUE_DAYS } from '../constants'
+import { useLang } from '../context/LanguageContext'
 import { useStages } from '../hooks/useStages'
 
 export function TodaySummary({ jobs, onSelectJob }) {
+  const { t } = useLang()
   const today = new Date().toDateString()
   const { lastValue, isOverdue } = useStages()
 
@@ -16,15 +18,15 @@ export function TodaySummary({ jobs, onSelectJob }) {
   if (newToday.length === 0 && overdueList.length === 0 && readyList.length === 0) return null
 
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
+    <div className="grid gap-3 sm:grid-cols-[repeat(auto-fit,minmax(180px,1fr))]">
       {newToday.length > 0 && (
         <div className="bg-surface-card rounded-md border border-hairline p-4">
           <p className="text-primary font-bold text-2xl font-display">{newToday.length}</p>
-          <p className="text-charcoal text-xs font-semibold mt-0.5">Masuk Hari Ini</p>
+          <p className="text-charcoal text-xs font-semibold mt-0.5">{t('ui_today')}</p>
           <div className="mt-2 space-y-1">
             {newToday.slice(0, 3).map(j => (
-              <p key={j.id} className="text-xs text-mute truncate cursor-pointer hover:text-ink transition-colors"
-                onClick={() => onSelectJob?.(j)}>{j.plate} — {j.car}</p>
+              <button type="button" key={j.id} className="block w-full min-h-8 text-left text-sm text-mute truncate cursor-pointer hover:text-ink transition-colors"
+                onClick={() => onSelectJob?.(j)}>{j.plate} — {j.car}</button>
             ))}
           </div>
         </div>
@@ -33,13 +35,13 @@ export function TodaySummary({ jobs, onSelectJob }) {
       {overdueList.length > 0 && (
         <div className="bg-surface-card rounded-md border border-red-200 p-4">
           <p className="text-red-600 font-bold text-2xl font-display">{overdueList.length}</p>
-          <p className="text-charcoal text-xs font-semibold mt-0.5">Tertangguh (&gt;{OVERDUE_DAYS} hari)</p>
+          <p className="text-charcoal text-xs font-semibold mt-0.5">{t('ui_overdue')} (&gt;{OVERDUE_DAYS} {t('days_short')})</p>
           <div className="mt-2 space-y-1">
             {overdueList.slice(0, 3).map(j => (
-              <p key={j.id} className="text-xs text-mute truncate cursor-pointer hover:text-ink transition-colors"
+              <button type="button" key={j.id} className="block w-full min-h-8 text-left text-sm text-mute truncate cursor-pointer hover:text-ink transition-colors"
                 onClick={() => onSelectJob?.(j)}>
                 {j.plate} — {daysIn(j)}h
-              </p>
+              </button>
             ))}
           </div>
         </div>
@@ -48,11 +50,11 @@ export function TodaySummary({ jobs, onSelectJob }) {
       {readyList.length > 0 && (
         <div className="bg-surface-card rounded-md border border-emerald-200 p-4">
           <p className="text-badge-success font-bold text-2xl font-display">{readyList.length}</p>
-          <p className="text-charcoal text-xs font-semibold mt-0.5">Siap — Tunggu Ambil</p>
+          <p className="text-charcoal text-xs font-semibold mt-0.5">{t('ui_ready')}</p>
           <div className="mt-2 space-y-1">
             {readyList.slice(0, 3).map(j => (
-              <p key={j.id} className="text-xs text-mute truncate cursor-pointer hover:text-ink transition-colors"
-                onClick={() => onSelectJob?.(j)}>{j.plate} — {j.owner}</p>
+              <button type="button" key={j.id} className="block w-full min-h-8 text-left text-sm text-mute truncate cursor-pointer hover:text-ink transition-colors"
+                onClick={() => onSelectJob?.(j)}>{j.plate} — {j.owner}</button>
             ))}
           </div>
         </div>
