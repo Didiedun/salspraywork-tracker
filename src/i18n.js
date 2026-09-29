@@ -736,6 +736,7 @@ export const translations = {
     eod_col_customer:  'Pelanggan',
     eod_col_type:      'Jenis',
     eod_printed_at:    'Dicetak {time}',
+    wa_msg_progress:  'Hi{name}, kemaskini untuk kenderaan anda ({plate}): kini di peringkat {stage}.',
   },
 
   en: {
@@ -1475,5 +1476,6 @@ export const translations = {
     eod_col_customer:  'Customer',
     eod_col_type:      'Type',
     eod_printed_at:    'Printed {time}',
+    wa_msg_progress:  'Hi{name}, an update on your vehicle ({plate}): it is now at the {stage} stage.',
   },
 }

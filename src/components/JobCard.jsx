@@ -94,9 +94,11 @@ export function JobCard({ job, visitCount = 1, onUpdate, onRefresh, onDelete, on
   const waHref = (() => {
     if (!job.phone) return null
     const d = job.phone.replace(/\D/g, ''); const p = d.startsWith('60') ? d : '60' + d.replace(/^0/, '')
+    // The workshop writes to the customer. (wa_msg is the customer's own opener
+    // on the status page and reads backwards here.)
     const msg = isLast
       ? `${t('wa_msg_ready')} (${job.plate})` + (owes ? ` — ${t('pay_balance')}: RM ${balance.toFixed(2)}` : '')
-      : t('wa_msg') + ' ' + job.plate
+      : t('wa_msg_progress', { name: job.owner ? ` ${job.owner}` : '', plate: job.plate, stage: stages[stageIdx]?.label || job.stage })
     return `https://wa.me/${p}?text=${encodeURIComponent(msg)}`
   })()
 
