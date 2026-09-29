@@ -65,9 +65,10 @@ body {
   .app-page-narrow { @apply max-w-[820px]; }
   .page-heading { @apply flex flex-wrap items-center justify-between gap-4; }
   .page-heading h1 { @apply font-display text-3xl font-bold text-ink sm:text-4xl; }
-  .page-kicker { @apply mb-2 text-xs font-bold tracking-[.14em] text-mute; }
+  .page-kicker { @apply mb-2 text-xs font-bold uppercase tracking-[.14em] text-mute; }
   .page-description { @apply mt-2 max-w-xl text-sm leading-relaxed text-mute; }
   .ui-primary { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-primary-deep disabled:opacity-50; }
+  .ui-danger { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-red-700 disabled:opacity-50; }
   .ui-secondary { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-hairline bg-surface-card px-4 py-2.5 text-sm font-semibold text-charcoal transition-colors hover:bg-surface-bone; }
   /* Number plate chip — Malaysian plates are white characters on black. Sized in em
      so it follows whatever text size the plate is set at. */
@@ -78,20 +79,46 @@ body {
     letter-spacing: .06em;
     box-shadow: inset 0 0 0 1px rgb(255 255 255 / .16);
   }
-  .dashboard-metrics { @apply grid grid-cols-2 gap-3 sm:grid-cols-4; }
-  .dashboard-metric { @apply rounded-2xl border border-hairline bg-surface-card p-4 sm:p-5; }
-  .dashboard-metric:first-child { @apply border-primary/25 bg-primary/[.05]; }
-  .dashboard-toolbar { @apply grid grid-cols-2 gap-3 rounded-2xl border border-hairline bg-surface-card p-3 sm:flex sm:items-center; }
-  .dashboard-toolbar input { @apply min-h-11 rounded-xl border-transparent bg-canvas; }
-  .dashboard-toolbar select { @apply min-h-11 min-w-0 rounded-xl bg-canvas; }
-  .job-card { @apply rounded-2xl bg-surface-card; box-shadow: 0 1px 2px rgb(20 27 31 / .04); }
-  .job-card > .job-card-body { @apply p-5; }
-  .job-card .stage-controls > button { @apply min-h-10 rounded-lg px-3; }
-  .job-card-actions { @apply gap-1 bg-canvas/60 px-2 py-2; }
-  .job-card-actions > button { @apply min-h-11 rounded-lg border-0; }
-  .job-card-actions > button:last-child { @apply flex-none px-3 text-mute hover:text-red-700; }
+  /* Long forms: titled sections separated by hairlines */
+  .form-section { @apply space-y-4 px-5 py-5; }
+  .form-section-title { @apply text-xs font-bold uppercase tracking-[.12em] text-mute; }
+  /* Inline notices (offline, low stock) */
+  .notice { @apply flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm; }
+  .notice-warn { @apply border-amber-200 bg-amber-50; }
+  /* Dashboard attention tiles: a number, what it means, and which cars */
+  .attention-tile { @apply flex min-w-0 flex-col items-start rounded-2xl border border-hairline bg-surface-card p-4 text-left transition-colors hover:border-stone sm:p-5; }
+  .attention-tile-active { @apply border-primary ring-2 ring-primary/20 hover:border-primary; }
+  /* Segmented control (one selected style app-wide) */
+  .segmented { @apply inline-flex gap-1 rounded-full border border-hairline bg-surface-bone p-1; }
+  .segmented-item { @apply inline-flex min-h-9 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-4 text-sm font-semibold text-mute transition-colors hover:text-charcoal; }
+  .segmented-item-on { @apply bg-surface-dark text-on-dark hover:text-on-dark; }
+  .segmented-count { @apply rounded-full bg-surface-card px-2 py-0.5 text-xs font-medium text-mute; }
+  .segmented-item-on .segmented-count { @apply bg-white/20 text-on-dark; }
+  /* Filter chips: scroll sideways on phones, wrap on larger screens */
+  .chip-row { @apply -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0; scrollbar-width: none; }
+  .chip { @apply inline-flex min-h-9 flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-hairline bg-surface-card px-3.5 text-sm font-semibold text-charcoal transition-colors hover:border-stone; }
+  .chip-on { @apply border-primary bg-primary text-white hover:border-primary; }
+  .chip-count { @apply text-xs font-medium text-mute; }
+  .chip-on .chip-count { @apply text-white/90; }
+  /* Floating primary action on phones, above the tab bar */
+  .fab { @apply fixed right-4 z-30 inline-flex min-h-12 items-center gap-2 rounded-full bg-primary pl-4 pr-5 text-sm font-bold text-white shadow-lg transition-colors hover:bg-primary-deep; bottom: calc(4.75rem + env(safe-area-inset-bottom)); }
+  .job-card { @apply flex flex-col overflow-hidden rounded-2xl bg-surface-card; box-shadow: 0 1px 2px rgb(20 27 31 / .04); }
+  /* Body absorbs spare height so the action bar sits at the bottom in a card row */
+  .job-card > .job-card-body { @apply flex-1 p-4 sm:p-5; }
+  /* Key facts in fixed positions so cards can be scanned down a column */
+  .job-facts { @apply mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-4; }
+  .job-facts dt { @apply text-xs text-mute; }
+  .job-facts dd { @apply mt-0.5 font-semibold text-ink; }
+  .job-card-actions { @apply gap-1 bg-canvas/60 p-2; }
+  /* Widths follow the labels so "Kutip Bayaran" stays on one line on 360px phones */
+  .job-action { @apply inline-flex min-h-11 flex-auto items-center justify-center gap-1 rounded-lg px-1.5 text-sm font-semibold text-charcoal transition-colors hover:bg-surface-card sm:gap-1.5 sm:px-2; }
+  .job-action-primary { @apply bg-primary text-white hover:bg-primary-deep; }
   .app-topbar { @apply flex min-h-16 items-center justify-between gap-3 border-b border-hairline bg-canvas/95 px-4 backdrop-blur-sm sm:px-7 lg:px-10; }
   .app-nav-link { @apply min-h-12; }
+  .app-tabbar { @apply fixed inset-x-0 bottom-0 z-30 border-t border-hairline bg-surface-card/95 backdrop-blur-sm; padding-bottom: env(safe-area-inset-bottom); }
+  .app-tab { @apply relative flex min-h-[3.75rem] flex-col items-center justify-center gap-1 text-[11px] font-semibold text-mute transition-colors; }
+  .app-tab-active { @apply text-primary; }
+  .app-tab-active::before { content: ''; position: absolute; top: 0; left: 1.25rem; right: 1.25rem; height: 3px; border-radius: 0 0 3px 3px; background: theme('colors.primary'); }
   .app-sidebar { background: theme('colors.surface-deep'); }
   .app-drawer { @apply fixed inset-y-0 left-0 m-0 h-dvh max-h-none w-72 max-w-[85vw] border-0 p-0 text-left; }
   .app-drawer::backdrop { background: rgb(17 24 27 / .5); backdrop-filter: blur(3px); }
@@ -112,7 +139,7 @@ body {
 }
 @media (max-width: 639px) {
   input:not([type='checkbox']):not([type='radio']), select, textarea { font-size: 16px; }
-  .app-shell .app-page { padding-bottom: 6rem; }
+  .app-shell .app-page { padding-bottom: 8.5rem; }
   .landing-page nav .landing-brand { font-size: .875rem; }
 }
 @media (prefers-reduced-motion: reduce) {

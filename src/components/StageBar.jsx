@@ -49,12 +49,6 @@ export function StageBar({ current, compact = false, stages = SPRAY_STAGES, useL
           </div>
         ))}
       </div>
-      <div className="mt-3 h-1 bg-stone/30 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-primary rounded-full transition-all duration-500"
-          style={{ width: `${(safeIdx / Math.max(stages.length - 1, 1)) * 100}%` }}
-        />
-      </div>
     </div>
   )
 }

@@ -55,7 +55,7 @@ export function CustomerHistoryModal({ plate, onClose }) {
             <p className="font-semibold text-ink text-sm">{t('hist_title')}</p>
             <p className="text-xs text-mute font-mono mt-0.5">{plate}</p>
           </div>
-          <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
+          <button aria-label={t('ui_close')} onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
             <X className="w-5 h-5 text-ash" />
           </button>
         </div>

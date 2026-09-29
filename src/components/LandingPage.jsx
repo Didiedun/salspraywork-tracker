@@ -8,7 +8,7 @@ import {
   MessageSquare, BookOpen, AlertTriangle, Search,
 } from 'lucide-react'
 import { useState } from 'react'
-import { FeedbackWidget } from './FeedbackWidget'
+import { FeedbackWidget, openFeedback } from './FeedbackWidget'
 
 /* ─── helpers ─────────────────────────────────────────── */
 function scrollTo(id) {
@@ -420,7 +420,7 @@ export function LandingPage() {
           <span className="font-bold bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded-full">BETA</span>
           <span>Sistem ini masih dalam pembangunan awal. Mungkin ada pepijat kecil — jika jumpa sebarang masalah, sila</span>
           <button
-            onClick={() => document.querySelector('[title="Hantar laporan / bug report"]')?.click()}
+            onClick={openFeedback}
             className="font-bold underline hover:text-amber-900 transition-colors whitespace-nowrap px-1">
             hantar laporan
           </button>
@@ -680,7 +680,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      <FeedbackWidget />
+      <FeedbackWidget launcher />
 
       </main>
 

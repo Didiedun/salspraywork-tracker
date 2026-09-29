@@ -25,7 +25,7 @@ export function TutorialModal({ onClose }) {
 
         <div className="flex items-center justify-between px-5 py-4 border-b border-hairline flex-shrink-0">
           <p className="font-semibold text-ink text-sm">{t('tut_title')} · {step + 1}/{STEPS.length}</p>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
+          <button aria-label={t('ui_close')} onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
             <X className="w-4 h-4 text-ash" />
           </button>
         </div>
@@ -40,8 +40,9 @@ export function TutorialModal({ onClose }) {
 
         <div className="flex justify-center gap-1 pb-2">
           {STEPS.map((_, i) => (
-            <button key={i} onClick={() => setStep(i)}
-              className="w-6 h-4 flex items-center justify-center">
+            <button key={i} type="button" onClick={() => setStep(i)}
+              aria-label={t('cv_step_of', { n: i + 1, total: STEPS.length })} aria-current={i === step ? 'step' : undefined}
+              className="w-7 h-7 flex items-center justify-center">
               <div className={`h-2 rounded-full transition-all ${i === step ? 'w-5 bg-primary' : 'w-2 bg-hairline hover:bg-ash'}`} />
             </button>
           ))}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { useLang } from '../context/LanguageContext'
 import { Printer, X, Loader, ChevronLeft, FileText } from 'lucide-react'
 
 const fmt = (v) => `RM ${Number(v || 0).toFixed(2)}`
@@ -17,6 +18,7 @@ export function EAFormModal({ workshopId, workshop, year, onClose }) {
   const [loading, setLoading] = useState(true)
   const [rows, setRows]       = useState([]) // [{ employee, ...totals }]
   const [selected, setSelected] = useState(null)
+  const { t } = useLang()
 
   useEffect(() => {
     if (!workshopId) return
@@ -66,7 +68,7 @@ export function EAFormModal({ workshopId, workshop, year, onClose }) {
         <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-hairline print:hidden">
           <div className="flex items-center gap-2">
             {selected && (
-              <button onClick={() => setSelected(null)} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
+              <button onClick={() => setSelected(null)} aria-label={t('ui_back')} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
                 <ChevronLeft className="w-4 h-4 text-ash" />
               </button>
             )}
@@ -78,7 +80,7 @@ export function EAFormModal({ workshopId, workshop, year, onClose }) {
                 <Printer className="w-3.5 h-3.5" /> Cetak
               </button>
             )}
-            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
+            <button aria-label={t('ui_close')} onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
               <X className="w-4 h-4 text-ash" />
             </button>
           </div>

@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AppProvider, useApp } from './context/AppContext'
 import { LanguageProvider } from './context/LanguageContext'
+import { NotifyProvider } from './context/NotifyContext'
 import { AuthScreen }    from './components/AuthScreen'
 import { Onboarding }    from './components/Onboarding'
 import { Layout }        from './components/Layout'
@@ -85,9 +86,11 @@ export default function App() {
   return (
     <BrowserRouter>
       <LanguageProvider>
-        <AppProvider>
-          <AppRoutes />
-        </AppProvider>
+        <NotifyProvider>
+          <AppProvider>
+            <AppRoutes />
+          </AppProvider>
+        </NotifyProvider>
       </LanguageProvider>
     </BrowserRouter>
   )

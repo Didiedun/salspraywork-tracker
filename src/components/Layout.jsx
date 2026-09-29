@@ -4,26 +4,26 @@ import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LanguageContext'
 import { planStatus } from '../lib/plan'
 import { TutorialModal } from './TutorialModal'
-import { FeedbackWidget } from './FeedbackWidget'
+import { FeedbackWidget, openFeedback } from './FeedbackWidget'
 import {
   LayoutDashboard, Package, Users, LogOut, ExternalLink, Settings, Wallet,
-  Menu, X, Globe, HelpCircle, ChevronLeft, ChevronRight,
+  Menu, X, Globe, HelpCircle, ChevronLeft, ChevronRight, MessageSquarePlus,
 } from 'lucide-react'
+
+const NAV = [
+  { to: '/dashboard', key: 'nav_dashboard', icon: LayoutDashboard },
+  { to: '/inventory', key: 'nav_inventory', icon: Package },
+  { to: '/finance',   key: 'nav_finance',   icon: Wallet },
+  { to: '/payroll',   key: 'nav_payroll',   icon: Users },
+  { to: '/settings',  key: 'nav_settings',  icon: Settings },
+]
 
 function Sidebar({ workshop, signOut, onClose, collapsed, onToggleCollapsed }) {
   const { lang, setLang, t } = useLang()
   const [showTutorial, setShowTutorial] = useState(false)
 
-  const navItems = [
-    { to: '/dashboard', label: t('nav_dashboard'), icon: LayoutDashboard },
-    { to: '/inventory', label: t('nav_inventory'), icon: Package },
-    { to: '/finance',   label: t('nav_finance'),   icon: Wallet },
-    { to: '/payroll',   label: t('nav_payroll'),   icon: Users    },
-    { to: '/settings',  label: t('nav_settings'),  icon: Settings },
-  ]
-
   const logoEl = workshop?.logo_url
-    ? <img src={workshop.logo_url} alt="logo" className="w-full h-full object-cover" />
+    ? <img src={workshop.logo_url} alt="" className="w-full h-full object-cover" />
     : <span className="font-display font-bold text-white text-xs">{workshop?.name?.[0]?.toUpperCase() || 'D'}</span>
 
   const navCls = ({ isActive }) =>
@@ -34,6 +34,16 @@ function Sidebar({ workshop, signOut, onClose, collapsed, onToggleCollapsed }) {
   const footerCls = `w-full flex items-center rounded-lg text-sm font-semibold text-on-dark/70 hover:text-on-dark hover:bg-white/5 transition-colors ${
     collapsed ? 'justify-center p-2.5 gap-0' : 'gap-3 px-3 py-2.5'
   }`
+  // Icon-only when collapsed: the label moves to aria-label/title.
+  const iconOnly = (label) => collapsed ? { 'aria-label': label, title: label } : {}
+
+  const footerItems = [
+    workshop?.slug && { key: 'portal', label: t('nav_portal'), icon: ExternalLink, href: `/w/${workshop.slug}` },
+    { key: 'tutorial', label: t('nav_tutorial'), icon: HelpCircle, onClick: () => setShowTutorial(true) },
+    { key: 'feedback', label: t('nav_feedback'), icon: MessageSquarePlus, onClick: () => { onClose?.(); openFeedback() } },
+    { key: 'lang',     label: t('lang_other'),   icon: Globe, onClick: () => setLang(lang === 'ms' ? 'en' : 'ms') },
+    { key: 'logout',   label: t('nav_logout'),   icon: LogOut, onClick: signOut },
+  ].filter(Boolean)
 
   return (
     <div className="app-sidebar h-full flex flex-col w-full overflow-hidden">
@@ -59,7 +69,7 @@ function Sidebar({ workshop, signOut, onClose, collapsed, onToggleCollapsed }) {
         )}
         {/* Mobile close */}
         {onClose && (
-          <button onClick={onClose} aria-label={t('ui_close')} className="sm:hidden min-h-11 min-w-11 flex items-center justify-center text-on-dark/50 hover:text-on-dark transition-colors">
+          <button onClick={onClose} aria-label={t('ui_close')} className="sm:hidden min-h-11 min-w-11 flex items-center justify-center text-on-dark/60 hover:text-on-dark transition-colors">
             <X className="w-4 h-4" />
           </button>
         )}
@@ -68,7 +78,7 @@ function Sidebar({ workshop, signOut, onClose, collapsed, onToggleCollapsed }) {
       {/* Desktop collapse toggle */}
       {!onClose && (
         <button onClick={onToggleCollapsed} aria-label={collapsed ? t('ui_expand') : t('ui_collapse')} title={collapsed ? t('ui_expand') : t('ui_collapse')} aria-expanded={!collapsed}
-          className={`hidden sm:flex items-center min-h-11 py-2 text-on-dark/60 hover:text-on-dark/70 transition-colors ${
+          className={`hidden sm:flex items-center min-h-11 py-2 text-on-dark/60 hover:text-on-dark transition-colors ${
             collapsed ? 'justify-center px-2' : 'justify-end px-3'
           }`}>
           {collapsed
@@ -80,38 +90,45 @@ function Sidebar({ workshop, signOut, onClose, collapsed, onToggleCollapsed }) {
 
       {/* Nav */}
       <nav aria-label={t('ui_workspace')} className="flex-1 px-3 py-3 space-y-1 overflow-y-auto">
-        {navItems.map(({ to, label, icon: Icon }) => (
-          <NavLink key={to} to={to} aria-label={label} title={collapsed ? label : undefined} onClick={onClose} className={navCls}>
-            <Icon className="w-4 h-4 flex-shrink-0" />
-            {!collapsed && label}
+        {NAV.map(({ to, key, icon: Icon }) => (
+          <NavLink key={to} to={to} {...iconOnly(t(key))} onClick={onClose} className={navCls}>
+            <Icon className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+            {!collapsed && t(key)}
           </NavLink>
         ))}
       </nav>
 
       {/* Footer */}
       <div className="px-2 py-3 border-t border-white/10 space-y-0.5 flex-shrink-0">
-        {workshop?.slug && (
-          <a href={`/w/${workshop.slug}`} target="_blank" rel="noreferrer" aria-label={t('nav_portal')} title={collapsed ? t('nav_portal') : undefined} className={footerCls}>
-            <ExternalLink className="w-4 h-4 flex-shrink-0" />
-            {!collapsed && t('nav_portal')}
-          </a>
-        )}
-        <button onClick={() => setShowTutorial(true)} aria-label={t('nav_tutorial')} title={collapsed ? t('nav_tutorial') : undefined} className={footerCls}>
-          <HelpCircle className="w-4 h-4 flex-shrink-0" />
-          {!collapsed && t('nav_tutorial')}
-        </button>
-        <button onClick={() => setLang(lang === 'ms' ? 'en' : 'ms')} aria-label={t('lang_other')} title={collapsed ? t('lang_other') : undefined} className={footerCls}>
-          <Globe className="w-4 h-4 flex-shrink-0" />
-          {!collapsed && t('lang_other')}
-        </button>
-        <button onClick={signOut} aria-label={t('nav_logout')} title={collapsed ? t('nav_logout') : undefined} className={footerCls}>
-          <LogOut className="w-4 h-4 flex-shrink-0" />
-          {!collapsed && t('nav_logout')}
-        </button>
+        {footerItems.map(({ key, label, icon: Icon, href, onClick }) => {
+          const body = <><Icon className="w-4 h-4 flex-shrink-0" aria-hidden="true" />{!collapsed && label}</>
+          return href
+            ? <a key={key} href={href} target="_blank" rel="noreferrer" {...iconOnly(label)} className={footerCls}>{body}</a>
+            : <button key={key} type="button" onClick={onClick} {...iconOnly(label)} className={footerCls}>{body}</button>
+        })}
       </div>
 
       {showTutorial && <TutorialModal onClose={() => setShowTutorial(false)} />}
     </div>
+  )
+}
+
+// Phones: the five destinations sit under the thumb instead of behind the menu.
+function TabBar() {
+  const { t } = useLang()
+  return (
+    <nav aria-label={t('ui_workspace')} className="app-tabbar sm:hidden">
+      <ul className="grid grid-cols-5">
+        {NAV.map(({ to, key, icon: Icon }) => (
+          <li key={to}>
+            <NavLink to={to} className={({ isActive }) => `app-tab${isActive ? ' app-tab-active' : ''}`}>
+              <Icon className="h-5 w-5" aria-hidden="true" />
+              <span>{t(key)}</span>
+            </NavLink>
+          </li>
+        ))}
+      </ul>
+    </nav>
   )
 }
 
@@ -129,11 +146,11 @@ function PlanBanner({ workshop }) {
     : t('plan_banner_expiring', { days: status.daysLeft })
 
   return (
-    <div className={`px-4 py-2.5 flex items-center justify-between gap-3 text-xs font-semibold ${
+    <div className={`px-4 py-2.5 flex items-center justify-between gap-3 text-xs font-semibold sm:px-7 lg:px-10 ${
       expired ? 'bg-red-50 text-red-700 border-b border-red-200' : 'bg-amber-50 text-amber-800 border-b border-amber-200'
     }`}>
       <span>{msg}</span>
-      <Link to="/settings" className={`flex-shrink-0 text-white px-3 py-1.5 rounded-full ${expired ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-700 hover:bg-amber-800'} transition-colors`}>
+      <Link to="/settings#langganan" className={`flex-shrink-0 text-white px-3 py-1.5 rounded-full ${expired ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-700 hover:bg-amber-800'} transition-colors`}>
         {proExpiring ? t('plan_banner_renew') : t('plan_banner_cta')}
       </Link>
     </div>
@@ -159,7 +176,7 @@ export function Layout({ children }) {
   const { t } = useLang()
   const { pathname } = useLocation()
   const drawer = useRef(null)
-  const currentPage = { '/dashboard': 'nav_dashboard', '/inventory': 'nav_inventory', '/finance': 'nav_finance', '/payroll': 'nav_payroll', '/settings': 'nav_settings' }[pathname] || 'nav_dashboard'
+  const currentPage = NAV.find(n => n.to === pathname)?.key || 'nav_dashboard'
 
   useEffect(() => {
     const dialog = drawer.current
@@ -194,7 +211,7 @@ export function Layout({ children }) {
         <header className="app-topbar sticky top-0 z-20 sm:static">
           <div className="flex items-center gap-3 min-w-0">
             <button onClick={() => setOpen(true)} aria-label={t('ui_menu')} aria-expanded={open}
-              className="sm:hidden min-h-11 min-w-11 flex items-center justify-center rounded-xl border border-hairline bg-white">
+              className="sm:hidden min-h-11 min-w-11 flex items-center justify-center rounded-xl border border-hairline bg-surface-card">
               <Menu className="w-5 h-5 text-charcoal" />
             </button>
             <span className="hidden sm:inline text-xs text-mute">Digital Depot</span>
@@ -208,6 +225,7 @@ export function Layout({ children }) {
           {children}
         </main>
       </div>
+      <TabBar />
       <FeedbackWidget />
     </div>
   )

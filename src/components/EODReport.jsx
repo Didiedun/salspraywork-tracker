@@ -55,11 +55,11 @@ export function EODReport({ jobs, workshop, onClose }) {
             {workshop?.name && <span className="text-xs text-mute">· {workshop.name}</span>}
           </div>
           <div className="flex items-center gap-1">
-            <button onClick={() => window.print()}
+            <button aria-label={t('rc_print')} onClick={() => window.print()}
               className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors text-mute hover:text-ink">
               <Printer className="w-4 h-4" />
             </button>
-            <button onClick={onClose}
+            <button aria-label={t('ui_close')} onClick={onClose}
               className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
               <X className="w-4 h-4 text-ash" />
             </button>
@@ -71,6 +71,7 @@ export function EODReport({ jobs, workshop, onClose }) {
           <div className="px-5 py-3 border-b border-hairline flex items-center gap-2">
             <Calendar className="w-4 h-4 text-mute flex-shrink-0" />
             <input type="date" value={date} onChange={e => setDate(e.target.value)}
+              aria-label={t('eod_date_label')}
               max={todayStr}
               className="flex-1 bg-canvas border border-hairline rounded-lg px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
           </div>

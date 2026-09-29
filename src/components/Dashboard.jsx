@@ -1,72 +1,134 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LanguageContext'
 import { useJobs } from '../hooks/useJobs'
 import { useInventory } from '../hooks/useInventory'
+import { useStages } from '../hooks/useStages'
+import { usePlanGate } from '../hooks/usePlanGate'
 import { JobCard } from './JobCard'
 import { JobForm } from './JobForm'
-import { TodaySummary } from './TodaySummary'
 import { RevenueChart } from './RevenueChart'
 import { EODReport } from './EODReport'
-import { paymentStatus, isStale } from '../constants'
-import { planStatus, isLimitedTrial, TRIAL_LIMITS } from '../lib/plan'
-import { useStages } from '../hooks/useStages'
-import { Plus, Search, RefreshCw, Archive, TrendingUp, BarChart2, Copy, Check, AlertTriangle, Bell, Download, ClipboardList } from 'lucide-react'
 import { TutorialModal } from './TutorialModal'
+import { PageHeader } from './PageHeader'
+import { paymentStatus, isStale, OVERDUE_DAYS } from '../constants'
+import { planStatus, isLimitedTrial, TRIAL_LIMITS } from '../lib/plan'
+import {
+  Plus, Search, X, Archive, BarChart2, Copy, Check, AlertTriangle, Bell, Download,
+  ClipboardList, Package, ExternalLink, Car,
+} from 'lucide-react'
 
 const parseLocalDate = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d) }
+const balanceOf = (j) => (Number(j.total_amount) || 0) - (Number(j.discount) || 0) - (Number(j.downpayment) || 0)
+const money = (v, digits = 2) => `RM ${Number(v).toLocaleString('ms-MY', { minimumFractionDigits: digits, maximumFractionDigits: digits })}`
+const reduceMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
+// One filter model for the list. The attention tiles are shortcuts into it.
+const FILTERS = {
+  all:     () => true,
+  overdue: (j, s) => s.isOverdue(j),
+  stale:   (j, s) => !j.archived && j.stage !== s.lastValue && isStale(j),
+  ready:   (j, s) => j.stage === s.lastValue,
+  owing:   (j) => paymentStatus(j) !== 'paid',
+  paid:    (j) => paymentStatus(j) === 'paid',
+}
+const ACTIVE_CHIPS   = ['all', 'overdue', 'stale', 'ready', 'owing', 'paid']
+const ARCHIVED_CHIPS = ['all', 'owing', 'paid']
+
+function AttentionTile({ tone, value, label, sub, active, onClick }) {
+  const colour = { ok: 'text-badge-success', danger: 'text-red-700', warn: 'text-amber-700', ink: 'text-ink' }[tone]
+  const empty = value === 0
+  return (
+    <button type="button" onClick={onClick} aria-pressed={active}
+      className={`attention-tile ${active ? 'attention-tile-active' : ''}`}>
+      <span className={`font-display text-3xl font-bold leading-none ${empty ? 'text-ash' : colour}`}>{value}</span>
+      <span className="mt-2 text-sm font-semibold leading-snug text-ink">{label}</span>
+      <span className="mt-0.5 min-h-4 truncate text-xs text-mute">{sub}</span>
+    </button>
+  )
+}
 
 export function Dashboard() {
   const { workshop } = useApp()
-  const { t } = useLang()
+  const { t, lang } = useLang()
+  const planGate = usePlanGate()
   const { jobs, loading, error, offline, fetchJobs, addJob, updateJob, deleteJob, addAttachment, deleteAttachment } = useJobs(workshop?.id)
   const { items: stockItems } = useInventory(workshop?.id)
   const lowStockItems = stockItems.filter(i => i.reorder_level > 0 && i.quantity <= i.reorder_level)
+  const stageHelpers = useStages()
 
   const [tab,       setTab]       = useState('active')
   const [search,    setSearch]    = useState('')
-  const [payFilter, setPayFilter] = useState('all')
+  const [filter,    setFilter]    = useState('all')
   const [adding,    setAdding]    = useState(false)
-
-  const planExpired = planStatus(workshop).state === 'expired'
-  const openAddJob = () => {
-    if (planExpired) { alert(t('plan_expired_block')); return }
-    if (isLimitedTrial(workshop) && jobs.filter(j => !j.archived).length >= TRIAL_LIMITS.jobs) {
-      alert(t('plan_limit_jobs')); return
-    }
-    setAdding(true)
-  }
+  const [showChart, setShowChart] = useState(false)
+  const [showEOD,   setShowEOD]   = useState(false)
+  const [copied,    setCopied]    = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('onboarding_done'))
+  const listRef = useRef(null)
+  const chipRowRef = useRef(null)
+  // On phones the chip row scrolls sideways; keep the active filter in view.
+  useEffect(() => {
+    const row = chipRowRef.current
+    const chip = row?.querySelector('[aria-pressed="true"]')
+    if (!chip || row.scrollWidth <= row.clientWidth) return
+    const x = chip.getBoundingClientRect().left - row.getBoundingClientRect().left + row.scrollLeft
+    row.scrollTo({ left: x - (row.clientWidth - chip.offsetWidth) / 2 })
+  }, [filter, tab])
 
   const closeOnboarding = () => {
     localStorage.setItem('onboarding_done', 'true')
     setShowOnboarding(false)
   }
-  const [showChart, setShowChart] = useState(false)
-  const [showEOD,   setShowEOD]   = useState(false)
-  const [copied,    setCopied]    = useState(false)
 
-  const filtered = useMemo(() => jobs.filter(j => {
-    if (!!j.archived !== (tab === 'archived')) return false
-    if (payFilter !== 'all' && paymentStatus(j) !== payFilter) return false
-    if (search) {
-      const q = search.toLowerCase()
-      return j.plate.toLowerCase().includes(q) ||
-        j.owner.toLowerCase().includes(q) ||
-        (j.car || '').toLowerCase().includes(q) ||
-        (j.phone || '').includes(q)
+  const activeJobs = jobs.filter(j => !j.archived)
+  const openAddJob = () => {
+    if (planStatus(workshop).state === 'expired') { planGate('plan_expired_block', 'plan_expired_title'); return }
+    if (isLimitedTrial(workshop) && activeJobs.length >= TRIAL_LIMITS.jobs) { planGate('plan_limit_jobs'); return }
+    setAdding(true)
+  }
+
+  const inTab = useMemo(() => jobs.filter(j => !!j.archived === (tab === 'archived')), [jobs, tab])
+  const chipKeys = tab === 'archived' ? ARCHIVED_CHIPS : ACTIVE_CHIPS
+  const count = (key) => inTab.filter(j => FILTERS[key](j, stageHelpers)).length
+
+  const filtered = useMemo(() => inTab.filter(j => {
+    if (!FILTERS[filter](j, stageHelpers)) return false
+    if (!search) return true
+    const q = search.toLowerCase()
+    return j.plate.toLowerCase().includes(q) ||
+      j.owner.toLowerCase().includes(q) ||
+      (j.car || '').toLowerCase().includes(q) ||
+      (j.phone || '').includes(q)
+  }), [inTab, filter, search, stageHelpers])
+
+  // Attention tiles always describe the live (non-archived) workload.
+  const attention = useMemo(() => {
+    const pick = (key) => activeJobs.filter(j => FILTERS[key](j, stageHelpers))
+    const owing = pick('owing')
+    return {
+      ready: pick('ready'), overdue: pick('overdue'), stale: pick('stale'), owing,
+      owingTotal: owing.reduce((s, j) => s + Math.max(balanceOf(j), 0), 0),
     }
-    return true
-  }), [jobs, tab, search, payFilter])
+  }, [activeJobs, stageHelpers])
+  const newToday = activeJobs.filter(j => new Date(j.created_at).toDateString() === new Date().toDateString()).length
 
-  const { lastValue } = useStages()
-  const activeJobs   = jobs.filter(j => !j.archived)
-  const staleCount   = activeJobs.filter(j => j.stage !== lastValue && isStale(j)).length
-  const unpaid       = activeJobs.filter(j => paymentStatus(j) === 'unpaid').length
-  const deposit      = activeJobs.filter(j => paymentStatus(j) === 'deposit').length
-  const paid         = activeJobs.filter(j => paymentStatus(j) === 'paid').length
+  const plates = (list) => list.length === 0 ? t('dash_tile_none')
+    : list.slice(0, 2).map(j => j.plate).join(', ') + (list.length > 2 ? ` +${list.length - 2}` : '')
+
+  const showFilter = (key) => {
+    const next = filter === key && tab === 'active' ? 'all' : key
+    setTab('active'); setFilter(next)
+    if (next !== 'all') listRef.current?.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'start' })
+  }
+  const switchTab = (key) => {
+    setTab(key)
+    if (!(key === 'archived' ? ARCHIVED_CHIPS : ACTIVE_CHIPS).includes(filter)) setFilter('all')
+  }
+  const clearFilters = () => { setSearch(''); setFilter('all') }
+
   const totalRevenue = jobs.filter(j => j.paid).reduce((s, j) => s + (Number(j.total_amount) || 0) - (Number(j.discount) || 0), 0)
-
   const now = new Date()
   const thisMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1)
@@ -96,7 +158,6 @@ export function Dashboard() {
   const serviceReminders = useMemo(() => {
     const today = new Date(); today.setHours(0, 0, 0, 0)
     const in30  = new Date(today); in30.setDate(in30.getDate() + 30)
-    const parseLocalDate = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d) }
     return jobs
       .filter(j => {
         if (!j.next_service_date) return false
@@ -105,11 +166,6 @@ export function Dashboard() {
       })
       .sort((a, b) => parseLocalDate(a.next_service_date) - parseLocalDate(b.next_service_date))
   }, [jobs])
-
-  const scrollToJob = (job) => {
-    setSearch(job.plate)
-    setTab(job.archived ? 'archived' : 'active')
-  }
 
   const exportCSV = () => {
     const headers = ['Plate', 'Owner', 'Car', 'Phone', 'Stage', 'Payment', 'Total (RM)', 'Downpayment (RM)', 'Date In', 'Assigned To', 'Next Service']
@@ -139,233 +195,238 @@ export function Dashboard() {
     setCopied(true); setTimeout(() => setCopied(false), 2000)
   }
 
+  const chipLabel = { all: t('dash_chip_all'), overdue: t('ui_overdue'), stale: t('stale_label'), ready: t('dash_chip_ready'), owing: t('dash_chip_owing'), paid: t('pay_paid') }
+  const today = now.toLocaleDateString(lang === 'ms' ? 'ms-MY' : 'en-MY', { weekday: 'long', day: 'numeric', month: 'long' })
+  const firstRun = !loading && !error && jobs.length === 0
+  const filtering = search || filter !== 'all'
+
   return (
     <div className="app-page">
-      <header className="page-heading">
-        <div>
-          <p className="page-kicker">{t('ui_workspace')}</p>
-          <h1>{t('ui_overview')}</h1>
-          <p className="page-description">{t('ui_overview_sub')}</p>
-        </div>
-        <button onClick={openAddJob} className="ui-primary">
-          <Plus className="w-4 h-4" /> {t('dash_new_job')}
-        </button>
-      </header>
-      <div className="dashboard-metrics">
-        {[
-          { label: t('dash_active'),   value: activeJobs.length, color: 'text-primary'      },
-          { label: t('dash_unpaid'),   value: unpaid,            color: 'text-red-700'       },
-          { label: t('dash_deposit'),  value: deposit,           color: 'text-amber-700'     },
-          { label: t('dash_paid'),     value: paid,              color: 'text-badge-success' },
-        ].map(({ label, value, color }) => (
-          <div key={label} className="dashboard-metric">
-            <p className={`text-3xl font-bold font-display ${color}`}>{value}</p>
-            <p className="text-mute text-sm mt-2 font-medium">{label}</p>
-          </div>
-        ))}
-      </div>
+      <PageHeader
+        kicker={today}
+        title={t('ui_overview')}
+        description={loading ? t('ui_overview_sub') : t('dash_summary', { active: activeJobs.length, today: newToday })}
+        actions={<button onClick={openAddJob} className="ui-primary hidden sm:inline-flex"><Plus className="w-4 h-4" /> {t('dash_new_job')}</button>}
+      />
 
       {showOnboarding && <TutorialModal onClose={closeOnboarding} />}
       {showEOD && <EODReport jobs={jobs} workshop={workshop} onClose={() => setShowEOD(false)} />}
+
       {offline && (
-        <div className="bg-amber-50 border border-amber-200 rounded-md px-4 py-3 flex items-center gap-3 text-sm">
-          <div>
+        <div className="notice notice-warn">
+          <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" aria-hidden="true" />
+          <div className="min-w-0 flex-1">
             <p className="font-semibold text-amber-800">{t('dash_offline_title')}</p>
             <p className="text-amber-700 text-xs mt-0.5">{t('dash_offline_sub')}</p>
           </div>
-          <button onClick={fetchJobs} className="ml-auto text-xs text-amber-800 font-semibold underline whitespace-nowrap">{t('retry')}</button>
+          <button onClick={fetchJobs} className="text-xs text-amber-800 font-semibold underline whitespace-nowrap">{t('retry')}</button>
         </div>
       )}
 
-      {!loading && staleCount > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-md px-4 py-3 flex items-center gap-3 text-sm">
-          <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-          <div>
-            <p className="font-semibold text-amber-800">{staleCount} {t('dash_stale_label')}</p>
-            <p className="text-amber-700 text-xs mt-0.5">{t('dash_stale_sub')}</p>
+      {firstRun ? (
+        <section className="rounded-2xl border border-hairline bg-surface-card p-6 sm:p-8">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary"><Car className="h-5 w-5" aria-hidden="true" /></div>
+          <h2 className="mt-4 font-display text-2xl font-bold text-ink">{t('dash_welcome_title')}</h2>
+          <p className="mt-1.5 max-w-lg text-sm leading-relaxed text-charcoal">{t('dash_welcome_sub')}</p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <button onClick={openAddJob} className="ui-primary"><Plus className="w-4 h-4" /> {t('dash_add_first')}</button>
+            {customerUrl && <button onClick={copyUrl} className="ui-secondary">{copied ? <Check className="w-4 h-4 text-badge-success" /> : <Copy className="w-4 h-4" />} {copied ? t('copied') : t('dash_copy_link')}</button>}
           </div>
-        </div>
+        </section>
+      ) : (
+        <section aria-label={t('dash_attention')} className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <AttentionTile tone="ok" value={attention.ready.length} label={t('ui_ready')} sub={plates(attention.ready)}
+            active={tab === 'active' && filter === 'ready'} onClick={() => showFilter('ready')} />
+          <AttentionTile tone="danger" value={attention.overdue.length} label={t('dash_tile_overdue', { days: OVERDUE_DAYS })} sub={plates(attention.overdue)}
+            active={tab === 'active' && filter === 'overdue'} onClick={() => showFilter('overdue')} />
+          <AttentionTile tone="warn" value={attention.stale.length} label={t('stale_label')} sub={plates(attention.stale)}
+            active={tab === 'active' && filter === 'stale'} onClick={() => showFilter('stale')} />
+          <AttentionTile tone="ink" value={attention.owing.length} label={t('dash_tile_owing')}
+            sub={attention.owing.length ? money(attention.owingTotal) : t('dash_tile_none')}
+            active={tab === 'active' && filter === 'owing'} onClick={() => showFilter('owing')} />
+        </section>
       )}
 
       {lowStockItems.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-md px-4 py-3 flex items-center gap-3 text-sm">
-          <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-          <div>
-            <p className="font-semibold text-amber-800">{lowStockItems.length} {t('dash_low_stock_label')}</p>
-            <p className="text-amber-700 text-xs mt-0.5">{t('dash_low_stock_sub')}</p>
-          </div>
+        <div className="notice notice-warn">
+          <Package className="w-4 h-4 text-amber-600 flex-shrink-0" aria-hidden="true" />
+          <p className="min-w-0 flex-1 text-amber-800">
+            <span className="font-semibold">{lowStockItems.length} {t('dash_low_stock_label')}</span>
+            <span className="text-amber-700"> · {lowStockItems.slice(0, 2).map(i => i.name).join(', ')}{lowStockItems.length > 2 ? '…' : ''}</span>
+          </p>
+          <Link to="/inventory?tab=stok" className="whitespace-nowrap text-xs font-semibold text-amber-800 underline underline-offset-2">{t('dash_view_stock')}</Link>
         </div>
       )}
 
       {serviceReminders.length > 0 && (
-        <div className="bg-surface-card border border-hairline rounded-md overflow-hidden">
-          <div className="px-4 py-2.5 border-b border-hairline flex items-center gap-2 bg-canvas">
-            <Bell className="w-3.5 h-3.5 text-primary" />
-            <p className="text-xs font-semibold text-ink">{t('remind_title')} ({serviceReminders.length})</p>
+        <div className="bg-surface-card border border-hairline rounded-2xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-hairline flex items-center gap-2">
+            <Bell className="w-4 h-4 text-primary" aria-hidden="true" />
+            <h2 className="text-sm font-semibold text-ink">{t('remind_title')} ({serviceReminders.length})</h2>
           </div>
-          <div className="divide-y divide-hairline">
+          <ul className="divide-y divide-hairline">
             {serviceReminders.map(j => {
               const days  = Math.ceil((parseLocalDate(j.next_service_date) - new Date().setHours(0,0,0,0)) / 86400000)
               const phone = j.phone?.replace(/\D/g, '')
               const waNum = phone ? (phone.startsWith('60') ? phone : '60' + phone.replace(/^0/, '')) : null
               const waUrl = waNum ? `https://wa.me/${waNum}?text=${encodeURIComponent(t('remind_wa_msg') + ' ' + j.plate)}` : null
               return (
-                <div key={j.id} className="px-4 py-2.5 flex items-center gap-3 text-sm">
+                <li key={j.id} className="px-4 py-3 flex items-center gap-3 text-sm">
+                  <span className="plate text-[13px] flex-shrink-0">{j.plate}</span>
                   <div className="flex-1 min-w-0">
-                    <span className="plate text-[13px]">{j.plate}</span>
-                    <span className="text-mute ml-2">{j.owner}</span>
-                    <span className={`ml-2 text-xs font-medium ${days <= 3 ? 'text-red-700' : days <= 7 ? 'text-amber-700' : 'text-charcoal'}`}>
-                      · {t('remind_due')} {days === 0 ? 'hari ini' : `${days}h`}
-                    </span>
+                    <p className="truncate text-ink">{j.owner}</p>
+                    <p className={`text-xs font-medium ${days <= 3 ? 'text-red-700' : days <= 7 ? 'text-amber-700' : 'text-mute'}`}>
+                      {t('remind_due')} {days === 0 ? t('ui_today_lower') : t('dash_in_days', { n: days })}
+                    </p>
                   </div>
                   {waUrl && (
                     <a href={waUrl} target="_blank" rel="noreferrer"
-                      className="flex-shrink-0 text-xs font-semibold text-badge-success hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-full transition-colors whitespace-nowrap">
+                      className="flex-shrink-0 text-xs font-semibold text-badge-success hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-3 py-2 rounded-full transition-colors whitespace-nowrap">
                       {t('remind_wa')}
                     </a>
                   )}
-                </div>
+                </li>
               )
             })}
-          </div>
+          </ul>
         </div>
       )}
 
-      <div className="flex items-end justify-between gap-3 pt-2">
-        <h2 className="font-display text-xl font-bold text-ink">{t('ui_jobs')}</h2>
-        <p className="text-xs text-mute" role="status">{filtered.length} {t('ui_results')}</p>
-      </div>
-      <div className="dashboard-toolbar">
-        <div className="relative col-span-2 flex-1 min-w-0">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-ash w-4 h-4" />
-          <input aria-label={t('dash_search_ph')} value={search} onChange={e => setSearch(e.target.value)}
-            placeholder={t('dash_search_ph')}
-            className="w-full bg-surface-card border border-hairline rounded-full pl-11 pr-5 py-2.5 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors" />
-        </div>
-        <select aria-label={t('pay_info')} value={payFilter} onChange={e => setPayFilter(e.target.value)}
-          className="bg-surface-card border border-hairline rounded-lg px-4 py-2.5 text-ink focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm">
-          <option value="all">{t('dash_filter_all')}</option>
-          <option value="unpaid">{t('pay_unpaid')}</option>
-          <option value="deposit">{t('pay_deposit')}</option>
-          <option value="paid">{t('pay_paid')}</option>
-        </select>
-        <button onClick={exportCSV}
-          className="ui-secondary">
-          <Download className="w-4 h-4" /> {t('dash_export')}
-        </button>
-      </div>
+      {!firstRun && (
+        <section ref={listRef} aria-labelledby="jobs-heading" className="space-y-3">
+          <div className="flex items-end justify-between gap-3 pt-2">
+            <h2 id="jobs-heading" className="font-display text-xl font-bold text-ink">{t('ui_jobs')}</h2>
+            <p className="text-xs text-mute" role="status">{filtered.length} {t('ui_results')}</p>
+          </div>
 
-      <div className="flex gap-1 bg-surface-bone border border-hairline rounded-full p-1 w-fit">
-        {[
-          { key: 'active',   label: t('dash_tab_active'),   count: activeJobs.length },
-          { key: 'archived', label: t('dash_tab_archived'), count: jobs.filter(j => j.archived).length },
-        ].map(({ key, label, count }) => (
-          <button key={key} aria-pressed={tab === key} onClick={() => setTab(key)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-              tab === key ? 'bg-surface-dark text-on-dark' : 'text-mute hover:text-charcoal'
-            }`}>
-            {label}
-            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-              tab === key ? 'bg-white/20 text-on-dark' : 'bg-surface-card text-mute'
-            }`}>{count}</span>
-          </button>
-        ))}
-      </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="relative min-w-0 flex-1">
+              <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ash w-4 h-4" aria-hidden="true" />
+              <input type="search" aria-label={t('dash_search_ph')} value={search} onChange={e => setSearch(e.target.value)}
+                placeholder={t('dash_search_ph')} enterKeyHint="search"
+                className="w-full min-h-11 bg-surface-card border border-hairline rounded-full pl-11 pr-11 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors" />
+              {search && (
+                <button type="button" onClick={() => setSearch('')} aria-label={t('dash_search_clear')}
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full text-mute hover:bg-canvas hover:text-ink">
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="segmented flex-1 sm:flex-none" role="group" aria-label={t('ui_jobs')}>
+                {[
+                  { key: 'active',   label: t('dash_tab_active'),   n: activeJobs.length },
+                  { key: 'archived', label: t('dash_tab_archived'), n: jobs.length - activeJobs.length },
+                ].map(({ key, label, n }) => (
+                  <button key={key} type="button" aria-pressed={tab === key} onClick={() => switchTab(key)}
+                    className={`segmented-item ${tab === key ? 'segmented-item-on' : ''}`}>
+                    {label} <span className="segmented-count">{n}</span>
+                  </button>
+                ))}
+              </div>
+              <button onClick={exportCSV} className="ui-secondary px-3.5" aria-label={t('dash_export')} title={t('dash_export')}>
+                <Download className="w-4 h-4" /> <span className="hidden lg:inline">{t('dash_export')}</span>
+              </button>
+            </div>
+          </div>
 
-      {loading ? (
-        <div role="status" aria-label={t('dash_loading')} className="grid gap-4 sm:grid-cols-2">
-          {[0, 1, 2, 3].map(item => <div key={item} aria-hidden="true" className="rounded-2xl border border-hairline bg-white p-5 space-y-5">
-            <div className="ui-skeleton h-5 w-1/3" /><div className="ui-skeleton h-4 w-2/3" />
-            <div className="ui-skeleton h-14 w-full" /><div className="ui-skeleton h-10 w-full" />
-          </div>)}
-          <span className="sr-only">{t('dash_loading')}</span>
-        </div>
-      ) : error ? (
-        <div className="bg-red-50 border border-red-200 rounded-md p-6 text-center">
-          <p className="text-red-700 font-medium">{t('error_prefix')} {error}</p>
-          <button onClick={fetchJobs} className="mt-3 text-sm text-red-700 font-semibold underline">{t('retry')}</button>
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="ui-empty text-ash">
-          <Archive className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p className="font-semibold text-charcoal">{search || payFilter !== 'all' ? t('ui_no_results') : tab === 'active' ? t('dash_empty_active') : t('dash_empty_arch')}</p>
-          {(search || payFilter !== 'all') ? (
-            <><p className="mt-2 text-sm text-mute">{t('ui_no_results_sub')}</p><button className="ui-secondary mt-5" onClick={() => { setSearch(''); setPayFilter('all') }}>{t('ui_clear')}</button></>
-          ) : tab === 'active' && (
-            <button onClick={openAddJob} className="mt-3 text-primary text-sm font-semibold hover:underline">
-              {t('dash_add_first')}
-            </button>
+          <div ref={chipRowRef} className="chip-row" role="group" aria-label={t('dash_filter_label')}>
+            {chipKeys.map(key => (
+              <button key={key} type="button" aria-pressed={filter === key} onClick={() => setFilter(key)}
+                className={`chip ${filter === key ? 'chip-on' : ''}`}>
+                {chipLabel[key]} <span className="chip-count">{count(key)}</span>
+              </button>
+            ))}
+          </div>
+
+          {loading ? (
+            <div role="status" aria-label={t('dash_loading')} className="grid gap-4 lg:grid-cols-2">
+              {[0, 1, 2, 3].map(item => <div key={item} aria-hidden="true" className="rounded-2xl border border-hairline bg-surface-card p-5 space-y-5">
+                <div className="ui-skeleton h-6 w-1/3" /><div className="ui-skeleton h-4 w-2/3" />
+                <div className="ui-skeleton h-12 w-full" /><div className="ui-skeleton h-10 w-full" />
+              </div>)}
+              <span className="sr-only">{t('dash_loading')}</span>
+            </div>
+          ) : error ? (
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
+              <p className="text-red-700 font-medium">{t('error_prefix')} {error}</p>
+              <button onClick={fetchJobs} className="mt-3 text-sm text-red-700 font-semibold underline">{t('retry')}</button>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="ui-empty">
+              <Archive className="w-10 h-10 mx-auto mb-3 text-ash opacity-40" aria-hidden="true" />
+              <p className="font-semibold text-charcoal">{filtering ? t('ui_no_results') : tab === 'active' ? t('dash_empty_active') : t('dash_empty_arch')}</p>
+              {filtering ? (
+                <><p className="mt-2 text-sm text-mute">{t('ui_no_results_sub')}</p><button className="ui-secondary mt-5" onClick={clearFilters}>{t('ui_clear')}</button></>
+              ) : tab === 'active' && (
+                <button onClick={openAddJob} className="ui-primary mt-5"><Plus className="w-4 h-4" /> {t('dash_add_first')}</button>
+              )}
+            </div>
+          ) : (
+            <div className="grid gap-4 lg:grid-cols-2">
+              {filtered.map(job => (
+                <JobCard key={job.id} job={job}
+                  visitCount={visitCounts[job.plate.replace(/\s/g, '').toUpperCase()] || 1}
+                  onUpdate={updateJob} onDelete={deleteJob}
+                  onAddAttachment={addAttachment} onDeleteAttachment={deleteAttachment} />
+              ))}
+            </div>
           )}
-        </div>
-      ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
-          {filtered.map(job => (
-            <JobCard key={job.id} job={job}
-              visitCount={visitCounts[job.plate.replace(/\s/g, '').toUpperCase()] || 1}
-              onUpdate={updateJob} onDelete={deleteJob}
-              onAddAttachment={addAttachment} onDeleteAttachment={deleteAttachment} />
-          ))}
-        </div>
+        </section>
       )}
 
-      {customerUrl && (
-        <div className="bg-surface-card border border-hairline rounded-md px-4 py-3 flex items-center gap-3">
+      {(totalRevenue > 0 || monthlyStats.lastRev > 0) && (
+        <section aria-labelledby="revenue-heading" className="rounded-2xl border border-hairline bg-surface-card">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline px-5 py-4">
+            <h2 id="revenue-heading" className="font-display text-lg font-bold text-ink">{t('dash_money_section')}</h2>
+            <div className="flex gap-2">
+              <button onClick={() => setShowEOD(true)} className="ui-secondary min-h-10 px-3.5 py-2 text-xs">
+                <ClipboardList className="w-4 h-4" /> {t('eod_title')}
+              </button>
+              <button onClick={() => setShowChart(x => !x)} aria-expanded={showChart} className="ui-secondary min-h-10 px-3.5 py-2 text-xs">
+                <BarChart2 className="w-4 h-4" /> {t('dash_chart_toggle')}
+              </button>
+            </div>
+          </div>
+          <dl className="grid grid-cols-3 divide-x divide-hairline">
+            {[
+              { label: t('dash_this_month'), value: money(monthlyStats.thisRev, 0), sub: `${monthlyStats.thisJobs} ${t('dash_month_jobs')}`, strong: true },
+              { label: t('dash_last_month'), value: money(monthlyStats.lastRev, 0), sub: `${monthlyStats.lastJobs} ${t('dash_month_jobs')}` },
+              { label: t('dash_revenue'),    value: money(totalRevenue, 0), sub: t('dash_all_time') },
+            ].map(({ label, value, sub, strong }) => (
+              <div key={label} className="px-4 py-4 sm:px-5">
+                <dt className="text-xs font-medium text-mute">{label}</dt>
+                <dd className={`mt-1 font-display text-lg font-bold sm:text-2xl ${strong ? 'text-primary' : 'text-ink'}`}>{value}</dd>
+                <dd className="mt-0.5 text-xs text-mute">{sub}</dd>
+              </div>
+            ))}
+          </dl>
+          {showChart && <div className="border-t border-hairline"><RevenueChart jobs={jobs} /></div>}
+        </section>
+      )}
+
+      {customerUrl && !firstRun && (
+        <div className="bg-surface-card border border-hairline rounded-2xl px-4 py-3.5 flex flex-wrap items-center gap-3 sm:flex-nowrap">
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-charcoal mb-0.5">{t('dash_link_label')}</p>
-            <p className="text-sm text-ink truncate font-mono">{customerUrl}</p>
+            <p className="text-xs font-semibold text-charcoal">{t('dash_link_label')}</p>
+            <p className="text-sm text-ink truncate font-mono mt-0.5">{customerUrl}</p>
+            <p className="text-xs text-mute mt-0.5">{t('dash_link_hint')}</p>
           </div>
-          <button onClick={copyUrl}
-            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full border border-hairline bg-canvas hover:bg-surface-bone transition-colors whitespace-nowrap flex-shrink-0">
-            {copied ? <><Check className="w-3.5 h-3.5 text-badge-success" /> {t('copied')}</> : <><Copy className="w-3.5 h-3.5" /> {t('dash_copy_url')}</>}
-          </button>
-        </div>
-      )}
-
-      {!loading && <TodaySummary jobs={jobs} onSelectJob={scrollToJob} />}
-
-      {totalRevenue > 0 && (
-        <div className="bg-surface-deep rounded-2xl p-5 flex items-center gap-3 text-white">
-          <TrendingUp className="w-5 h-5 opacity-80" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm opacity-80">{t('dash_revenue')}</p>
-            <p className="font-display font-bold text-xl">
-              RM {totalRevenue.toLocaleString('ms-MY', { minimumFractionDigits: 2 })}
-            </p>
-          </div>
-          <button onClick={() => setShowEOD(true)}
-            title={t('eod_title')} aria-label={t('eod_title')}
-            className="p-2 rounded-full transition-colors bg-white/10 hover:bg-white/20">
-            <ClipboardList className="w-4 h-4" />
-          </button>
-          <button aria-label={t('ui_chart')} aria-expanded={showChart} onClick={() => setShowChart(x => !x)}
-            className={`p-2 rounded-full transition-colors ${showChart ? 'bg-white/20' : 'bg-white/10 hover:bg-white/20'}`}>
-            <BarChart2 className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
-      {/* Monthly comparison */}
-      {(monthlyStats.thisRev > 0 || monthlyStats.lastRev > 0) && (
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-surface-card border border-hairline rounded-md p-4">
-            <p className="text-xs text-mute font-medium mb-1">{t('dash_this_month')}</p>
-            <p className="font-display font-bold text-lg text-ink">
-              RM {monthlyStats.thisRev.toLocaleString('ms-MY', { minimumFractionDigits: 0 })}
-            </p>
-            <p className="text-xs text-mute mt-0.5">{monthlyStats.thisJobs} {t('dash_month_jobs')}</p>
-          </div>
-          <div className="bg-surface-card border border-hairline rounded-md p-4">
-            <p className="text-xs text-mute font-medium mb-1">{t('dash_last_month')}</p>
-            <p className="font-display font-bold text-lg text-charcoal">
-              RM {monthlyStats.lastRev.toLocaleString('ms-MY', { minimumFractionDigits: 0 })}
-            </p>
-            <p className="text-xs text-mute mt-0.5">{monthlyStats.lastJobs} {t('dash_month_jobs')}</p>
+          <div className="flex gap-2 flex-shrink-0">
+            <a href={customerUrl} target="_blank" rel="noreferrer" className="ui-secondary min-h-10 px-3.5 py-2 text-xs">
+              <ExternalLink className="w-4 h-4" /> {t('dash_open_portal')}
+            </a>
+            <button onClick={copyUrl} className="ui-secondary min-h-10 px-3.5 py-2 text-xs">
+              {copied ? <><Check className="w-4 h-4 text-badge-success" /> {t('copied')}</> : <><Copy className="w-4 h-4" /> {t('dash_copy_url')}</>}
+            </button>
           </div>
         </div>
       )}
 
-      {showChart && <RevenueChart jobs={jobs} />}
-
+      {/* Phones: the day's main action stays under the thumb. */}
+      <button onClick={openAddJob} className="fab sm:hidden">
+        <Plus className="w-5 h-5" aria-hidden="true" /> {t('dash_new_job')}
+      </button>
 
       {adding && <JobForm onSave={addJob} onClose={() => setAdding(false)} jobs={jobs} />}
     </div>

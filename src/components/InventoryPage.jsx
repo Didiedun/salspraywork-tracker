@@ -1,7 +1,11 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { isLimitedTrial, TRIAL_LIMITS } from '../lib/plan'
 import { useLang } from '../context/LanguageContext'
+import { useNotify } from '../context/NotifyContext'
+import { usePlanGate } from '../hooks/usePlanGate'
+import { PageHeader } from './PageHeader'
 import { useInventory } from '../hooks/useInventory'
 import { useCatalog } from '../hooks/useCatalog'
 import {
@@ -17,6 +21,7 @@ const CREATE_NEW = '__create_new__'
 
 function VariantStockRow({ variant, catId, itemId, stockItems, onUpdate }) {
   const { t } = useLang()
+  const { toast } = useNotify()
   const [editing, setEditing]     = useState(false)
   const [stockItemId, setStockId] = useState(variant.inventory_item_id || '')
   const [qty, setQty]             = useState(String(variant.qty_per_service ?? 1))
@@ -35,7 +40,7 @@ function VariantStockRow({ variant, catId, itemId, stockItems, onUpdate }) {
         qty_per_service:   parseFloat(qty) || 1,
       })
       setEditing(false)
-    } catch (e) { alert(e.message) }
+    } catch (e) { toast.error(e.message) }
     finally { setSaving(false) }
   }
 
@@ -62,6 +67,7 @@ function VariantStockRow({ variant, catId, itemId, stockItems, onUpdate }) {
   return (
     <div className="flex items-center gap-1.5 mt-1 flex-wrap">
       <select value={stockItemId} onChange={e => setStockId(e.target.value)}
+        aria-label={t('cat_stock_item')}
         className="flex-1 min-w-0 bg-canvas border border-hairline rounded-lg px-3 py-1.5 text-ink text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
         <option value="">— {t('cat_pick_stock_ph')} —</option>
         {stockItems.map(i => (
@@ -69,6 +75,7 @@ function VariantStockRow({ variant, catId, itemId, stockItems, onUpdate }) {
         ))}
       </select>
       <input type="text" inputMode="decimal" value={qty} onChange={e => setQty(e.target.value)}
+        aria-label={t('cat_qty_per_svc')}
         placeholder="1"
         className="w-14 bg-canvas border border-hairline rounded-lg px-2 py-1.5 text-xs text-ink text-center focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
       <button onClick={save} disabled={saving}
@@ -147,7 +154,7 @@ function CatalogModal({ modal, onClose, onSave, stockItems = [], addStockItem })
             <h3 className="font-display font-bold text-ink">{titles[`${modal.type}-${modal.mode}`]}</h3>
             {isItemAdd && <p className="text-xs text-mute mt-0.5">{t('cat_item_add_hint')}</p>}
           </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas">
+          <button aria-label={t('ui_close')} onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas">
             <X className="w-4 h-4 text-ash" />
           </button>
         </div>
@@ -155,8 +162,8 @@ function CatalogModal({ modal, onClose, onSave, stockItems = [], addStockItem })
         <div className="p-5 space-y-3 overflow-y-auto flex-1">
           {/* Name */}
           <div>
-            <label className={lbl}>{t('cat_name_lbl')} *</label>
-            <input autoFocus value={name} onChange={e => setName(e.target.value)}
+            <label htmlFor="catalog-name" className={lbl}>{t('cat_name_lbl')} *</label>
+            <input id="catalog-name" autoFocus value={name} onChange={e => setName(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !showPrices) handleSave() }}
               placeholder={modal.type === 'cat' ? t('cat_cat_ph') : modal.type === 'item' ? t('cat_item_ph') : t('cat_variant_ph')}
               className={inp} />
@@ -166,12 +173,12 @@ function CatalogModal({ modal, onClose, onSave, stockItems = [], addStockItem })
           {showPrices && (
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className={lbl}>{t('cat_cost_lbl')} (RM)</label>
-                <input type="text" inputMode="decimal" value={cost} onChange={e => setCost(e.target.value)} placeholder="0.00" className={inp} />
+                <label htmlFor="catalog-cost" className={lbl}>{t('cat_cost_lbl')} (RM)</label>
+                <input id="catalog-cost" type="text" inputMode="decimal" value={cost} onChange={e => setCost(e.target.value)} placeholder="0.00" className={inp} />
               </div>
               <div>
-                <label className={lbl}>{t('cat_sell_lbl')} (RM) *</label>
-                <input type="text" inputMode="decimal" value={sell} onChange={e => setSell(e.target.value)} placeholder="0.00" className={inp} />
+                <label htmlFor="catalog-sell" className={lbl}>{t('cat_sell_lbl')} (RM) *</label>
+                <input id="catalog-sell" type="text" inputMode="decimal" value={sell} onChange={e => setSell(e.target.value)} placeholder="0.00" className={inp} />
               </div>
             </div>
           )}
@@ -190,8 +197,8 @@ function CatalogModal({ modal, onClose, onSave, stockItems = [], addStockItem })
               {linkStock && (
                 <>
                   <div>
-                    <label className={lbl}>{t('cat_stock_item')}</label>
-                    <select value={stockItemId} onChange={e => setStockItemId(e.target.value)} className={selCls}>
+                    <label htmlFor="catalog-stock-item" className={lbl}>{t('cat_stock_item')}</label>
+                    <select id="catalog-stock-item" value={stockItemId} onChange={e => setStockItemId(e.target.value)} className={selCls}>
                       <option value="">— {t('cat_pick_stock_ph')} —</option>
                       {stockItems.map(i => (
                         <option key={i.id} value={i.id}>{i.name} ({i.quantity} {i.unit})</option>
@@ -205,16 +212,16 @@ function CatalogModal({ modal, onClose, onSave, stockItems = [], addStockItem })
                       <p className="text-xs text-mute">{t('cat_creating_stock_for')} <span className="font-semibold text-charcoal">"{name || '...'}"</span></p>
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className={lbl}>{t('inv_unit')}</label>
-                          <select value={newStockUnit} onChange={e => setNewStockUnit(e.target.value)} className={selCls}>
+                          <label htmlFor="catalog-unit" className={lbl}>{t('inv_unit')}</label>
+                          <select id="catalog-unit" value={newStockUnit} onChange={e => setNewStockUnit(e.target.value)} className={selCls}>
                             {['pcs', 'tin', 'liter', 'kg', 'meter', 'set', 'kotak'].map(u => (
                               <option key={u} value={u}>{u}</option>
                             ))}
                           </select>
                         </div>
                         <div>
-                          <label className={lbl}>{t('cat_new_qty_lbl')}</label>
-                          <input type="text" inputMode="decimal" value={newStockQty}
+                          <label htmlFor="catalog-new-qty" className={lbl}>{t('cat_new_qty_lbl')}</label>
+                          <input id="catalog-new-qty" type="text" inputMode="decimal" value={newStockQty}
                             onChange={e => setNewStockQty(e.target.value)} placeholder="0" className={inp} />
                         </div>
                       </div>
@@ -222,8 +229,8 @@ function CatalogModal({ modal, onClose, onSave, stockItems = [], addStockItem })
                   )}
 
                   <div>
-                    <label className={lbl}>{t('cat_qty_per_svc')}</label>
-                    <input type="text" inputMode="decimal" value={qtyPerSvc} onChange={e => setQtyPerSvc(e.target.value)} placeholder="1" className={inp} />
+                    <label htmlFor="catalog-qty-per-service" className={lbl}>{t('cat_qty_per_svc')}</label>
+                    <input id="catalog-qty-per-service" type="text" inputMode="decimal" value={qtyPerSvc} onChange={e => setQtyPerSvc(e.target.value)} placeholder="1" className={inp} />
                   </div>
                 </>
               )}
@@ -249,6 +256,7 @@ function CatalogModal({ modal, onClose, onSave, stockItems = [], addStockItem })
 
 function CatalogTab({ workshopId }) {
   const { t } = useLang()
+  const { toast, confirm } = useNotify()
   const {
     categories, loading,
     addCategory, updateCategory, deleteCategory,
@@ -296,14 +304,14 @@ function CatalogTab({ workshopId }) {
                   <span className="font-semibold text-ink truncate">{cat.name}</span>
                   <span className="text-xs text-ash flex-shrink-0">({(cat.service_items || []).length} item)</span>
                 </button>
-                <button onClick={() => setModal({ type: 'cat', mode: 'edit', data: cat })}
-                  className="w-7 h-7 flex items-center justify-center text-mute hover:text-ink hover:bg-canvas rounded-full transition-colors flex-shrink-0">
+                <button aria-label={t('edit')} onClick={() => setModal({ type: 'cat', mode: 'edit', data: cat })}
+                  className="w-9 h-9 flex items-center justify-center text-mute hover:text-ink hover:bg-canvas rounded-full transition-colors flex-shrink-0">
                   <Pencil className="w-3.5 h-3.5" />
                 </button>
-                <button onClick={async () => {
-                  if (!window.confirm(`${t('delete')} "${cat.name}"?`)) return
-                  try { await deleteCategory(cat.id) } catch (e) { alert(e.message) }
-                }} className="w-7 h-7 flex items-center justify-center text-mute hover:text-red-700 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
+                <button aria-label={t('delete')} onClick={async () => {
+                  if (!(await confirm({ title: t('confirm_delete_title', { name: cat.name }), message: t('confirm_irreversible'), confirmLabel: t('delete'), tone: 'danger' }))) return
+                  try { await deleteCategory(cat.id) } catch (e) { toast.error(e.message) }
+                }} className="w-9 h-9 flex items-center justify-center text-mute hover:text-red-700 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -324,14 +332,14 @@ function CatalogTab({ workshopId }) {
                           <span className="font-medium text-charcoal text-sm truncate">{item.name}</span>
                           <span className="text-xs text-ash flex-shrink-0">({(item.service_variants || []).length} varian)</span>
                         </button>
-                        <button onClick={() => setModal({ type: 'item', mode: 'edit', data: item, catId: cat.id })}
-                          className="w-7 h-7 flex items-center justify-center text-mute hover:text-ink hover:bg-canvas rounded-full transition-colors flex-shrink-0">
+                        <button aria-label={t('edit')} onClick={() => setModal({ type: 'item', mode: 'edit', data: item, catId: cat.id })}
+                          className="w-9 h-9 flex items-center justify-center text-mute hover:text-ink hover:bg-canvas rounded-full transition-colors flex-shrink-0">
                           <Pencil className="w-3 h-3" />
                         </button>
-                        <button onClick={async () => {
-                          if (!window.confirm(`${t('delete')} "${item.name}"?`)) return
-                          try { await deleteItem(cat.id, item.id) } catch (e) { alert(e.message) }
-                        }} className="w-7 h-7 flex items-center justify-center text-mute hover:text-red-700 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
+                        <button aria-label={t('delete')} onClick={async () => {
+                          if (!(await confirm({ title: t('confirm_delete_title', { name: item.name }), message: t('confirm_irreversible'), confirmLabel: t('delete'), tone: 'danger' }))) return
+                          try { await deleteItem(cat.id, item.id) } catch (e) { toast.error(e.message) }
+                        }} className="w-9 h-9 flex items-center justify-center text-mute hover:text-red-700 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
                           <Trash2 className="w-3 h-3" />
                         </button>
                       </div>
@@ -357,14 +365,14 @@ function CatalogTab({ workshopId }) {
                                   onUpdate={updateVariant}
                                 />
                               </div>
-                              <button onClick={() => setModal({ type: 'variant', mode: 'edit', data: v, itemId: item.id, catId: cat.id })}
-                                className="w-6 h-6 flex items-center justify-center text-mute hover:text-ink hover:bg-surface-bone rounded-full transition-colors flex-shrink-0">
+                              <button aria-label={t('edit')} onClick={() => setModal({ type: 'variant', mode: 'edit', data: v, itemId: item.id, catId: cat.id })}
+                                className="w-8 h-8 flex items-center justify-center text-mute hover:text-ink hover:bg-surface-bone rounded-full transition-colors flex-shrink-0">
                                 <Pencil className="w-3 h-3" />
                               </button>
-                              <button onClick={async () => {
-                                if (!window.confirm(`${t('delete')} "${v.name}"?`)) return
-                                try { await deleteVariant(cat.id, item.id, v.id) } catch (e) { alert(e.message) }
-                              }} className="w-6 h-6 flex items-center justify-center text-mute hover:text-red-700 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
+                              <button aria-label={t('delete')} onClick={async () => {
+                                if (!(await confirm({ title: t('confirm_delete_title', { name: v.name }), message: t('confirm_irreversible'), confirmLabel: t('delete'), tone: 'danger' }))) return
+                                try { await deleteVariant(cat.id, item.id, v.id) } catch (e) { toast.error(e.message) }
+                              }} className="w-8 h-8 flex items-center justify-center text-mute hover:text-red-700 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
                                 <Trash2 className="w-3 h-3" />
                               </button>
                             </div>
@@ -471,24 +479,24 @@ function ItemForm({ initial, onSave, onClose }) {
       <div className="bg-surface-card rounded-t-2xl sm:rounded-2xl border border-hairline w-full sm:max-w-md max-h-[calc(100dvh-4rem)] sm:max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between p-5 border-b border-hairline flex-shrink-0">
           <h2 className="font-display font-bold text-ink">{initial ? t('inv_edit') : t('inv_new')}</h2>
-          <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
+          <button aria-label={t('ui_close')} onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
             <X className="w-5 h-5 text-ash" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
           <div className="p-5 space-y-4 overflow-y-auto flex-1">
             <div>
-              <label className={labelCls}>{t('inv_name_lbl')}</label>
-              <input value={form.name} onChange={set('name')} placeholder={t('inv_name_ph')} className={inputCls} />
+              <label htmlFor="item-name" className={labelCls}>{t('inv_name_lbl')}</label>
+              <input id="item-name" value={form.name} onChange={set('name')} placeholder={t('inv_name_ph')} className={inputCls} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={labelCls}>{t('inv_sku')}</label>
-                <input value={form.sku} onChange={set('sku')} placeholder={t('inv_sku_ph')} className={inputCls} />
+                <label htmlFor="item-sku" className={labelCls}>{t('inv_sku')}</label>
+                <input id="item-sku" value={form.sku} onChange={set('sku')} placeholder={t('inv_sku_ph')} className={inputCls} />
               </div>
               <div>
-                <label className={labelCls}>{t('inv_unit')}</label>
-                <select value={form.unit} onChange={set('unit')}
+                <label htmlFor="item-unit" className={labelCls}>{t('inv_unit')}</label>
+                <select id="item-unit" value={form.unit} onChange={set('unit')}
                   className="w-full bg-canvas border border-hairline rounded-lg px-5 py-2.5 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                   {['pcs', 'tin', 'liter', 'kg', 'meter', 'set', 'kotak'].map(u => (
                     <option key={u} value={u}>{u}</option>
@@ -498,17 +506,17 @@ function ItemForm({ initial, onSave, onClose }) {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={labelCls}>{t('inv_qty')}</label>
-                <input type="text" inputMode="decimal" value={form.quantity} onChange={set('quantity')} placeholder="0" className={inputCls} />
+                <label htmlFor="item-qty" className={labelCls}>{t('inv_qty')}</label>
+                <input id="item-qty" type="text" inputMode="decimal" value={form.quantity} onChange={set('quantity')} placeholder="0" className={inputCls} />
               </div>
               <div>
-                <label className={labelCls}>{t('inv_reorder')}</label>
-                <input type="text" inputMode="decimal" value={form.reorder_level} onChange={set('reorder_level')} placeholder="0" className={inputCls} />
+                <label htmlFor="item-reorder" className={labelCls}>{t('inv_reorder')}</label>
+                <input id="item-reorder" type="text" inputMode="decimal" value={form.reorder_level} onChange={set('reorder_level')} placeholder="0" className={inputCls} />
               </div>
             </div>
             <div>
-              <label className={labelCls}>{t('inv_cost')}</label>
-              <input type="text" inputMode="decimal" value={form.unit_cost} onChange={set('unit_cost')} placeholder="0.00" className={inputCls} />
+              <label htmlFor="item-cost" className={labelCls}>{t('inv_cost')}</label>
+              <input id="item-cost" type="text" inputMode="decimal" value={form.unit_cost} onChange={set('unit_cost')} placeholder="0.00" className={inputCls} />
             </div>
             {error && <p className="text-red-700 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
           </div>
@@ -527,6 +535,7 @@ function ItemForm({ initial, onSave, onClose }) {
 
 function RestockForm({ item, onSave, onClose }) {
   const { t } = useLang()
+  const { toast } = useNotify()
   const [qty,      setQty]      = useState('')
   const [cost,     setCost]     = useState(item.unit_cost ? String(item.unit_cost) : '')
   const [supplier, setSupplier] = useState('')
@@ -541,7 +550,7 @@ function RestockForm({ item, onSave, onClose }) {
       if (cost) updates.unit_cost = parseFloat(cost)
       await onSave(item.id, updates)
       onClose()
-    } catch (e) { alert(e.message) }
+    } catch (e) { toast.error(e.message) }
     finally { setSaving(false) }
   }
 
@@ -555,14 +564,14 @@ function RestockForm({ item, onSave, onClose }) {
             <h3 className="font-display font-bold text-ink">{t('inv_restock')}</h3>
             <p className="text-xs text-mute mt-0.5">{item.name} — {t('inv_qty')}: {item.quantity} {item.unit}</p>
           </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
+          <button aria-label={t('ui_close')} onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
             <X className="w-4 h-4 text-ash" />
           </button>
         </div>
         <div className="p-5 space-y-4">
           <div>
-            <label className="text-xs font-semibold text-charcoal mb-1.5 block">{t('inv_restock_qty')} ({item.unit}) *</label>
-            <input autoFocus type="text" inputMode="decimal" value={qty} onChange={e => setQty(e.target.value)}
+            <label htmlFor="restock-qty" className="text-xs font-semibold text-charcoal mb-1.5 block">{t('inv_restock_qty')} ({item.unit}) *</label>
+            <input id="restock-qty" autoFocus type="text" inputMode="decimal" value={qty} onChange={e => setQty(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handle()}
               placeholder="0" className={inp} />
             {qty && parseFloat(qty) > 0 && (
@@ -572,13 +581,13 @@ function RestockForm({ item, onSave, onClose }) {
             )}
           </div>
           <div>
-            <label className="text-xs font-semibold text-charcoal mb-1.5 block">{t('inv_cost')} (RM) — {t('inv_restock_optional')}</label>
-            <input type="text" inputMode="decimal" value={cost} onChange={e => setCost(e.target.value)}
+            <label htmlFor="restock-cost" className="text-xs font-semibold text-charcoal mb-1.5 block">{t('inv_cost')} (RM) — {t('inv_restock_optional')}</label>
+            <input id="restock-cost" type="text" inputMode="decimal" value={cost} onChange={e => setCost(e.target.value)}
               placeholder="0.00" className={inp} />
           </div>
           <div>
-            <label className="text-xs font-semibold text-charcoal mb-1.5 block">{t('inv_restock_supplier')} — {t('inv_restock_optional')}</label>
-            <input type="text" value={supplier} onChange={e => setSupplier(e.target.value)}
+            <label htmlFor="restock-supplier" className="text-xs font-semibold text-charcoal mb-1.5 block">{t('inv_restock_supplier')} — {t('inv_restock_optional')}</label>
+            <input id="restock-supplier" type="text" value={supplier} onChange={e => setSupplier(e.target.value)}
               placeholder={t('inv_restock_supplier_ph')} className={inp} />
           </div>
         </div>
@@ -596,6 +605,8 @@ function RestockForm({ item, onSave, onClose }) {
 
 function StockTab({ workshopId }) {
   const { t } = useLang()
+  const { toast, confirm } = useNotify()
+  const planGate = usePlanGate()
   const { workshop } = useApp()
   const { items, loading, addItem, updateItem, deleteItem } = useInventory(workshopId)
   const [search,     setSearch]     = useState('')
@@ -603,7 +614,7 @@ function StockTab({ workshopId }) {
 
   const openAddItem = () => {
     if (isLimitedTrial(workshop) && items.length >= TRIAL_LIMITS.items) {
-      alert(t('plan_limit_items')); return
+      planGate('plan_limit_items'); return
     }
     setEditing('new')
   }
@@ -626,13 +637,13 @@ function StockTab({ workshopId }) {
   }
 
   const handleDelete = async (item) => {
-    if (!window.confirm(`${t('delete')} "${item.name}"?`)) return
-    await deleteItem(item.id)
+    if (!(await confirm({ title: t('confirm_delete_title', { name: item.name }), message: t('confirm_irreversible'), confirmLabel: t('delete'), tone: 'danger' }))) return
+    try { await deleteItem(item.id) } catch (e) { toast.error(e.message) }
   }
 
   const handleQtyChange = async (item, delta) => {
     const newQty = Math.max(0, (Number(item.quantity) || 0) + delta)
-    await updateItem(item.id, { quantity: newQty })
+    try { await updateItem(item.id, { quantity: newQty }) } catch (e) { toast.error(e.message) }
   }
 
   return (
@@ -658,10 +669,12 @@ function StockTab({ workshopId }) {
         <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-ash w-4 h-4" />
           <input value={search} onChange={e => setSearch(e.target.value)}
+            type="search" aria-label={t('inv_search_ph')}
             placeholder={t('inv_search_ph')}
             className="w-full bg-surface-card border border-hairline rounded-full pl-11 pr-5 py-2.5 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm" />
         </div>
         <select value={filter} onChange={e => setFilter(e.target.value)}
+          aria-label={t('inv_filter_label')}
           className="bg-surface-card border border-hairline rounded-lg px-5 py-2.5 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
           <option value="all">{t('inv_filter_all')}</option>
           <option value="low">{t('inv_filter_low')}</option>
@@ -700,7 +713,7 @@ function StockTab({ workshopId }) {
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <button onClick={() => handleQtyChange(item, -1)}
-                    className="w-7 h-7 flex items-center justify-center rounded-full border border-hairline hover:bg-surface-bone text-charcoal font-bold text-base leading-none transition-colors">−</button>
+                    className="w-9 h-9 flex items-center justify-center rounded-full border border-hairline hover:bg-surface-bone text-charcoal font-bold text-base leading-none transition-colors">−</button>
                   <div className="text-center min-w-[3rem]">
                     <p className={`font-bold font-display text-base leading-tight ${isLow ? 'text-amber-700' : 'text-ink'}`}>
                       {item.quantity} <span className="text-xs font-normal text-mute">{item.unit}</span>
@@ -710,20 +723,20 @@ function StockTab({ workshopId }) {
                     )}
                   </div>
                   <button onClick={() => handleQtyChange(item, +1)}
-                    className="w-7 h-7 flex items-center justify-center rounded-full border border-hairline hover:bg-surface-bone text-charcoal font-bold text-base leading-none transition-colors">+</button>
+                    className="w-9 h-9 flex items-center justify-center rounded-full border border-hairline hover:bg-surface-bone text-charcoal font-bold text-base leading-none transition-colors">+</button>
                 </div>
                 <div className="flex items-center gap-0.5 flex-shrink-0">
-                  <button onClick={() => setRestocking(item)}
+                  <button aria-label={t('inv_restock')} onClick={() => setRestocking(item)}
                     title={t('inv_restock')}
-                    className="w-8 h-8 flex items-center justify-center text-mute hover:text-badge-success hover:bg-emerald-50 rounded-full transition-colors">
+                    className="w-9 h-9 flex items-center justify-center text-mute hover:text-badge-success hover:bg-emerald-50 rounded-full transition-colors">
                     <PackagePlus className="w-3.5 h-3.5" />
                   </button>
-                  <button onClick={() => setEditing(item)}
-                    className="w-8 h-8 flex items-center justify-center text-mute hover:text-ink hover:bg-canvas rounded-full transition-colors">
+                  <button aria-label={t('edit')} onClick={() => setEditing(item)}
+                    className="w-9 h-9 flex items-center justify-center text-mute hover:text-ink hover:bg-canvas rounded-full transition-colors">
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
-                  <button onClick={() => handleDelete(item)}
-                    className="w-8 h-8 flex items-center justify-center text-mute hover:text-red-700 hover:bg-red-50 rounded-full transition-colors">
+                  <button aria-label={t('delete')} onClick={() => handleDelete(item)}
+                    className="w-9 h-9 flex items-center justify-center text-mute hover:text-red-700 hover:bg-red-50 rounded-full transition-colors">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -756,17 +769,18 @@ function StockTab({ workshopId }) {
 export function InventoryPage() {
   const { workshop } = useApp()
   const { t } = useLang()
-  const [tab, setTab] = useState('catalog')
+  // ?tab=stok deep-links to the stock list (e.g. from the dashboard's low-stock notice).
+  const [params, setParams] = useSearchParams()
+  const tab = params.get('tab') === 'stok' ? 'stock' : 'catalog'
+  const setTab = (val) => setParams(val === 'stock' ? { tab: 'stok' } : {}, { replace: true })
 
   return (
     <div className="app-page">
-      <header className="page-heading"><div><p className="page-kicker">{t('ui_workspace')}</p><h1>{t('nav_inventory')}</h1><p className="page-description">{t('ui_catalog_sub')}</p></div></header>
-      <div className="flex gap-1 bg-surface-bone border border-hairline rounded-full p-1 w-fit">
+      <PageHeader title={t('nav_inventory')} description={t('ui_catalog_sub')} />
+      <div className="segmented" role="group" aria-label={t('nav_inventory')}>
         {[['catalog', t('cat_tab_catalog')], ['stock', t('cat_tab_stock')]].map(([val, label]) => (
-          <button key={val} aria-pressed={tab === val} onClick={() => setTab(val)}
-            className={`px-5 py-1.5 rounded-full text-sm font-semibold transition-colors ${
-              tab === val ? 'bg-surface-dark text-on-dark' : 'text-mute hover:text-charcoal'
-            }`}>{label}</button>
+          <button key={val} type="button" aria-pressed={tab === val} onClick={() => setTab(val)}
+            className={`segmented-item px-5 ${tab === val ? 'segmented-item-on' : ''}`}>{label}</button>
         ))}
       </div>
 

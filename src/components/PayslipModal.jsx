@@ -46,7 +46,7 @@ function ringgitInWords(amount) {
 
 // Shared payslip — used by the owner (PayrollPage) and by workers (WorkerView).
 export function PayslipModal({ entry, run, workshop, onClose }) {
-  const { lang } = useLang()
+  const { lang, t } = useLang()
   const months = lang === 'ms' ? MONTH_MS : MONTH_EN
   const emp = entry.employee
   const period = `${months[run.month - 1]} ${run.year}`
@@ -82,13 +82,13 @@ export function PayslipModal({ entry, run, workshop, onClose }) {
             <button onClick={() => window.print()} className="flex items-center gap-1.5 bg-primary text-white text-xs font-semibold px-3 py-2 rounded-full hover:bg-primary-deep transition-colors">
               <Printer className="w-3.5 h-3.5" /> Cetak
             </button>
-            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
+            <button aria-label={t('ui_close')} onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
               <X className="w-4 h-4 text-ash" />
             </button>
           </div>
         </div>
 
-        <div className="printable p-6 overflow-y-auto text-sm">
+        <div className="printable p-6 overflow-y-auto text-sm" tabIndex={0}>
           {/* Company header */}
           <div className="flex items-start justify-between gap-4 border-b-2 border-ink pb-4 mb-4">
             <div className="flex items-center gap-3">

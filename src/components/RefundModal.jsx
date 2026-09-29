@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { X, Undo2, Loader } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { useLang } from '../context/LanguageContext'
 
 const METHODS = [
   ['cash', 'Tunai'], ['card', 'Kad'], ['duitnow', 'DuitNow'], ['online', 'Online'],
@@ -20,6 +21,7 @@ export function RefundModal({ job, onSave, onClose }) {
   const [notes,  setNotes]  = useState('')
   const [saving, setSaving] = useState(false)
   const [error,  setError]  = useState('')
+  const { t } = useLang()
 
   const fmt = (v) => `RM ${Number(v).toFixed(2)}`
   const amt = parseFloat(amount) || 0
@@ -54,7 +56,7 @@ export function RefundModal({ job, onSave, onClose }) {
             <Undo2 className="w-4 h-4 text-amber-700" />
             <h3 className="font-display font-bold text-ink">Bayar Balik / Refund</h3>
           </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
+          <button aria-label={t('ui_close')} onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
             <X className="w-4 h-4 text-ash" />
           </button>
         </div>
@@ -72,10 +74,10 @@ export function RefundModal({ job, onSave, onClose }) {
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-charcoal mb-1.5 block">Jumlah Bayar Balik (RM)</label>
+            <label htmlFor="refund-amount" className="text-xs font-semibold text-charcoal mb-1.5 block">Jumlah Bayar Balik (RM)</label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-mute pointer-events-none font-medium">RM</span>
-              <input autoFocus type="text" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)}
+              <input id="refund-amount" autoFocus type="text" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)}
                 placeholder="0.00" className={inputCls + ' pl-12 font-bold'} />
             </div>
           </div>
@@ -93,8 +95,8 @@ export function RefundModal({ job, onSave, onClose }) {
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-charcoal mb-1.5 block">Nota (pilihan)</label>
-            <input value={notes} onChange={e => setNotes(e.target.value)} placeholder="cth: diskaun selepas bayaran" className={inputCls} />
+            <label htmlFor="refund-note" className="text-xs font-semibold text-charcoal mb-1.5 block">Nota (pilihan)</label>
+            <input id="refund-note" value={notes} onChange={e => setNotes(e.target.value)} placeholder="cth: diskaun selepas bayaran" className={inputCls} />
           </div>
 
           {error && <p className="text-red-700 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}

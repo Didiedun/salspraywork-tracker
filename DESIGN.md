@@ -198,6 +198,31 @@ Cards are white on the grey canvas with a 1px `hairline` border and at most a
 hairline shadow. Controls are pills; cards use 12–16px corners. Overlays dim with
 `ink` at 40% and a small blur. There are no gradients, glows or dotted textures.
 
+## Patterns
+
+The app is used one-handed in a workshop, so the common path is short and the
+rare path is one level down.
+
+- **Navigation.** Sidebar on desktop; on phones a bottom tab bar (`.app-tabbar`)
+  with the same five pages. Portal, tutorial, feedback, language and logout
+  live in the menu drawer. Every page opens with `PageHeader`.
+- **Primary action.** One per screen. On phones the dashboard's "Kerja Baru" is
+  a floating `.fab` above the tab bar.
+- **Filtering.** Tap-to-filter summary tiles (`.attention-tile`) feed a single
+  filter state shared with the chip row (`.chip`, `.chip-on`). A two-way
+  choice (Aktif/Selesai, Walk-in/Booking, page tabs) is a `.segmented` control.
+- **Job card.** Facts in fixed positions (`.job-facts`), one advance button,
+  secondary actions in the bottom bar (`.job-card-actions`). Destructive
+  actions are never on the card; delete lives inside the edit form.
+- **Feedback.** Never `alert()` / `confirm()`. Use `useNotify()` from
+  `src/context/NotifyContext.jsx`: `toast.success/error/info` for results and
+  `await confirm({ title, message, tone: 'danger' })` before anything
+  irreversible. Plan limits go through `usePlanGate()`, which offers the
+  upgrade (`/settings#langganan`).
+- **Forms.** Group long forms into titled `.form-section`s, mark required
+  fields with `*`, link every visible label to its field (`htmlFor`/`id`),
+  and give label-less fields (search, inline edits) an `aria-label`.
+
 ## Do and don't
 
 - Do keep one accent. If two petrol elements compete, make one secondary.

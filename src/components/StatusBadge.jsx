@@ -15,7 +15,7 @@ export function PaymentBadge({ job }) {
     paid:    t('pay_paid'),
   }
   return (
-    <span className={`inline-block px-3 py-0.5 rounded-full text-xs font-semibold ${styles[status]}`}>
+    <span className={`inline-block whitespace-nowrap px-3 py-0.5 rounded-full text-xs font-semibold ${styles[status]}`}>
       {labels[status]}
     </span>
   )
@@ -25,7 +25,7 @@ export function TypeBadge({ type }) {
   const { t } = useLang()
   const isBooking = type === 'booking'
   return (
-    <span className={`inline-block px-3 py-0.5 rounded-full text-xs font-semibold border ${
+    <span className={`inline-block whitespace-nowrap px-3 py-0.5 rounded-full text-xs font-semibold border ${
       isBooking
         ? 'bg-primary/10 text-primary border-primary/25'
         : 'bg-canvas text-charcoal border-hairline'

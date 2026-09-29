@@ -2,6 +2,7 @@ import { useDialogFocus } from '../hooks/useDialogFocus'
 import { useState } from 'react'
 import { X, Banknote, CreditCard, QrCode, Globe, DollarSign, Copy, Check, ExternalLink } from 'lucide-react'
 import { useLang } from '../context/LanguageContext'
+import { useNotify } from '../context/NotifyContext'
 import { useApp } from '../context/AppContext'
 import { supabase } from '../lib/supabase'
 
@@ -14,6 +15,7 @@ const METHODS = [
 export function PaymentModal({ job, onSave, onClose }) {
   const dialogRef = useDialogFocus(onClose)
   const { t } = useLang()
+  const { toast } = useNotify()
   const { workshop } = useApp()
   const total    = Number(job.total_amount) || 0
   const discount = Number(job.discount)     || 0
@@ -53,7 +55,7 @@ export function PaymentModal({ job, onSave, onClose }) {
         payment_method: method,
       })
       onClose()
-    } catch (e) { alert(e.message) }
+    } catch (e) { toast.error(e.message) }
     finally { setSaving(false) }
   }
 

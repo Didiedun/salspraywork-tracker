@@ -202,12 +202,12 @@ export function ReceiptModal({ job, workshop, onClose }) {
 
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-hairline flex-shrink-0">
             <p className="font-semibold text-ink text-sm">{t('rc_title')}</p>
-            <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
+            <button aria-label={t('ui_close')} onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
               <X className="w-5 h-5 text-ash" />
             </button>
           </div>
 
-          <div className="overflow-y-auto flex-1">
+          <div className="overflow-y-auto flex-1" tabIndex={0}>
             <InvoiceBody job={job} workshop={workshop} t={t} />
           </div>
 

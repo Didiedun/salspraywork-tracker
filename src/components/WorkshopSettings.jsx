@@ -1,10 +1,12 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LanguageContext'
 import { supabase } from '../lib/supabase'
 import { SPRAY_STAGES } from '../constants'
 import { planStatus, planPrices } from '../lib/plan'
-import { Settings, Upload, Save, Loader, Plus, Trash2, ChevronUp, ChevronDown, Eye, EyeOff, Globe, Zap } from 'lucide-react'
+import { Upload, Save, Loader, Plus, Trash2, ChevronUp, ChevronDown, Eye, EyeOff, Globe, Zap } from 'lucide-react'
+import { PageHeader } from './PageHeader'
 
 function BillingCard() {
   const { workshop } = useApp()
@@ -151,17 +153,17 @@ function PaymentGatewayCard() {
       </div>
 
       <div>
-        <label className="text-xs font-semibold text-charcoal block mb-1.5">{t('st_gw_key')}</label>
+        <label htmlFor="gw-secret-key" className="text-xs font-semibold text-charcoal block mb-1.5">{t('st_gw_key')}</label>
         <div className="relative">
-          <input
+          <input id="gw-secret-key"
             type={showKey ? 'text' : 'password'}
             value={secretKey}
             onChange={e => setSecretKey(e.target.value)}
             placeholder={secretSet ? '•••••••••• (tersimpan)' : t('st_gw_key_ph')}
             className={inputCls + ' pr-12'}
           />
-          <button type="button" onClick={() => setShowKey(v => !v)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-ash hover:text-charcoal transition-colors">
+          <button type="button" onClick={() => setShowKey(v => !v)} aria-label={showKey ? t('ui_hide') : t('ui_show')} aria-pressed={showKey}
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full text-ash hover:text-charcoal hover:bg-surface-bone transition-colors">
             {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
         </div>
@@ -171,8 +173,8 @@ function PaymentGatewayCard() {
       </div>
 
       <div>
-        <label className="text-xs font-semibold text-charcoal block mb-1.5">{t('st_gw_cat')}</label>
-        <input value={catCode} onChange={e => setCatCode(e.target.value)}
+        <label htmlFor="gw-category" className="text-xs font-semibold text-charcoal block mb-1.5">{t('st_gw_cat')}</label>
+        <input id="gw-category" value={catCode} onChange={e => setCatCode(e.target.value)}
           placeholder={t('st_gw_cat_ph')} className={inputCls} />
       </div>
 
@@ -306,15 +308,28 @@ export function WorkshopSettings() {
 
   const inputCls = 'w-full bg-canvas border border-hairline rounded-lg px-4 py-3 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors'
 
+  // Links like /settings#langganan (from "Naik Taraf") land on the right card.
+  const { hash } = useLocation()
+  useEffect(() => {
+    if (hash) document.getElementById(hash.slice(1))?.scrollIntoView({ block: 'start' })
+  }, [hash])
+
+  const sections = [
+    ['bengkel',    t('st_nav_details')],
+    ['peringkat',  t('st_nav_stages')],
+    ['langganan',  t('st_nav_billing')],
+    ['pembayaran', t('st_nav_gateway')],
+    ['link',       t('st_nav_link')],
+  ]
+
   return (
     <div className="app-page app-page-narrow">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
-          <Settings className="w-4 h-4 text-primary" />
-        </div>
-        <div><h1 className="font-display font-bold text-ink text-3xl">{t('st_title')}</h1><p className="page-description">{t('ui_settings_sub')}</p></div>
-      </div>
+      <PageHeader title={t('st_title')} description={t('ui_settings_sub')} />
+      <nav aria-label={t('st_sections')} className="chip-row">
+        {sections.map(([id, label]) => <a key={id} href={`#${id}`} className="chip">{label}</a>)}
+      </nav>
 
+      <div id="bengkel" className="space-y-6">
       {/* Logo */}
       <div className="bg-surface-card border border-hairline rounded-lg p-5">
         <h2 className="font-semibold text-ink text-sm mb-4">{t('st_logo')}</h2>
@@ -346,32 +361,32 @@ export function WorkshopSettings() {
         <h2 className="font-semibold text-ink text-sm">{t('st_details')}</h2>
 
         <div>
-          <label className="text-xs font-semibold text-charcoal block mb-1.5">{t('st_name')}</label>
-          <input value={name} onChange={e => setName(e.target.value)} required
+          <label htmlFor="ws-name" className="text-xs font-semibold text-charcoal block mb-1.5">{t('st_name')}</label>
+          <input id="ws-name" value={name} onChange={e => setName(e.target.value)} required
             placeholder={t('st_name_ph')} className={inputCls} />
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-charcoal block mb-1.5">{t('st_phone')}</label>
-          <input value={phone} onChange={e => setPhone(e.target.value)}
+          <label htmlFor="ws-phone" className="text-xs font-semibold text-charcoal block mb-1.5">{t('st_phone')}</label>
+          <input id="ws-phone" value={phone} onChange={e => setPhone(e.target.value)}
             placeholder={t('st_phone_ph')} className={inputCls} />
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-charcoal block mb-1.5">{t('st_address')}</label>
-          <input value={address} onChange={e => setAddress(e.target.value)}
+          <label htmlFor="ws-address" className="text-xs font-semibold text-charcoal block mb-1.5">{t('st_address')}</label>
+          <input id="ws-address" value={address} onChange={e => setAddress(e.target.value)}
             placeholder={t('st_address_ph')} className={inputCls} />
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-charcoal block mb-1.5">{t('st_instagram')}</label>
-          <input value={instagram} onChange={e => setInstagram(e.target.value)}
+          <label htmlFor="ws-instagram" className="text-xs font-semibold text-charcoal block mb-1.5">{t('st_instagram')}</label>
+          <input id="ws-instagram" value={instagram} onChange={e => setInstagram(e.target.value)}
             placeholder={t('st_instagram_ph')} className={inputCls} />
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-charcoal block mb-1.5">{t('st_tiktok')}</label>
-          <input value={tiktok} onChange={e => setTiktok(e.target.value)}
+          <label htmlFor="ws-tiktok" className="text-xs font-semibold text-charcoal block mb-1.5">{t('st_tiktok')}</label>
+          <input id="ws-tiktok" value={tiktok} onChange={e => setTiktok(e.target.value)}
             placeholder={t('st_tiktok_ph')} className={inputCls} />
         </div>
 
@@ -384,8 +399,10 @@ export function WorkshopSettings() {
         </button>
       </form>
 
+      </div>
+
       {/* Stage editor */}
-      <div className="bg-surface-card border border-hairline rounded-lg p-5">
+      <div id="peringkat" className="bg-surface-card border border-hairline rounded-lg p-5">
         <div className="mb-4">
           <h2 className="font-semibold text-ink text-sm">{t('st_stages')}</h2>
           <p className="text-xs text-mute mt-0.5">{t('st_stages_sub')}</p>
@@ -397,27 +414,29 @@ export function WorkshopSettings() {
             const isLast  = i === stages.length - 1
             const canDelete = !isFirst && !isLast && stages.length > 2
             return (
-              <div key={s.value} className="flex items-center gap-2">
-                <span className="w-5 text-center text-xs text-mute font-bold flex-shrink-0">{i + 1}</span>
-                <div className="flex flex-col gap-0.5 flex-shrink-0">
-                  <button type="button" onClick={() => moveUp(i)} disabled={isFirst}
-                    className="w-5 h-5 flex items-center justify-center rounded hover:bg-surface-bone disabled:opacity-20 transition-colors">
-                    <ChevronUp className="w-3.5 h-3.5 text-charcoal" />
+              <div key={s.value} className="flex items-center gap-1.5 sm:gap-2">
+                <span className="w-4 text-center text-xs text-mute font-bold flex-shrink-0">{i + 1}</span>
+                <div className="flex flex-col flex-shrink-0">
+                  <button aria-label={`${t('ui_move_up')}: ${s.label || i + 1}`} type="button" onClick={() => moveUp(i)} disabled={isFirst}
+                    className="w-7 h-6 flex items-center justify-center rounded-md text-charcoal hover:bg-surface-bone disabled:opacity-25 disabled:hover:bg-transparent transition-colors">
+                    <ChevronUp className="w-4 h-4" />
                   </button>
-                  <button type="button" onClick={() => moveDown(i)} disabled={isLast}
-                    className="w-5 h-5 flex items-center justify-center rounded hover:bg-surface-bone disabled:opacity-20 transition-colors">
-                    <ChevronDown className="w-3.5 h-3.5 text-charcoal" />
+                  <button aria-label={`${t('ui_move_down')}: ${s.label || i + 1}`} type="button" onClick={() => moveDown(i)} disabled={isLast}
+                    className="w-7 h-6 flex items-center justify-center rounded-md text-charcoal hover:bg-surface-bone disabled:opacity-25 disabled:hover:bg-transparent transition-colors">
+                    <ChevronDown className="w-4 h-4" />
                   </button>
                 </div>
                 <input value={s.label} onChange={e => updateLabel(i, e.target.value)}
+                  aria-label={`${t('st_stage_ph')} ${i + 1}`}
                   placeholder={t('st_stage_ph')}
-                  className="flex-1 bg-canvas border border-hairline rounded-lg px-3 py-2 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors min-w-0" />
+                  className="flex-1 bg-canvas border border-hairline rounded-lg px-2.5 sm:px-3 py-2 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors min-w-0" />
                 <input value={s.short} onChange={e => updateShort(i, e.target.value.slice(0, 8))}
+                  aria-label={`${t('st_short_ph')} ${i + 1}`}
                   placeholder={t('st_short_ph')}
-                  className="w-20 bg-canvas border border-hairline rounded-lg px-3 py-2 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors flex-shrink-0" />
-                <button type="button" onClick={() => removeStage(i)} disabled={!canDelete}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 disabled:opacity-20 transition-colors flex-shrink-0">
-                  <Trash2 className="w-3.5 h-3.5 text-red-700" />
+                  className="w-[5.25rem] sm:w-24 bg-canvas border border-hairline rounded-lg px-2.5 sm:px-3 py-2 text-ink text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors flex-shrink-0" />
+                <button aria-label={`${t('delete')}: ${s.label || i + 1}`} type="button" onClick={() => removeStage(i)} disabled={!canDelete}
+                  className="w-8 h-9 flex items-center justify-center rounded-lg hover:bg-red-50 disabled:opacity-20 disabled:hover:bg-transparent transition-colors flex-shrink-0">
+                  <Trash2 className="w-4 h-4 text-red-700" />
                 </button>
               </div>
             )
@@ -440,13 +459,13 @@ export function WorkshopSettings() {
       </div>
 
       {/* Subscription */}
-      <BillingCard />
+      <div id="langganan"><BillingCard /></div>
 
       {/* Payment gateway */}
-      <PaymentGatewayCard />
+      <div id="pembayaran"><PaymentGatewayCard /></div>
 
       {/* Customer link */}
-      <div className="bg-surface-bone border border-hairline rounded-lg px-5 py-4">
+      <div id="link" className="bg-surface-bone border border-hairline rounded-lg px-5 py-4">
         <p className="text-xs font-semibold text-charcoal mb-1">{t('st_link')}</p>
         <p className="text-xs text-mute font-mono break-all">
           {typeof window !== 'undefined' ? window.location.origin : ''}/w/{workshop?.slug}

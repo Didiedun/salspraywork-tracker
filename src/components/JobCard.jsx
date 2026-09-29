@@ -7,13 +7,16 @@ import { ReceiptModal } from './ReceiptModal'
 import { CustomerHistoryModal } from './CustomerHistoryModal'
 import { PaymentModal } from './PaymentModal'
 import { RefundModal } from './RefundModal'
+import { Lightbox } from './Lightbox'
+import { WhatsAppIcon } from './icons'
 import { daysIn, isStale } from '../constants'
 import { useStages } from '../hooks/useStages'
 import { useLang } from '../context/LanguageContext'
 import { useApp } from '../context/AppContext'
+import { useNotify } from '../context/NotifyContext'
 import {
-  Edit2, Trash2, Camera, Printer, Image, DollarSign,
-  ChevronDown, ChevronUp, X, ChevronRight, ChevronLeft, Clock, UserCheck, Mail, Loader
+  Edit2, Camera, Printer, ChevronDown, X, ChevronRight, ChevronLeft, Clock, UserCheck, Mail,
+  Loader, Banknote, CheckCircle2, History,
 } from 'lucide-react'
 
 function EmailToast({ job, workshop, t, onClose }) {
@@ -21,18 +24,18 @@ function EmailToast({ job, workshop, t, onClose }) {
   const body = `Hi ${job.owner},\n\n${t('email_body_stage')}: ${job.stage.toUpperCase()}\n\n${statusUrl ? `Semak status: ${statusUrl}\n\n` : ''}${workshop?.name || 'Workshop'}`
   const href = `mailto:${job.customer_email}?subject=${encodeURIComponent(t('email_subject') + ' — ' + job.plate)}&body=${encodeURIComponent(body)}`
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-surface-dark text-on-dark rounded-2xl shadow-2xl px-4 py-3 flex items-center gap-3 text-sm w-[calc(100vw-2rem)] max-w-sm">
-      <Mail className="w-4 h-4 flex-shrink-0 opacity-70" />
+    <div role="status" className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-50 bg-surface-dark text-on-dark rounded-2xl shadow-2xl px-4 py-3 flex items-center gap-3 text-sm w-[calc(100vw-2rem)] max-w-sm sm:bottom-6">
+      <Mail className="w-4 h-4 flex-shrink-0 opacity-70" aria-hidden="true" />
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-xs">{t('email_prompt')}</p>
-        <p className="text-on-dark/50 text-xs truncate">{job.customer_email}</p>
+        <p className="text-on-dark/70 text-xs truncate">{job.customer_email}</p>
       </div>
       <a href={href} onClick={onClose} target="_blank" rel="noreferrer"
-        className="flex-shrink-0 text-xs font-semibold bg-primary hover:bg-primary-deep px-3 py-1.5 rounded-full transition-colors whitespace-nowrap">
+        className="flex-shrink-0 text-xs font-semibold bg-white text-ink hover:bg-canvas px-3 py-2 rounded-full transition-colors whitespace-nowrap">
         {t('email_send')}
       </a>
-      <button onClick={onClose} className="text-on-dark/40 hover:text-on-dark transition-colors flex-shrink-0">
-        <X className="w-3.5 h-3.5" />
+      <button onClick={onClose} aria-label={t('ui_close')} className="flex h-8 w-8 items-center justify-center rounded-full text-on-dark/70 hover:text-on-dark transition-colors flex-shrink-0">
+        <X className="w-4 h-4" />
       </button>
     </div>
   )
@@ -54,19 +57,17 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
   const [uploading, setUploading]     = useState(null)
   const [lightbox, setLightbox]       = useState(null)
   const [advancing, setAdvancing]     = useState(false)
-  const [showReceipt, setShowReceipt]   = useState(false)
-  const [showHistory, setShowHistory]   = useState(false)
-  const [showPayment, setShowPayment]   = useState(false)
-  const [showRefund, setShowRefund]     = useState(false)
-  const [emailPrompt, setEmailPrompt]   = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState(false)
-  const [deleting, setDeleting]           = useState(false)
-  const [deleteErr, setDeleteErr]         = useState('')
+  const [showReceipt, setShowReceipt] = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
+  const [showPayment, setShowPayment] = useState(false)
+  const [showRefund, setShowRefund]   = useState(false)
+  const [emailPrompt, setEmailPrompt] = useState(false)
   const photoRef = useRef()
 
   const { stages, stageMap, lastValue, nextStage, prevStage, isOverdue: checkOverdue } = useStages()
   const { t, lang } = useLang()
   const { workshop } = useApp()
+  const { toast, confirm } = useNotify()
 
   const photos = job.job_attachments?.filter(a => a.type === 'photo') || []
 
@@ -76,10 +77,28 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
   const overdue  = checkOverdue(job)
   const stale    = !overdue && !isLast && isStale(job)
   const days     = daysIn(job)
+  const nextLabel = stages[Math.min(stageIdx + 1, stages.length - 1)]?.label
+  const prevLabel = stages[Math.max(stageIdx - 1, 0)]?.label
 
-  const formatDate  = (d) => d ? new Date(d).toLocaleDateString('ms-MY', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'
-  const formatMoney = (v) => v != null ? `RM ${Number(v).toFixed(2)}` : '-'
+  // Year only when it isn't this year — keeps facts on one line.
+  const formatDate  = (d) => {
+    if (!d) return '-'
+    const date = new Date(d)
+    const opts = { day: '2-digit', month: 'short', ...(date.getFullYear() !== new Date().getFullYear() && { year: 'numeric' }) }
+    return date.toLocaleDateString(lang === 'en' ? 'en-MY' : 'ms-MY', opts)
+  }
+  const formatMoney = (v) => v != null ? `RM ${Number(v).toLocaleString('ms-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-'
   const balance     = (Number(job.total_amount) || 0) - (Number(job.discount) || 0) - (Number(job.downpayment) || 0)
+  const owes        = !job.paid && balance > 0
+
+  const waHref = (() => {
+    if (!job.phone) return null
+    const d = job.phone.replace(/\D/g, ''); const p = d.startsWith('60') ? d : '60' + d.replace(/^0/, '')
+    const msg = isLast
+      ? `${t('wa_msg_ready')} (${job.plate})` + (owes ? ` — ${t('pay_balance')}: RM ${balance.toFixed(2)}` : '')
+      : t('wa_msg') + ' ' + job.plate
+    return `https://wa.me/${p}?text=${encodeURIComponent(msg)}`
+  })()
 
   const advanceStage = async (dir) => {
     setAdvancing(true)
@@ -87,6 +106,8 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
       const newStage = dir === 'next' ? nextStage(job.stage) : prevStage(job.stage)
       await onUpdate(job.id, { stage: newStage, updated_at: new Date().toISOString() })
       if (dir === 'next' && job.customer_email) setEmailPrompt(true)
+    } catch (e) {
+      toast.error(e.message)
     } finally { setAdvancing(false) }
   }
 
@@ -100,7 +121,7 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
       if (upErr) throw upErr
       const { data: { publicUrl } } = supabase.storage.from('attachments').getPublicUrl(path)
       await onAddAttachment(job.id, publicUrl, type, '', type === 'photo' ? job.stage : '')
-    } catch (e) { alert('Gagal muat naik: ' + e.message) }
+    } catch (e) { toast.error(`${t('upload_failed')}: ${e.message}`) }
     finally { setUploading(null) }
   }
 
@@ -108,211 +129,146 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
     const file = e.target.files?.[0]; if (file) uploadFile(file, type); e.target.value = ''
   }
 
-  // In-app confirm (no window.confirm — browsers can silently suppress dialogs).
-  const doDelete = async () => {
-    setDeleting(true); setDeleteErr('')
-    try {
-      await onDelete(job.id)
-      setConfirmDelete(false)
-    } catch (e) {
-      setDeleteErr(e.message)
-    } finally {
-      setDeleting(false)
-    }
+  const deletePhoto = async (img) => {
+    if (!(await confirm({ title: t('photo_delete_title'), message: t('confirm_irreversible'), confirmLabel: t('delete'), tone: 'danger' }))) return
+    try { await onDeleteAttachment(job.id, img.id) } catch (e) { toast.error(e.message) }
   }
 
   return (
     <>
       {editing && (
         <JobForm initial={job}
-          onSave={(d) => onUpdate(job.id, d)} onClose={() => setEditing(false)} />
+          onSave={(d) => onUpdate(job.id, d)}
+          onDelete={() => onDelete(job.id)}
+          onClose={() => setEditing(false)} />
       )}
-      {showReceipt && (
-        <ReceiptModal job={job} workshop={workshop} onClose={() => setShowReceipt(false)} />
-      )}
-      {showHistory && (
-        <CustomerHistoryModal plate={job.plate} onClose={() => setShowHistory(false)} />
-      )}
-      {showPayment && (
-        <PaymentModal job={job} onSave={onUpdate} onClose={() => setShowPayment(false)} />
-      )}
-      {showRefund && (
-        <RefundModal job={job} onSave={onUpdate} onClose={() => setShowRefund(false)} />
-      )}
-      {confirmDelete && (
-        <div className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-[80] flex items-center justify-center p-4"
-          onClick={() => !deleting && setConfirmDelete(false)}>
-          <div className="bg-surface-card rounded-2xl w-full max-w-xs p-5 space-y-4" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
-                <Trash2 className="w-4 h-4 text-red-700" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-semibold text-ink text-sm">{t('card_confirm_delete')}</p>
-                <p className="text-xs text-mute truncate">{job.plate} — {job.owner}</p>
-              </div>
-            </div>
-            {deleteErr && <p className="text-red-700 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{deleteErr}</p>}
-            <div className="flex gap-2">
-              <button onClick={() => setConfirmDelete(false)} disabled={deleting}
-                className="flex-1 py-2.5 rounded-full border border-hairline text-charcoal text-sm font-semibold hover:bg-canvas transition-colors disabled:opacity-50">
-                {t('no')}
-              </button>
-              <button onClick={doDelete} disabled={deleting}
-                className="flex-1 py-2.5 rounded-full bg-red-600 hover:bg-red-700 text-white text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50">
-                {deleting ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                {t('delete')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {showReceipt && <ReceiptModal job={job} workshop={workshop} onClose={() => setShowReceipt(false)} />}
+      {showHistory && <CustomerHistoryModal plate={job.plate} onClose={() => setShowHistory(false)} />}
+      {showPayment && <PaymentModal job={job} onSave={onUpdate} onClose={() => setShowPayment(false)} />}
+      {showRefund && <RefundModal job={job} onSave={onUpdate} onClose={() => setShowRefund(false)} />}
       {emailPrompt && <EmailToast job={job} workshop={workshop} t={t} onClose={() => setEmailPrompt(false)} />}
-      {lightbox && (
-        <div className="fixed inset-0 bg-ink/80 z-50 flex items-center justify-center p-4" onClick={() => setLightbox(null)}>
-          <img src={lightbox} alt="" className="max-w-full max-h-full rounded-md" />
-          <button className="absolute top-4 right-4 text-white bg-ink/60 hover:bg-ink/80 rounded-full w-10 h-10 flex items-center justify-center transition-colors" onClick={() => setLightbox(null)}>
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
+      {lightbox && <Lightbox src={lightbox.url} alt={lightbox.stage || job.plate} onClose={() => setLightbox(null)} />}
 
-      <div className={`job-card border overflow-hidden transition-shadow hover:shadow-md ${
+      <article aria-labelledby={`job-${job.id}`} className={`job-card border ${
         overdue ? 'border-red-200' : stale ? 'border-amber-200' : 'border-hairline'
       }`}>
-        {overdue && (
-          <div className="bg-red-50 border-b border-red-100 px-4 py-1.5 flex items-center gap-2">
-            <Clock className="w-3.5 h-3.5 text-red-700" />
-            <p className="text-red-700 text-xs font-semibold">{t('overdue_label')} — {days} {t('card_overdue')}</p>
-          </div>
-        )}
-        {stale && (
-          <div className="bg-amber-50 border-b border-amber-100 px-4 py-1.5 flex items-center gap-2">
-            <Clock className="w-3.5 h-3.5 text-amber-600" />
-            <p className="text-amber-700 text-xs font-semibold">{t('stale_label')}</p>
-          </div>
+        {(overdue || stale) && (
+          <p className={`flex items-center gap-2 border-b px-5 py-2 text-xs font-semibold ${
+            overdue ? 'bg-red-50 border-red-100 text-red-700' : 'bg-amber-50 border-amber-100 text-amber-800'
+          }`}>
+            <Clock className="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" />
+            {overdue ? `${t('overdue_label')} — ${days} ${t('card_overdue')}` : t('stale_label')}
+          </p>
         )}
 
         <div className="job-card-body">
-          <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="plate text-2xl">{job.plate}</span>
+                <h3 id={`job-${job.id}`} className="plate text-xl sm:text-2xl">{job.plate}</h3>
                 <TypeBadge type={job.type} />
                 {visitCount > 1 && (
-                  <button onClick={() => setShowHistory(true)}
-                    className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-semibold hover:bg-primary/20 transition-colors">
-                    {visitCount}×
+                  <button onClick={() => setShowHistory(true)} title={t('hist_title')}
+                    className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-semibold hover:bg-primary/15 transition-colors">
+                    <History className="w-3 h-3" aria-hidden="true" /> {t('card_visits', { n: visitCount })}
                   </button>
                 )}
-                {!overdue && days > 0 && (
-                  <span className="text-xs text-mute flex items-center gap-1">
-                    <Clock className="w-3 h-3" />{days}{t('days_short')}
-                  </span>
-                )}
               </div>
-              <p className="text-charcoal text-sm mt-0.5 truncate">{job.car} — {job.owner}</p>
+              <p className="text-charcoal text-sm mt-2 truncate">{job.car} · {job.owner}</p>
             </div>
             <PaymentBadge job={job} />
           </div>
 
-          <div className="mt-3">
+          <div className="mt-4">
             <StageBar current={job.stage} stages={stages} />
           </div>
 
-          <div className="stage-controls flex items-center gap-2 mt-4">
-            <button
-              onClick={() => advanceStage('prev')}
-              disabled={isFirst || advancing}
-              className="flex items-center gap-1 text-xs text-mute hover:text-ink disabled:opacity-30 bg-canvas hover:bg-surface-bone border border-hairline px-2.5 py-1.5 rounded-full transition-colors font-semibold"
-            >
-              <ChevronLeft className="w-3.5 h-3.5" /> {t('card_retreat')}
-            </button>
-            <div className="flex-1 text-center">
-              <span className="text-xs font-semibold text-charcoal">
-                {stages[stageIdx]?.label}
-              </span>
+          <dl className="job-facts">
+            <div>
+              <dt>{t('card_fact_in')}</dt>
+              <dd>{formatDate(job.date_in || job.created_at)}{days > 0 && <span className="font-normal text-mute"> · {t('card_days', { n: days })}</span>}</dd>
             </div>
-            <button
-              onClick={() => advanceStage('next')}
-              disabled={isLast || advancing}
-              className="flex items-center gap-1 text-xs text-primary hover:text-primary-deep disabled:opacity-30 bg-primary/10 hover:bg-primary/15 border border-primary/25 px-2.5 py-1.5 rounded-full transition-colors font-semibold"
-            >
-              {t('card_advance')} <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          <div className="flex items-center gap-3 mt-4 text-xs text-mute flex-wrap">
-            <span>{formatDate(job.date_in || job.created_at)}</span>
-            {job.updated_by && (
-              <span className="flex items-center gap-1">
-                <UserCheck className="w-3 h-3" />
-                {t('card_updated_by')} {job.updated_by.split('@')[0]}
-                {job.updated_at && <span className="text-ash">· {timeAgo(job.updated_at, lang)}</span>}
-              </span>
-            )}
             {job.est_completion && (
-              <span className="text-primary font-semibold">{t('form_est')}: {formatDate(job.est_completion)}</span>
+              <div><dt>{t('card_fact_est')}</dt><dd className="text-primary">{formatDate(job.est_completion)}</dd></div>
             )}
             {job.total_amount != null && (
-              <span className="font-semibold text-charcoal">
-                {formatMoney(job.total_amount)}
-                {!job.paid && balance > 0 && (
-                  <button
-                    onClick={() => setShowPayment(true)}
-                    className="ml-1 text-amber-700 hover:text-amber-800 font-semibold underline underline-offset-2 transition-colors">
-                    · {t('pay_balance').split(' ')[0]} {formatMoney(balance)}
-                  </button>
-                )}
-                {balance < -0.005 && (
-                  <button
-                    onClick={() => setShowRefund(true)}
-                    className="ml-1 text-amber-700 hover:text-amber-800 font-semibold underline underline-offset-2 transition-colors">
-                    · {t('rc_overpaid')} {formatMoney(-balance)}
-                  </button>
-                )}
-              </span>
+              <div><dt>{t('card_fact_total')}</dt><dd>{formatMoney(job.total_amount)}</dd></div>
             )}
-            {job.phone && (
-              <a href={(() => {
-                const d = job.phone.replace(/\D/g,''); const p = d.startsWith('60') ? d : '60'+d.replace(/^0/,'')
-                const msg = isLast
-                  ? `${t('wa_msg_ready')} (${job.plate})` + (!job.paid && balance > 0 ? ` — ${t('pay_balance')}: RM ${balance.toFixed(2)}` : '')
-                  : t('wa_msg') + ' ' + job.plate
-                return `https://wa.me/${p}?text=${encodeURIComponent(msg)}`
-              })()}
-                target="_blank" rel="noreferrer"
-                className="text-badge-success hover:text-emerald-700 font-semibold" onClick={e => e.stopPropagation()}>
-                {t('card_whatsapp')}
-              </a>
+            {owes && (
+              <div><dt>{t('card_fact_balance')}</dt><dd>
+                <button onClick={() => setShowPayment(true)} className="font-semibold text-amber-700 underline underline-offset-2 hover:text-amber-800">{formatMoney(balance)}</button>
+              </dd></div>
+            )}
+            {balance < -0.005 && (
+              <div><dt>{t('rc_overpaid')}</dt><dd>
+                <button onClick={() => setShowRefund(true)} className="font-semibold text-amber-700 underline underline-offset-2 hover:text-amber-800">{formatMoney(-balance)}</button>
+              </dd></div>
+            )}
+          </dl>
+
+          {job.updated_by && (
+            <p className="mt-3 flex items-center gap-1.5 text-xs text-mute">
+              <UserCheck className="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" />
+              <span className="truncate">{t('card_updated_by')} {job.updated_by.split('@')[0]}{job.updated_at && ` · ${timeAgo(job.updated_at, lang)}`}</span>
+            </p>
+          )}
+
+          <div className="stage-controls mt-4 flex gap-2">
+            <button onClick={() => advanceStage('prev')} disabled={isFirst || advancing}
+              aria-label={t('card_retreat_to', { stage: prevLabel })} title={t('card_retreat_to', { stage: prevLabel })}
+              className="flex min-h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-hairline bg-canvas text-charcoal transition-colors hover:bg-surface-bone disabled:opacity-40">
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            {isLast ? (
+              <p className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-50 px-3 text-sm font-semibold text-badge-success">
+                <CheckCircle2 className="w-4 h-4" aria-hidden="true" /> {t('card_ready_pickup')}
+              </p>
+            ) : (
+              <button onClick={() => advanceStage('next')} disabled={advancing}
+                className="flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-primary/25 bg-primary/10 px-3 text-sm font-semibold text-primary transition-colors hover:bg-primary/15 disabled:opacity-60">
+                {advancing && <Loader className="w-4 h-4 animate-spin" aria-hidden="true" />}
+                {t('card_advance_to', { stage: nextLabel })} <ChevronRight className="w-4 h-4" aria-hidden="true" />
+              </button>
             )}
           </div>
         </div>
 
         <div className="border-t border-hairline">
           <button aria-expanded={expanded} onClick={() => setExpanded(x => !x)}
-            className="w-full flex items-center justify-between px-5 py-3 text-xs text-mute hover:bg-canvas transition-colors">
-            <span>{photos.length} {t('card_photos')}</span>
-            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            className="w-full flex items-center justify-between px-5 py-3 text-xs font-semibold text-mute hover:bg-canvas hover:text-charcoal transition-colors">
+            <span>{t('card_details_toggle', { n: photos.length })}</span>
+            <ChevronDown className={`w-4 h-4 transition-transform ${expanded ? 'rotate-180' : ''}`} aria-hidden="true" />
           </button>
 
           {expanded && (
-            <div className="px-4 pb-4 space-y-4">
+            <div className="px-5 pb-5 space-y-4">
               {job.notes && (
-                <div className="bg-canvas rounded-md p-3 text-sm text-body">
+                <div className="bg-canvas rounded-xl p-3 text-sm text-body">
                   <span className="font-semibold text-charcoal text-xs block mb-1">{t('card_notes')}</span>
                   {job.notes}
                 </div>
               )}
 
+              {job.services?.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-charcoal mb-1.5">{t('form_services')}</p>
+                  <ul className="divide-y divide-hairline rounded-xl border border-hairline text-sm">
+                    {job.services.map((s, i) => (
+                      <li key={i} className="flex items-baseline justify-between gap-3 px-3 py-2">
+                        <span className="min-w-0 text-body">{s.description}{(parseFloat(s.qty) || 1) > 1 && <span className="text-mute"> × {s.qty}</span>}</span>
+                        <span className="flex-shrink-0 font-semibold text-ink">{formatMoney(s.amount)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-semibold text-charcoal flex items-center gap-1.5">
-                    <Image className="w-3.5 h-3.5" /> {t('card_photos_lbl')} ({photos.length})
-                  </p>
+                  <p className="text-xs font-semibold text-charcoal">{t('card_photos_lbl')} ({photos.length})</p>
                   <button onClick={() => photoRef.current?.click()} disabled={!!uploading}
-                    className="flex items-center gap-1.5 text-xs bg-canvas border border-hairline text-charcoal px-3 py-1.5 rounded-full hover:bg-surface-bone disabled:opacity-50 transition-colors font-semibold">
-                    <Camera className="w-3.5 h-3.5" />
+                    className="flex min-h-9 items-center gap-1.5 text-xs bg-canvas border border-hairline text-charcoal px-3 rounded-full hover:bg-surface-bone disabled:opacity-50 transition-colors font-semibold">
+                    {uploading === 'photo' ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
                     {uploading === 'photo' ? t('uploading') : t('card_add_photo')}
                   </button>
                   <input ref={photoRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange('photo')} />
@@ -320,45 +276,52 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
                 {photos.length > 0 ? (
                   <div className="grid grid-cols-4 gap-2">
                     {photos.map(img => (
-                      <div key={img.id} className="relative group">
-                        <img src={img.url} alt={img.stage} title={img.stage}
-                          className="w-full aspect-square object-cover rounded-md cursor-pointer"
-                          onClick={() => setLightbox(img.url)} />
+                      <div key={img.id} className="relative">
+                        <button type="button" onClick={() => setLightbox(img)} className="block w-full" aria-label={`${t('card_photos_lbl')}: ${img.stage || job.plate}`}>
+                          <img src={img.url} alt="" className="w-full aspect-square object-cover rounded-lg" />
+                        </button>
                         {img.stage && (
-                          <span className="absolute bottom-1 left-1 bg-ink/60 text-white text-xs px-1 rounded truncate max-w-[90%]">{img.stage}</span>
+                          <span className="pointer-events-none absolute bottom-1 left-1 bg-ink/70 text-white text-[10px] px-1 rounded truncate max-w-[90%]">{img.stage}</span>
                         )}
-                        <button onClick={() => window.confirm(t('delete') + '?') && onDeleteAttachment(job.id, img.id)}
-                          className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <X className="w-3 h-3" />
+                        <button onClick={() => deletePhoto(img)} aria-label={t('photo_delete_title')}
+                          className="absolute top-1 right-1 bg-ink/70 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center transition-colors">
+                          <X className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     ))}
                   </div>
-                ) : <p className="text-xs text-ash italic">{t('card_no_photos')}</p>}
+                ) : <p className="text-xs text-mute">{t('card_no_photos')}</p>}
               </div>
 
+              {owes && (
+                <button onClick={() => setShowReceipt(true)} className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline">
+                  <Printer className="w-3.5 h-3.5" /> {t('card_view_invoice')}
+                </button>
+              )}
             </div>
           )}
         </div>
 
         <div className="job-card-actions flex border-t border-hairline">
-          <button onClick={() => setEditing(true)} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs text-mute hover:bg-canvas hover:text-ink transition-colors font-semibold">
-            <Edit2 className="w-3.5 h-3.5" /> {t('edit')}
-          </button>
-          {!job.paid && balance > 0 ? (
-            <button onClick={() => setShowPayment(true)} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs text-white bg-primary hover:bg-primary-deep transition-colors font-semibold border-x border-primary">
-              <DollarSign className="w-3.5 h-3.5" /> {t('pay_collect')}
+          {waHref && (
+            <a href={waHref} target="_blank" rel="noreferrer" className="job-action text-badge-success hover:bg-emerald-50">
+              <WhatsAppIcon className="w-4 h-4" /> {t('card_whatsapp')}
+            </a>
+          )}
+          {owes ? (
+            <button onClick={() => setShowPayment(true)} className="job-action job-action-primary">
+              <Banknote className="w-4 h-4" /> {t('pay_collect')}
             </button>
           ) : (
-            <button onClick={() => setShowReceipt(true)} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs text-mute hover:bg-canvas hover:text-ink transition-colors border-x border-hairline font-semibold">
-              <Printer className="w-3.5 h-3.5" /> {t('card_invoice')}
+            <button onClick={() => setShowReceipt(true)} className="job-action">
+              <Printer className="w-4 h-4" /> {t('card_invoice')}
             </button>
           )}
-          <button onClick={() => { setDeleteErr(''); setConfirmDelete(true) }} className="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs text-red-700 hover:bg-red-50 transition-colors font-semibold">
-            <Trash2 className="w-3.5 h-3.5" /> {t('delete')}
+          <button onClick={() => setEditing(true)} className="job-action">
+            <Edit2 className="w-4 h-4" /> {t('edit')}
           </button>
         </div>
-      </div>
+      </article>
     </>
   )
 }

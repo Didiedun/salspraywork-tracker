@@ -1,12 +1,14 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LanguageContext'
+import { useNotify } from '../context/NotifyContext'
+import { PageHeader } from './PageHeader'
 import { useExpenses } from '../hooks/useExpenses'
 import { useJobs } from '../hooks/useJobs'
 import { supabase } from '../lib/supabase'
 import {
   Plus, Trash2, X, Save, Download, ChevronLeft, ChevronRight,
-  TrendingUp, TrendingDown, Minus, AlertTriangle, Receipt,
+  TrendingUp, TrendingDown, Wallet, AlertTriangle, Receipt,
 } from 'lucide-react'
 
 const CATEGORIES = ['sewa', 'utiliti', 'alat', 'petrol', 'gaji', 'lain']
@@ -52,32 +54,32 @@ function AddExpenseModal({ onSave, onClose }) {
       <div className="bg-surface-card rounded-t-2xl sm:rounded-2xl border border-hairline w-full sm:max-w-sm flex flex-col">
         <div className="flex items-center justify-between p-5 border-b border-hairline">
           <h3 className="font-display font-bold text-ink">{t('fin_add_expense')}</h3>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
+          <button aria-label={t('ui_close')} onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-canvas transition-colors">
             <X className="w-4 h-4 text-ash" />
           </button>
         </div>
         <form onSubmit={handle} className="p-5 space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-semibold text-charcoal mb-1.5 block">{t('fin_expense_date')}</label>
-              <input type="date" value={form.date} onChange={set('date')} className="w-full bg-canvas border border-hairline rounded-lg px-3 py-2.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+              <label htmlFor="expense-date" className="text-xs font-semibold text-charcoal mb-1.5 block">{t('fin_expense_date')}</label>
+              <input id="expense-date" type="date" value={form.date} onChange={set('date')} className="w-full bg-canvas border border-hairline rounded-lg px-3 py-2.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
             </div>
             <div>
-              <label className="text-xs font-semibold text-charcoal mb-1.5 block">{t('fin_expense_cat')}</label>
-              <select value={form.category} onChange={set('category')} className={sel}>
+              <label htmlFor="expense-category" className="text-xs font-semibold text-charcoal mb-1.5 block">{t('fin_expense_cat')}</label>
+              <select id="expense-category" value={form.category} onChange={set('category')} className={sel}>
                 {CATEGORIES.map(c => <option key={c} value={c}>{t(`fin_cat_${c}`)}</option>)}
               </select>
             </div>
           </div>
           <div>
-            <label className="text-xs font-semibold text-charcoal mb-1.5 block">{t('fin_expense_desc')}</label>
-            <input autoFocus value={form.description} onChange={set('description')} placeholder={t('fin_expense_desc_ph')} className={inp} />
+            <label htmlFor="expense-description" className="text-xs font-semibold text-charcoal mb-1.5 block">{t('fin_expense_desc')}</label>
+            <input id="expense-description" autoFocus value={form.description} onChange={set('description')} placeholder={t('fin_expense_desc_ph')} className={inp} />
           </div>
           <div>
-            <label className="text-xs font-semibold text-charcoal mb-1.5 block">{t('fin_expense_amount')} (RM) *</label>
+            <label htmlFor="expense-amount" className="text-xs font-semibold text-charcoal mb-1.5 block">{t('fin_expense_amount')} (RM) *</label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-mute pointer-events-none font-medium">RM</span>
-              <input type="text" inputMode="decimal" value={form.amount} onChange={set('amount')} placeholder="0.00"
+              <input id="expense-amount" type="text" inputMode="decimal" value={form.amount} onChange={set('amount')} placeholder="0.00"
                 className="w-full bg-canvas border border-hairline rounded-full pl-12 pr-4 py-2.5 text-sm text-ink font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
             </div>
           </div>
@@ -96,7 +98,13 @@ function AddExpenseModal({ onSave, onClose }) {
 export function FinancePage() {
   const { workshop } = useApp()
   const { t, lang } = useLang()
+  const { toast, confirm } = useNotify()
   const MONTHS = lang === 'ms' ? MONTH_MS : MONTH_EN
+  // Lists are already scoped to one month, so "15 Sep" reads faster than 2026-09-15.
+  const shortDate = (iso) => {
+    const [, m, d] = (iso || '').slice(0, 10).split('-').map(Number)
+    return m && d ? `${d} ${MONTHS[m - 1]}` : ''
+  }
 
   const now = new Date()
   const [year,  setYear]  = useState(now.getFullYear())
@@ -224,7 +232,18 @@ CREATE POLICY "service_manage_events" ON payment_events FOR ALL USING (true);`
 
   return (
     <div className="app-page">
-      <header className="page-heading"><div><p className="page-kicker">{t('ui_workspace')}</p><h1>{t('nav_finance')}</h1><p className="page-description">{t('ui_finance_sub')}</p></div></header>
+      <PageHeader title={t('nav_finance')} description={t('ui_finance_sub')} actions={
+        <div className="flex items-center gap-1 rounded-full border border-hairline bg-surface-card p-1" role="group" aria-label={t('fin_month')}>
+          <button aria-label={t('ui_prev')} onClick={prevMonth} className="flex h-10 w-10 items-center justify-center rounded-full text-charcoal transition-colors hover:bg-canvas hover:text-ink">
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <span className="min-w-[7.5rem] text-center text-sm font-semibold text-ink" aria-live="polite">{MONTHS[month - 1]} {year}</span>
+          <button aria-label={t('ui_next')} onClick={nextMonth} disabled={isCurrentMonth}
+            className="flex h-10 w-10 items-center justify-center rounded-full text-charcoal transition-colors hover:bg-canvas hover:text-ink disabled:opacity-30">
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      } />
 
       {/* Migration notice */}
       {needsMigration && (
@@ -240,60 +259,30 @@ CREATE POLICY "service_manage_events" ON payment_events FOR ALL USING (true);`
         </div>
       )}
 
-      {/* Month nav */}
-      <div className="flex items-center justify-between">
-        <h2 className="font-display font-bold text-ink text-lg">{t('nav_finance')}</h2>
-        <div className="flex items-center gap-2 bg-surface-card border border-hairline rounded-full px-2 py-1">
-          <button onClick={prevMonth} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-canvas transition-colors text-mute hover:text-ink">
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <span className="text-sm font-semibold text-ink min-w-[7rem] text-center">
-            {MONTHS[month - 1]} {year}
-          </span>
-          <button onClick={nextMonth} disabled={isCurrentMonth}
-            className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-canvas transition-colors text-mute hover:text-ink disabled:opacity-30">
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* P&L summary */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-surface-card border border-hairline rounded-xl p-4 text-center">
-          <TrendingUp className="w-4 h-4 text-badge-success mx-auto mb-1.5" />
-          <p className="font-display font-bold text-base text-badge-success">
-            RM {monthRevenue.toLocaleString('ms-MY', { minimumFractionDigits: 0 })}
-          </p>
-          <p className="text-xs text-mute mt-0.5 font-medium">{t('fin_revenue')}</p>
-        </div>
-        <div className="bg-surface-card border border-hairline rounded-xl p-4 text-center">
-          <TrendingDown className="w-4 h-4 text-red-700 mx-auto mb-1.5" />
-          <p className="font-display font-bold text-base text-red-700">
-            RM {totalExpenses.toLocaleString('ms-MY', { minimumFractionDigits: 0 })}
-          </p>
-          <p className="text-xs text-mute mt-0.5 font-medium">{t('fin_expenses_total')}</p>
-        </div>
-        <div className={`border rounded-xl p-4 text-center ${isProfit ? 'bg-badge-success/5 border-badge-success/30' : 'bg-red-50 border-red-200'}`}>
-          <Minus className={`w-4 h-4 mx-auto mb-1.5 ${isProfit ? 'text-badge-success' : 'text-red-700'}`} />
-          <p className={`font-display font-bold text-base ${isProfit ? 'text-badge-success' : 'text-red-700'}`}>
-            {isProfit ? '' : '−'}{fmt(profit)}
-          </p>
-          <p className={`text-xs mt-0.5 font-medium ${isProfit ? 'text-badge-success' : 'text-red-700'}`}>
-            {isProfit ? t('fin_profit') : t('fin_loss')}
-          </p>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-1 bg-surface-bone border border-hairline rounded-full p-1 w-fit">
+      {/* Profit & loss for the month: what came in, what went out, what's left */}
+      <dl className="grid grid-cols-3 gap-2 sm:gap-3">
         {[
-          { key: 'expenses', label: `${t('fin_tab_expenses')} (${expenses.length})` },
-          { key: 'revenue',  label: `${t('fin_tab_revenue')} (${paidJobs.length})` },
-        ].map(({ key, label }) => (
-          <button key={key} onClick={() => setTab(key)}
-            className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
-              tab === key ? 'bg-surface-dark text-on-dark' : 'text-mute hover:text-charcoal'
-            }`}>{label}</button>
+          { label: t('fin_revenue'),        value: fmt(monthRevenue),  tone: 'text-badge-success', Icon: TrendingUp },
+          { label: t('fin_expenses_total'), value: fmt(totalExpenses), tone: 'text-red-700',       Icon: TrendingDown },
+          { label: isProfit ? t('fin_profit') : t('fin_loss'), value: `${isProfit ? '' : '−'}${fmt(profit)}`, tone: isProfit ? 'text-badge-success' : 'text-red-700', Icon: Wallet,
+            box: isProfit ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200' },
+        ].map(({ label, value, tone, Icon, box }) => (
+          <div key={label} className={`rounded-2xl border p-3 sm:p-5 ${box || 'bg-surface-card border-hairline'}`}>
+            <dt className="flex items-center gap-1.5 text-xs font-medium text-charcoal"><Icon className={`w-3.5 h-3.5 flex-shrink-0 ${tone}`} aria-hidden="true" /> {label}</dt>
+            <dd className={`mt-1.5 font-display font-bold text-base leading-tight sm:text-2xl ${tone}`}>{value}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <div className="segmented" role="group" aria-label={t('nav_finance')}>
+        {[
+          { key: 'expenses', label: t('fin_tab_expenses'), n: expenses.length },
+          { key: 'revenue',  label: t('fin_tab_revenue'),  n: paidJobs.length },
+        ].map(({ key, label, n }) => (
+          <button key={key} type="button" aria-pressed={tab === key} onClick={() => setTab(key)}
+            className={`segmented-item ${tab === key ? 'segmented-item-on' : ''}`}>
+            {label} <span className="segmented-count">{n}</span>
+          </button>
         ))}
       </div>
 
@@ -336,14 +325,14 @@ CREATE POLICY "service_manage_events" ON payment_events FOR ALL USING (true);`
                       </span>
                       {exp.description && <span className="text-sm text-ink truncate">{exp.description}</span>}
                     </div>
-                    <p className="text-xs text-mute mt-0.5">{exp.date}</p>
+                    <p className="text-xs text-mute mt-0.5">{shortDate(exp.date)}</p>
                   </div>
                   <p className="text-sm font-bold text-red-700 flex-shrink-0">−{fmt(exp.amount)}</p>
                   <button onClick={async () => {
-                    if (!window.confirm(t('delete') + '?')) return
-                    try { await deleteExpense(exp.id) } catch (e) { alert(e.message) }
-                  }} className="w-7 h-7 flex items-center justify-center text-mute hover:text-red-700 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
-                    <Trash2 className="w-3 h-3" />
+                    if (!(await confirm({ title: t('confirm_delete_title', { name: exp.description || t(`fin_cat_${exp.category}`) }), message: `${shortDate(exp.date)} · ${fmt(exp.amount)}`, confirmLabel: t('delete'), tone: 'danger' }))) return
+                    try { await deleteExpense(exp.id) } catch (e) { toast.error(e.message) }
+                  }} aria-label={`${t('delete')}: ${exp.description || t(`fin_cat_${exp.category}`)}`} className="w-9 h-9 -mr-1.5 flex items-center justify-center text-mute hover:text-red-700 hover:bg-red-50 rounded-full transition-colors flex-shrink-0">
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               ))}
@@ -374,7 +363,7 @@ CREATE POLICY "service_manage_events" ON payment_events FOR ALL USING (true);`
                     <p className="text-sm font-bold text-badge-success">
                       RM {jobNet(j).toFixed(2)}
                     </p>
-                    <p className="text-xs text-mute">{(j.date_in || j.created_at || '').slice(0, 10)}</p>
+                    <p className="text-xs text-mute">{shortDate(j.date_in || j.created_at)}</p>
                   </div>
                 </div>
               ))}
