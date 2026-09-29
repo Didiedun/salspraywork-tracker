@@ -53,7 +53,7 @@ export function Dashboard() {
   const { workshop } = useApp()
   const { t, lang } = useLang()
   const planGate = usePlanGate()
-  const { jobs, loading, error, offline, fetchJobs, addJob, updateJob, deleteJob, addAttachment, deleteAttachment } = useJobs(workshop?.id)
+  const { jobs, loading, error, offline, fetchJobs, addJob, updateJob, refreshJob, deleteJob, addAttachment, deleteAttachment } = useJobs(workshop?.id)
   const { items: stockItems } = useInventory(workshop?.id)
   const lowStockItems = stockItems.filter(i => i.reorder_level > 0 && i.quantity <= i.reorder_level)
   const stageHelpers = useStages()
@@ -367,7 +367,7 @@ export function Dashboard() {
               {filtered.map(job => (
                 <JobCard key={job.id} job={job}
                   visitCount={visitCounts[job.plate.replace(/\s/g, '').toUpperCase()] || 1}
-                  onUpdate={updateJob} onDelete={deleteJob}
+                  onUpdate={updateJob} onRefresh={refreshJob} onDelete={deleteJob}
                   onAddAttachment={addAttachment} onDeleteAttachment={deleteAttachment} />
               ))}
             </div>

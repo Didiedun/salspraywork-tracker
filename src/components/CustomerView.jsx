@@ -343,7 +343,8 @@ export function CustomerView() {
                       <span className="text-charcoal font-semibold text-sm">{t('pay_balance')}</span>
                       <span className="text-ink font-display font-bold text-lg">{formatMoney(balance)}</span>
                     </div>
-                    {workshop.toyyibpay_secret_set && workshop.toyyibpay_category_code && (
+                    {/* Live gateways only (the server refuses test mode too); online payments start at RM1 */}
+                    {workshop.toyyibpay_secret_set && workshop.toyyibpay_category_code && workshop.toyyibpay_sandbox === false && balance >= 1 && (
                       <>
                         <button onClick={() => payOnline(job.id)} disabled={payLoading}
                           className="w-full mt-3 flex items-center justify-center gap-2 bg-primary hover:bg-primary-deep disabled:opacity-60 text-white font-semibold rounded-full py-3 transition-colors text-sm">

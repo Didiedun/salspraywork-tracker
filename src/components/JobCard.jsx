@@ -51,7 +51,7 @@ function timeAgo(dateStr, lang) {
   return lang === 'ms' ? `${d} hari lalu` : `${d}d ago`
 }
 
-export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachment, onDeleteAttachment }) {
+export function JobCard({ job, visitCount = 1, onUpdate, onRefresh, onDelete, onAddAttachment, onDeleteAttachment }) {
   const [expanded, setExpanded]       = useState(false)
   const [editing, setEditing]         = useState(false)
   const [uploading, setUploading]     = useState(null)
@@ -144,7 +144,7 @@ export function JobCard({ job, visitCount = 1, onUpdate, onDelete, onAddAttachme
       )}
       {showReceipt && <ReceiptModal job={job} workshop={workshop} onClose={() => setShowReceipt(false)} />}
       {showHistory && <CustomerHistoryModal plate={job.plate} onClose={() => setShowHistory(false)} />}
-      {showPayment && <PaymentModal job={job} onSave={onUpdate} onClose={() => setShowPayment(false)} />}
+      {showPayment && <PaymentModal job={job} onSave={onUpdate} onRefresh={() => onRefresh?.(job.id)} onClose={() => setShowPayment(false)} />}
       {showRefund && <RefundModal job={job} onSave={onUpdate} onClose={() => setShowRefund(false)} />}
       {emailPrompt && <EmailToast job={job} workshop={workshop} t={t} onClose={() => setEmailPrompt(false)} />}
       {lightbox && <Lightbox src={lightbox.url} alt={lightbox.stage || job.plate} onClose={() => setLightbox(null)} />}

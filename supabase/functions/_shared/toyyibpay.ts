@@ -47,10 +47,26 @@ export function callbackHashValid(params: URLSearchParams, secret: string): bool
   return timingSafeEqual(new TextEncoder().encode(expected), new TextEncoder().encode(hash.toLowerCase()))
 }
 
+// Test (sandbox) payments move no real money, so they may only mark jobs or plans
+// as paid in a project that opts in explicitly (a separate test project).
+export function sandboxAllowed(env: (key: string) => string | undefined): boolean {
+  return env('TOYYIBPAY_ALLOW_SANDBOX') === 'true'
+}
+
+// Workshops saved before the sandbox toggle was removed may still be flagged (or
+// unset); only an explicit false counts as live.
+export function workshopSandbox(workshop: { toyyibpay_sandbox?: boolean | null } | null | undefined): boolean {
+  return workshop?.toyyibpay_sandbox !== false
+}
+
 export function verifiedTransaction(data: unknown, payment: { id: string; amount_original: unknown; currency: string }) {
   if (payment.currency !== 'MYR' || !Array.isArray(data)) return null
   return data.find(tx => {
-    if (!tx || tx.billExternalReferenceNo !== payment.id || String(tx.billpaymentStatus) !== '1') return false
+    if (!tx || String(tx.billpaymentStatus) !== '1') return false
+    // The lookup is already scoped to this payment's own bill code, and ToyyibPay's
+    // documented response does not promise this field; when it is present it must match.
+    const reference = tx.billExternalReferenceNo
+    if (reference != null && reference !== '' && String(reference) !== payment.id) return false
     try { return myrToSen(tx.billpaymentAmount) > 0 && myrToSen(tx.billpaymentAmount) === myrToSen(payment.amount_original) }
     catch { return false }
   }) ?? null

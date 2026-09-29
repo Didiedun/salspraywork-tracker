@@ -6,6 +6,9 @@ verify_jwt = false
 [functions.create-subscription-bill]
 verify_jwt = false
 
+[functions.check-payment]
+verify_jwt = false
+
 # Customer checkout is public; its amount is calculated on the server.
 [functions.create-bill-public]
 verify_jwt = false

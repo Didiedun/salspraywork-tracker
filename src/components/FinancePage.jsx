@@ -171,12 +171,9 @@ export function FinancePage() {
     a.click(); URL.revokeObjectURL(url)
   }
 
+  // Only the expenses table. Payment tables and gateway settings come from
+  // supabase/migrations; an older copy here re-created the insecure versions.
   const SQL_MIGRATION = `-- Run this once in Supabase SQL editor
-
--- Payment gateway columns on workshops
-ALTER TABLE workshops ADD COLUMN IF NOT EXISTS toyyibpay_secret_key    text;
-ALTER TABLE workshops ADD COLUMN IF NOT EXISTS toyyibpay_category_code text;
-ALTER TABLE workshops ADD COLUMN IF NOT EXISTS toyyibpay_sandbox        boolean DEFAULT true;
 
 -- Expenses table
 CREATE TABLE IF NOT EXISTS expenses (
@@ -192,43 +189,7 @@ ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "owners_manage_expenses" ON expenses
   FOR ALL USING (
     workshop_id IN (SELECT id FROM workshops WHERE owner_id = auth.uid())
-  );
-
--- Online payments table (for ToyyibPay integration)
-CREATE TABLE IF NOT EXISTS payments (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  workshop_id uuid REFERENCES workshops(id) ON DELETE CASCADE,
-  job_id uuid REFERENCES jobs(id) ON DELETE CASCADE,
-  amount_original numeric(10,2) NOT NULL,
-  amount_paid numeric(10,2),
-  currency text NOT NULL DEFAULT 'MYR',
-  provider text NOT NULL DEFAULT 'toyyibpay',
-  status text NOT NULL DEFAULT 'pending',
-  gateway_ref text,
-  gateway_status text,
-  gateway_payload jsonb,
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now(),
-  paid_at timestamptz
-);
-ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "owners_manage_payments" ON payments
-  FOR ALL USING (
-    workshop_id IN (SELECT id FROM workshops WHERE owner_id = auth.uid())
-  );
-
--- Webhook deduplication table
-CREATE TABLE IF NOT EXISTS payment_events (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  provider text NOT NULL,
-  event_id text NOT NULL,
-  payment_id uuid REFERENCES payments(id),
-  payload jsonb,
-  created_at timestamptz DEFAULT now(),
-  UNIQUE(provider, event_id)
-);
-ALTER TABLE payment_events ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_manage_events" ON payment_events FOR ALL USING (true);`
+  );`
 
   return (
     <div className="app-page">

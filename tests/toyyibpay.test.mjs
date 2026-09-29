@@ -1,8 +1,9 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
-import { myrToSen, outstandingSen, billText, returnUrl, readGatewayResponse, callbackHashValid, verifiedTransaction } from '../supabase/functions/_shared/toyyibpay.ts'
+import { myrToSen, outstandingSen, billText, returnUrl, readGatewayResponse, callbackHashValid, verifiedTransaction, sandboxAllowed, workshopSandbox } from '../supabase/functions/_shared/toyyibpay.ts'
 import { handleCallback } from '../supabase/functions/payment-callback/handler.ts'
+import { handleCheck } from '../supabase/functions/check-payment/handler.ts'
 import { createCheckout } from '../supabase/functions/_shared/create-checkout.ts'
 
 const id = '00000000-0000-4000-8000-000000000001'
@@ -32,6 +33,8 @@ function callbackClient(row = payment, rpcError = null) {
 }
 const request = params => new Request('https://example.com/callback', { method: 'POST', body: params })
 const env = key => key === 'PLATFORM_TOYYIBPAY_SECRET_KEY' ? secret : 'false'
+// A test project that accepts sandbox payments on purpose.
+const testProjectEnv = key => key === 'TOYYIBPAY_ALLOW_SANDBOX' ? 'true' : env(key)
 
 test('decimal MYR is converted to sen exactly, including fractional balances', () => {
   assert.equal(myrToSen('30.00'), 3000)
@@ -62,6 +65,10 @@ test('callback hash rejects tampering and missing signatures', () => {
 })
 test('verification requires matching reference, currency, final status and exact amount', () => {
   assert.deepEqual(verifiedTransaction([transaction], payment), transaction)
+  // The lookup is scoped to the bill; a response without the reference field still verifies.
+  const { billExternalReferenceNo: _omitted, ...withoutReference } = transaction
+  assert.deepEqual(verifiedTransaction([withoutReference], payment), withoutReference)
+  assert.equal(verifiedTransaction([{ ...withoutReference, billpaymentAmount: '29.99' }], payment), null)
   for (const change of [{ billpaymentAmount: '0.30' }, { billpaymentAmount: '31.00' }, { billpaymentAmount: null }, { billpaymentStatus: '2' }, { billExternalReferenceNo: 'different' }]) {
     assert.equal(verifiedTransaction([{ ...transaction, ...change }], payment), null)
   }
@@ -73,9 +80,33 @@ test('forged callback produces no audit or settlement writes', async () => {
   assert.equal(response.status, 401)
   assert.deepEqual(client.actions, [])
 })
+test('only an explicit false counts as live; sandbox payments need an explicit opt-in', () => {
+  assert.equal(workshopSandbox({ toyyibpay_sandbox: false }), false)
+  for (const legacy of [{ toyyibpay_sandbox: true }, { toyyibpay_sandbox: null }, {}, null]) assert.equal(workshopSandbox(legacy), true)
+  assert.equal(sandboxAllowed(env), false)
+  assert.equal(sandboxAllowed(() => undefined), false)
+  assert.equal(sandboxAllowed(testProjectEnv), true)
+})
+test('sandbox callback never settles in a project that does not allow test payments', async () => {
+  const client = callbackClient()
+  const response = await handleCallback(request(signed()), client, env, () => { throw new Error('Unexpected provider call') })
+  assert.equal(response.status, 200)
+  assert.equal(client.actions.some(a => a.name), false)
+  assert.deepEqual(client.actions.at(-1).value.status, 'rejected')
+  assert.deepEqual(client.actions.at(-1).value.gateway_status, 'sandbox_blocked')
+})
+test('live callback settles through the live endpoint without any sandbox opt-in', async () => {
+  const client = callbackClient({ ...payment, gateway_sandbox: false })
+  const response = await handleCallback(request(signed()), client, env, async url => {
+    assert.match(url, /^https:\/\/toyyibpay.com\//)
+    return Response.json([transaction])
+  })
+  assert.equal(response.status, 200)
+  assert.equal(client.actions.at(-1).args.p_amount_sen, 3000)
+})
 test('successful callback uses provider MYR and the original sandbox, ignoring callback amount', async () => {
   const client = callbackClient()
-  const response = await handleCallback(request(signed()), client, env, async url => {
+  const response = await handleCallback(request(signed()), client, testProjectEnv, async url => {
     assert.match(url, /^https:\/\/dev.toyyibpay.com\//)
     return Response.json([transaction])
   })
@@ -86,13 +117,13 @@ test('successful callback uses provider MYR and the original sandbox, ignoring c
 test('verification outages and mismatches remain retryable without settlement', async () => {
   for (const reply of [new Response('down', { status: 503 }), Response.json([]), Response.json([{ ...transaction, billpaymentAmount: '0.30' }])]) {
     const client = callbackClient()
-    assert.equal((await handleCallback(request(signed()), client, env, async () => reply)).status, 503)
+    assert.equal((await handleCallback(request(signed()), client, testProjectEnv, async () => reply)).status, 503)
     assert.equal(client.actions.some(a => a.name), false)
   }
 })
 test('settlement errors return failure for gateway retry', async () => {
   const client = callbackClient(payment, { message: 'database unavailable' })
-  assert.equal((await handleCallback(request(signed()), client, env, async () => Response.json([transaction]))).status, 500)
+  assert.equal((await handleCallback(request(signed()), client, testProjectEnv, async () => Response.json([transaction]))).status, 500)
 })
 test('late failed callback cannot overwrite a paid payment', async () => {
   const client = callbackClient({ ...payment, status: 'paid' })
@@ -137,4 +168,63 @@ test('plain-text rejection preserves the failed intent without exposing upstream
 test('checkout does not return an unpersisted gateway link', async t => {
   t.mock.method(globalThis, 'fetch', async () => Response.json([{ BillCode: 'testbill' }]))
   await assert.rejects(createCheckout(checkoutClient({ message: 'offline' }), options), /Unable to save the payment link/)
+})
+
+// ── Owner "check payment status" ─────────────────────────────────────────────
+const ownerId = '00000000-0000-4000-8000-0000000000aa'
+const jobPayment = { id, gateway_ref: 'testbill', amount_original: 30, currency: 'MYR', gateway_sandbox: false }
+function checkClient({ owner = ownerId, pending = [jobPayment], rpcError = null } = {}) {
+  const actions = []
+  const rows = { jobs: { id, workshop_id: 'ws' }, workshops: { owner_id: owner, toyyibpay_sandbox: false } }
+  return { actions,
+    from(table) {
+      const query = {
+        select() { return query }, eq() { return query }, not() { return query }, order() { return query },
+        limit: async () => ({ data: pending, error: null }),
+        single: async () => ({ data: rows[table] ?? null }),
+        update(value) { actions.push({ table, value }); return query },
+        then(resolve) { resolve({ error: null }) },
+      }
+      return query
+    },
+    async rpc(name, args) { actions.push({ name, args }); return { error: rpcError } },
+  }
+}
+const userClient = (userId = ownerId) => () => ({ auth: { getUser: async () => ({ data: { user: userId ? { id: userId } : null }, error: null }) } })
+const checkRequest = (headers = { Authorization: 'Bearer token' }) =>
+  new Request('https://example.com/check-payment', { method: 'POST', headers, body: JSON.stringify({ job_id: id }) })
+const liveTx = { billpaymentStatus: '1', billpaymentAmount: '30.00' }
+
+test('status check requires a signed-in owner of the job', async () => {
+  const noFetch = () => { throw new Error('Unexpected provider call') }
+  assert.equal((await handleCheck(checkRequest({}), { userClient: userClient(), serviceClient: checkClient(), env, fetcher: noFetch })).status, 401)
+  const stranger = checkClient({ owner: 'someone-else' })
+  assert.equal((await handleCheck(checkRequest(), { userClient: userClient(), serviceClient: stranger, env, fetcher: noFetch })).status, 403)
+  assert.deepEqual(stranger.actions, [])
+})
+test('status check settles a live payment ToyyibPay confirms', async () => {
+  const client = checkClient()
+  const response = await handleCheck(checkRequest(), { userClient: userClient(), serviceClient: client, env, fetcher: async url => {
+    assert.match(url, /^https:\/\/toyyibpay.com\//)
+    return Response.json([liveTx])
+  } })
+  assert.deepEqual(await response.json(), { checked: 1, settled: [30], unavailable: false })
+  const settle = client.actions.find(a => a.name === 'settle_toyyibpay_payment')
+  assert.equal(settle.args.p_amount_sen, 3000)
+  assert.equal(settle.args.p_payload.source, 'status_check')
+})
+test('status check leaves unpaid or unreachable bills pending', async () => {
+  for (const [reply, unavailable] of [[Response.json([]), false], [new Response('down', { status: 503 }), true]]) {
+    const client = checkClient()
+    const response = await handleCheck(checkRequest(), { userClient: userClient(), serviceClient: client, env, fetcher: async () => reply })
+    assert.deepEqual(await response.json(), { checked: 1, settled: [], unavailable })
+    assert.equal(client.actions.length, 0)
+  }
+})
+test('status check blocks sandbox bills unless the project allows test payments', async () => {
+  const client = checkClient({ pending: [{ ...jobPayment, gateway_sandbox: true }] })
+  const response = await handleCheck(checkRequest(), { userClient: userClient(), serviceClient: client, env, fetcher: () => { throw new Error('Unexpected provider call') } })
+  assert.deepEqual(await response.json(), { checked: 1, settled: [], unavailable: false })
+  assert.equal(client.actions[0].value.gateway_status, 'sandbox_blocked')
+  assert.equal(client.actions.some(a => a.name), false)
 })

@@ -5,7 +5,7 @@ import { useLang } from '../context/LanguageContext'
 import { supabase } from '../lib/supabase'
 import { SPRAY_STAGES } from '../constants'
 import { planStatus, planPrices } from '../lib/plan'
-import { Upload, Save, Loader, Plus, Trash2, ChevronUp, ChevronDown, Eye, EyeOff, Globe, Zap } from 'lucide-react'
+import { Upload, Save, Loader, Plus, Trash2, ChevronUp, ChevronDown, Eye, EyeOff, Globe, Zap, AlertTriangle } from 'lucide-react'
 import { PageHeader } from './PageHeader'
 
 function BillingCard() {
@@ -100,6 +100,9 @@ function PaymentGatewayCard() {
 
   const secretSet    = !!workshop?.toyyibpay_secret_set
   const isConfigured = secretSet && !!workshop?.toyyibpay_category_code
+  // Saved before the sandbox toggle was removed: payments stay blocked until the
+  // owner saves live credentials (saving always stores live mode).
+  const testMode     = isConfigured && workshop?.toyyibpay_sandbox !== false
 
   const handleSave = async () => {
     if (!catCode.trim()) { setError('Category Code diperlukan.'); return }
@@ -139,13 +142,26 @@ function PaymentGatewayCard() {
             <p className="text-xs text-mute">{t('st_gw_sub')}</p>
           </div>
         </div>
-        <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${isConfigured ? 'bg-badge-success/10 text-badge-success' : 'bg-surface-bone text-mute'}`}>
-          {isConfigured ? t('st_gw_configured') : t('st_gw_not_set')}
+        <span className={`text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap ${
+          !isConfigured ? 'bg-surface-bone text-mute' : testMode ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-badge-success/10 text-badge-success'
+        }`}>
+          {!isConfigured ? t('st_gw_not_set') : testMode ? t('st_gw_test_badge') : t('st_gw_live')}
         </span>
       </div>
 
+      {testMode && (
+        <div className="notice notice-warn items-start">
+          <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
+          <div className="min-w-0">
+            <p className="font-semibold text-amber-800">{t('st_gw_test_title')}</p>
+            <p className="text-amber-800 text-xs mt-1 leading-relaxed">{t('st_gw_test_msg')}</p>
+          </div>
+        </div>
+      )}
+
       <div className="bg-primary/[.05] border border-primary/20 rounded-lg px-4 py-3 space-y-1">
         <p className="text-xs text-body">{t('st_gw_hint')}</p>
+        <p className="text-xs text-body">{t('st_gw_live_note')}</p>
         <a href="https://toyyibpay.com" target="_blank" rel="noreferrer"
           className="text-xs font-semibold text-primary underline hover:text-primary-deep">
           {t('st_gw_register')}

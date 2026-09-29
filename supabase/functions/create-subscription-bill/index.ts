@@ -2,7 +2,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.117.1'
 import { corsHeaders, corsResponse } from '../_shared/cors.ts'
 import { createCheckout } from '../_shared/create-checkout.ts'
-import { returnUrl } from '../_shared/toyyibpay.ts'
+import { returnUrl, sandboxAllowed } from '../_shared/toyyibpay.ts'
 
 // Prices are server-side only — never trust an amount from the client.
 // Matches the landing page: early bird RM20/200, standard RM30/300.
@@ -42,10 +42,14 @@ serve(async (req) => {
 
     const secretKey    = Deno.env.get('PLATFORM_TOYYIBPAY_SECRET_KEY')
     const categoryCode = Deno.env.get('PLATFORM_TOYYIBPAY_CATEGORY_CODE')
-    const isSandbox    = Deno.env.get('PLATFORM_TOYYIBPAY_SANDBOX') !== 'false'
+    // Test mode only when asked for explicitly; an unset variable means live.
+    const isSandbox    = Deno.env.get('PLATFORM_TOYYIBPAY_SANDBOX') === 'true'
 
     if (!secretKey || !categoryCode) {
       return corsResponse({ error: 'Platform payment gateway not configured.' }, 503)
+    }
+    if (isSandbox && !sandboxAllowed(key => Deno.env.get(key))) {
+      return corsResponse({ error: 'Platform payment gateway is in test mode.' }, 503)
     }
 
     const amountRM = PRICES_RM[purpose][workshop.early_bird ? 'early_bird' : 'standard']
