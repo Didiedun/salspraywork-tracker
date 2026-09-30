@@ -13,6 +13,37 @@ pin also satisfies Vite 8's requirement (Node 20.19+ or 22.12+).
 The existing `npm run lint` command needs an ESLint flat configuration; none is
 currently included in this repository.
 
+## Database changes of 30 Sep 2026
+
+Both files are already applied to the production project. Apply them, in order,
+to any other database before deploying the frontend that uses them:
+
+- `supabase/migrations/20260930120000_quotations.sql`: the `quotations` table
+  behind the **Sebut Harga** page. Owner-only; workers and the public have no access.
+- `supabase/migrations/20260930120100_attachments_and_secret_hardening.sql`:
+  drops the leftover public `workshops.toyyibpay_secret_key` column (the key
+  lives only in `workshop_secrets`), and limits uploads and deletes in the
+  `attachments` bucket to signed-in members of the workshop that owns the file.
+  Reading files stays public.
+
+`tests/quotations-storage.test.mjs` runs both against PGlite with owner, worker,
+stranger and logged-out roles.
+
+The customer tracking page (`/w/:slug`) and the landing page counters no longer
+read tables directly. They are applied in two steps:
+
+1. `supabase/migrations/20260930130000_tracking_lookup.sql` (already applied to
+   production): `track_jobs(slug, plate, phone)` returns exact matches only (the
+   full plate, or the full phone number), with the customer's number masked and
+   photos only. `platform_stats()` returns the landing page totals.
+2. `supabase/migrations/20260930130100_close_public_job_reads.sql`: removes the
+   policies that let anyone read every active job, every attachment row and every
+   file name in the `attachments` bucket. Apply it only once a frontend that calls
+   `track_jobs` is live; the older tracking page reads `jobs` directly and finds
+   no cars without those policies.
+
+`tests/tracking-lookup.test.mjs` covers both steps.
+
 ## ToyyibPay setup and deployment
 
 There are two separate merchant accounts/configurations:

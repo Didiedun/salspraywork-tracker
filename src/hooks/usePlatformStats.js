@@ -1,30 +1,17 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
+const NONE = { workshops: 0, jobs: 0, paid: 0, photos: 0 }
+
 export function usePlatformStats() {
   const [stats, setStats] = useState(null)
 
   useEffect(() => {
-    async function load() {
-      const [
-        { count: workshops },
-        { count: jobs },
-        { count: paid },
-        { count: attachments },
-      ] = await Promise.all([
-        supabase.from('workshops').select('*', { count: 'exact', head: true }),
-        supabase.from('jobs').select('*', { count: 'exact', head: true }),
-        supabase.from('jobs').select('*', { count: 'exact', head: true }).eq('paid', true),
-        supabase.from('job_attachments').select('*', { count: 'exact', head: true }),
-      ])
-      setStats({
-        workshops: workshops || 0,
-        jobs:      jobs      || 0,
-        paid:      paid      || 0,
-        photos:    attachments || 0,
-      })
-    }
-    load()
+    // Totals come from a function: the tables themselves are not readable when logged out.
+    supabase.rpc('platform_stats').then(
+      ({ data }) => setStats({ ...NONE, ...(data || {}) }),
+      () => setStats(NONE),
+    )
   }, [])
 
   return stats

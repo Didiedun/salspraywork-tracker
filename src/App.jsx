@@ -20,6 +20,7 @@ const LandingPage      = lazy(() => import('./components/LandingPage').then(m =>
 const WorkshopSettings = lazy(() => import('./components/WorkshopSettings').then(m => ({ default: m.WorkshopSettings })))
 const FinancePage      = lazy(() => import('./components/FinancePage').then(m => ({ default: m.FinancePage })))
 const PayrollPage      = lazy(() => import('./components/PayrollPage').then(m => ({ default: m.PayrollPage })))
+const QuotationsPage   = lazy(() => import('./components/QuotationsPage').then(m => ({ default: m.QuotationsPage })))
 
 const MAINTENANCE = import.meta.env.VITE_MAINTENANCE === 'true'
 
@@ -68,6 +69,7 @@ function AppRoutes() {
       {user && workshop && role === 'owner' && (
         <>
           <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+          <Route path="/quotations" element={<Layout><QuotationsPage /></Layout>} />
           <Route path="/inventory" element={<Layout><InventoryPage /></Layout>} />
           <Route path="/finance"   element={<Layout><FinancePage /></Layout>} />
           <Route path="/workers"   element={<Layout><WorkersPage /></Layout>} />
