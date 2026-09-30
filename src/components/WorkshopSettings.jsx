@@ -5,7 +5,7 @@ import { useLang } from '../context/LanguageContext'
 import { supabase } from '../lib/supabase'
 import { SPRAY_STAGES } from '../constants'
 import { planStatus, planPrices } from '../lib/plan'
-import { Upload, Save, Loader, Plus, Trash2, ChevronUp, ChevronDown, Eye, EyeOff, Globe, Zap, AlertTriangle } from 'lucide-react'
+import { Upload, Save, Loader, Plus, Trash2, ChevronUp, ChevronDown, Eye, EyeOff, Globe, Zap, AlertTriangle, Check, KeyRound } from 'lucide-react'
 import { PageHeader } from './PageHeader'
 
 function BillingCard() {
@@ -94,6 +94,7 @@ function PaymentGatewayCard() {
   const [secretKey,  setSecretKey]  = useState('')
   const [catCode,    setCatCode]    = useState(workshop?.toyyibpay_category_code  || '')
   const [showKey,    setShowKey]    = useState(false)
+  const [changingKey, setChangingKey] = useState(false)
   const [saving,     setSaving]     = useState(false)
   const [saved,      setSaved]      = useState(false)
   const [error,      setError]      = useState('')
@@ -105,9 +106,9 @@ function PaymentGatewayCard() {
   const testMode     = isConfigured && workshop?.toyyibpay_sandbox !== false
 
   const handleSave = async () => {
-    if (!catCode.trim()) { setError('Category Code diperlukan.'); return }
+    if (!catCode.trim()) { setError(t('st_gw_cat_required')); return }
     // Secret only required the first time; afterwards a blank field keeps the existing key.
-    if (!secretSet && !secretKey.trim()) { setError('Secret Key dan Category Code diperlukan.'); return }
+    if (!secretSet && !secretKey.trim()) { setError(t('st_gw_key_required')); return }
     setSaving(true); setError(''); setSaved(false)
     try {
       const { error: err } = await supabase.rpc('set_toyyibpay_secret', {
@@ -117,7 +118,7 @@ function PaymentGatewayCard() {
         p_sandbox:     false,
       })
       if (err) throw err
-      setSecretKey('')
+      setSecretKey(''); setShowKey(false); setChangingKey(false)
       await reloadWorkshop()
       setSaved(true)
       setTimeout(() => setSaved(false), 5000)
@@ -169,22 +170,50 @@ function PaymentGatewayCard() {
       </div>
 
       <div>
-        <label htmlFor="gw-secret-key" className="text-xs font-semibold text-charcoal block mb-1.5">{t('st_gw_key')}</label>
-        <div className="relative">
-          <input id="gw-secret-key"
-            type={showKey ? 'text' : 'password'}
-            value={secretKey}
-            onChange={e => setSecretKey(e.target.value)}
-            placeholder={secretSet ? '•••••••••• (tersimpan)' : t('st_gw_key_ph')}
-            className={inputCls + ' pr-12'}
-          />
-          <button type="button" onClick={() => setShowKey(v => !v)} aria-label={showKey ? t('ui_hide') : t('ui_show')} aria-pressed={showKey}
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full text-ash hover:text-charcoal hover:bg-surface-bone transition-colors">
-            {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-          </button>
-        </div>
-        {secretSet && (
-          <p className="text-xs text-mute mt-1.5">Kunci sudah disimpan. Biarkan kosong untuk kekalkan, atau taip kunci baharu untuk gantikan.</p>
+        {/* The saved key is write-only (never sent back), so show that it's saved and
+            offer an explicit way to replace it rather than an empty box that looks locked. */}
+        {secretSet && !changingKey ? (
+          <>
+            <p className="text-xs font-semibold text-charcoal mb-1.5">{t('st_gw_key')}</p>
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-hairline bg-canvas px-4 py-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Check className="w-4 h-4 text-badge-success flex-shrink-0" aria-hidden="true" />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-ink">{t('st_gw_key_saved')}</p>
+                  <p className="text-xs text-mute">{t('st_gw_key_saved_sub')}</p>
+                </div>
+              </div>
+              <button type="button" onClick={() => { setChangingKey(true); setSaved(false); setError('') }}
+                className="ui-secondary min-h-10 px-3.5 py-2 text-xs">
+                <KeyRound className="w-4 h-4" aria-hidden="true" /> {t('st_gw_key_change')}
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <label htmlFor="gw-secret-key" className="text-xs font-semibold text-charcoal block mb-1.5">{t('st_gw_key')}</label>
+            <div className="relative">
+              <input id="gw-secret-key"
+                type={showKey ? 'text' : 'password'}
+                value={secretKey}
+                onChange={e => setSecretKey(e.target.value)}
+                autoFocus={changingKey}
+                autoComplete="off" spellCheck={false}
+                placeholder={secretSet ? t('st_gw_key_new_ph') : t('st_gw_key_ph')}
+                className={inputCls + ' pr-12'}
+              />
+              <button type="button" onClick={() => setShowKey(v => !v)} aria-label={showKey ? t('ui_hide') : t('ui_show')} aria-pressed={showKey}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full text-ash hover:text-charcoal hover:bg-surface-bone transition-colors">
+                {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            {changingKey && (
+              <button type="button" onClick={() => { setChangingKey(false); setSecretKey(''); setShowKey(false) }}
+                className="mt-2 text-xs font-semibold text-primary underline underline-offset-2 hover:text-primary-deep">
+                {t('st_gw_key_keep')}
+              </button>
+            )}
+          </>
         )}
       </div>
 
@@ -206,6 +235,18 @@ function PaymentGatewayCard() {
   )
 }
 
+const LOGO_EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' }
+
+// Storage path of a logo we uploaded ("logos/…"), from its public URL. Anything
+// else (an external URL, another folder) is never deleted.
+function logoPath(url) {
+  const marker = '/object/public/attachments/'
+  const i = url ? url.indexOf(marker) : -1
+  if (i === -1) return null
+  const path = decodeURIComponent(url.slice(i + marker.length).split('?')[0])
+  return path.startsWith('logos/') ? path : null
+}
+
 export function WorkshopSettings() {
   const { workshop, reloadWorkshop } = useApp()
   const { t } = useLang()
@@ -217,6 +258,7 @@ export function WorkshopSettings() {
   const [tiktok, setTiktok]       = useState(workshop?.tiktok     || '')
   const [saving, setSaving]       = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [logoSaved, setLogoSaved] = useState(false)
   const [saved, setSaved]         = useState(false)
   const [error, setError]         = useState('')
   const fileRef = useRef(null)
@@ -230,28 +272,41 @@ export function WorkshopSettings() {
   const [stagesSaved, setStagesSaved]   = useState(false)
   const [stagesError, setStagesError]   = useState('')
 
+  // Every logo gets a new file name. Overwriting one fixed name needs a storage
+  // UPDATE permission the bucket doesn't grant (so changing a logo failed), and a
+  // fixed address also kept showing the old logo from browser and CDN caches.
   const handleLogoUpload = async (e) => {
     const file = e.target.files?.[0]
+    if (fileRef.current) fileRef.current.value = ''
     if (!file) return
+    setLogoSaved(false)
+    const ext = LOGO_EXT[file.type]
+    if (!ext) { setError(t('st_logo_type')); return }
     if (file.size > 2 * 1024 * 1024) { setError(t('st_logo_size')); return }
     setUploading(true); setError('')
+    const bucket  = supabase.storage.from('attachments')
+    const path    = `logos/${workshop.id}/${Date.now()}.${ext}`
+    const oldPath = logoPath(workshop.logo_url)
     try {
-      const ext  = file.name.split('.').pop()
-      const path = `logos/${workshop.id}.${ext}`
-      const { error: upErr } = await supabase.storage
-        .from('attachments').upload(path, file, { upsert: true })
+      const { error: upErr } = await bucket.upload(path, file, { contentType: file.type, cacheControl: '31536000' })
       if (upErr) throw upErr
-      const { data: { publicUrl } } = supabase.storage
-        .from('attachments').getPublicUrl(path)
+      const { data: { publicUrl } } = bucket.getPublicUrl(path)
       const { error: dbErr } = await supabase
         .from('workshops').update({ logo_url: publicUrl }).eq('id', workshop.id)
-      if (dbErr) throw dbErr
+      if (dbErr) {
+        await bucket.remove([path]) // don't leave an unused file behind
+        throw dbErr
+      }
+      // Tidy up the previous file; the new logo is already saved either way.
+      if (oldPath && oldPath !== path) bucket.remove([oldPath]).catch(() => {})
       await reloadWorkshop()
+      setLogoSaved(true)
+      setTimeout(() => setLogoSaved(false), 5000)
     } catch (err) {
-      setError(err.message)
+      console.error('Logo upload failed', err)
+      setError(`${t('st_logo_failed')}${err?.message ? ` (${err.message})` : ''}`)
     } finally {
       setUploading(false)
-      if (fileRef.current) fileRef.current.value = ''
     }
   }
 
@@ -365,10 +420,12 @@ export function WorkshopSettings() {
               {uploading ? t('uploading') : t('st_logo_btn')}
             </button>
             <p className="text-xs text-mute mt-1.5">{t('st_logo_hint')}</p>
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+            <input ref={fileRef} type="file" accept={Object.keys(LOGO_EXT).join(',')} className="hidden" onChange={handleLogoUpload} />
           </div>
         </div>
-        {workshop?.logo_url && <p className="text-xs text-badge-success mt-3">{t('st_logo_ok')}</p>}
+        {logoSaved
+          ? <p role="status" className="text-xs font-semibold text-badge-success mt-3">{t('st_logo_changed')}</p>
+          : workshop?.logo_url && <p className="text-xs text-badge-success mt-3">{t('st_logo_ok')}</p>}
         {error && <p className="text-red-700 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2 mt-3">{error}</p>}
       </div>
 
