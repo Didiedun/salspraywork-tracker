@@ -16,7 +16,7 @@ import { paymentStatus, isStale, OVERDUE_DAYS } from '../constants'
 import { planStatus, isLimitedTrial, TRIAL_LIMITS } from '../lib/plan'
 import {
   Plus, Search, X, Archive, BarChart2, Copy, Check, AlertTriangle, Bell, Download,
-  ClipboardList, Package, ExternalLink, Car,
+  ClipboardList, Package, ExternalLink, Car, FileText,
 } from 'lucide-react'
 
 const parseLocalDate = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d) }
@@ -206,7 +206,10 @@ export function Dashboard() {
         kicker={today}
         title={t('ui_overview')}
         description={loading ? t('ui_overview_sub') : t('dash_summary', { active: activeJobs.length, today: newToday })}
-        actions={<button onClick={openAddJob} className="ui-primary hidden sm:inline-flex"><Plus className="w-4 h-4" /> {t('dash_new_job')}</button>}
+        actions={<>
+          <Link to="/quotations" className="ui-secondary"><FileText className="w-4 h-4" aria-hidden="true" /> {t('dash_quotes')}</Link>
+          <button onClick={openAddJob} className="ui-primary hidden sm:inline-flex"><Plus className="w-4 h-4" /> {t('dash_new_job')}</button>
+        </>}
       />
 
       {showOnboarding && <TutorialModal onClose={closeOnboarding} />}

@@ -7,11 +7,13 @@ import { TutorialModal } from './TutorialModal'
 import { FeedbackWidget, openFeedback } from './FeedbackWidget'
 import {
   LayoutDashboard, Package, Users, LogOut, ExternalLink, Settings, Wallet,
-  Menu, X, Globe, HelpCircle, ChevronLeft, ChevronRight, MessageSquarePlus,
+  Menu, X, Globe, HelpCircle, ChevronLeft, ChevronRight, MessageSquarePlus, FileText,
 } from 'lucide-react'
 
+// tab: false keeps a page out of the five-slot phone tab bar (it stays in the menu).
 const NAV = [
   { to: '/dashboard', key: 'nav_dashboard', icon: LayoutDashboard },
+  { to: '/quotations', key: 'nav_quotations', icon: FileText, tab: false },
   { to: '/inventory', key: 'nav_inventory', icon: Package },
   { to: '/finance',   key: 'nav_finance',   icon: Wallet },
   { to: '/payroll',   key: 'nav_payroll',   icon: Users },
@@ -119,7 +121,7 @@ function TabBar() {
   return (
     <nav aria-label={t('ui_workspace')} className="app-tabbar sm:hidden">
       <ul className="grid grid-cols-5">
-        {NAV.map(({ to, key, icon: Icon }) => (
+        {NAV.filter(n => n.tab !== false).map(({ to, key, icon: Icon }) => (
           <li key={to}>
             <NavLink to={to} className={({ isActive }) => `app-tab${isActive ? ' app-tab-active' : ''}`}>
               <Icon className="h-5 w-5" aria-hidden="true" />
