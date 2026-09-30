@@ -29,6 +29,21 @@ to any other database before deploying the frontend that uses them:
 `tests/quotations-storage.test.mjs` runs both against PGlite with owner, worker,
 stranger and logged-out roles.
 
+The customer tracking page (`/w/:slug`) and the landing page counters no longer
+read tables directly. They are applied in two steps:
+
+1. `supabase/migrations/20260930130000_tracking_lookup.sql` (already applied to
+   production): `track_jobs(slug, plate, phone)` returns exact matches only (the
+   full plate, or the full phone number), with the customer's number masked and
+   photos only. `platform_stats()` returns the landing page totals.
+2. `supabase/migrations/20260930130100_close_public_job_reads.sql`: removes the
+   policies that let anyone read every active job, every attachment row and every
+   file name in the `attachments` bucket. Apply it only once a frontend that calls
+   `track_jobs` is live; the older tracking page reads `jobs` directly and finds
+   no cars without those policies.
+
+`tests/tracking-lookup.test.mjs` covers both steps.
+
 ## ToyyibPay setup and deployment
 
 There are two separate merchant accounts/configurations:

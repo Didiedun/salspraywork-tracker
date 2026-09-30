@@ -50,6 +50,7 @@ export function CustomerView() {
   const [activeJob, setActiveJob]   = useState(null)
   const [searched, setSearched]     = useState(false)
   const [loading, setLoading]       = useState(false)
+  const [searchError, setSearchError] = useState('')
   const [lightbox, setLightbox]     = useState(null)
   const [beforeAfter, setBeforeAfter] = useState(false)
   const [showReceipt, setShowReceipt] = useState(false)
@@ -85,25 +86,15 @@ export function CustomerView() {
     if (!workshop) return
     const q = query.trim().toUpperCase().replace(/\s+/g, '')
     if (!q) return
-    setLoading(true); setSearched(false); setActiveJob(null); setJobs([])
-    if (mode === 'plate') {
-      const { data } = await supabase
-        .from('jobs').select('*, job_attachments(*)')
-        .eq('workshop_id', workshop.id)
-        .ilike('plate', q).eq('archived', false)
-        .order('created_at', { ascending: false }).limit(1).maybeSingle()
-      setActiveJob(data || null)
-    } else {
-      const phone = query.trim().replace(/\D/g, '')
-      if (!phone) { setSearched(true); setLoading(false); return }
-      const { data } = await supabase
-        .from('jobs').select('*, job_attachments(*)')
-        .eq('workshop_id', workshop.id)
-        .ilike('phone', `%${phone}%`)
-        .eq('archived', false)
-        .order('created_at', { ascending: false })
-        .limit(20)
-      const list = data || []
+    setLoading(true); setSearched(false); setActiveJob(null); setJobs([]); setSearchError('')
+    // Jobs are not readable when logged out; track_jobs returns exact matches only
+    // (full plate, or the full phone number), with the customer's number masked.
+    const { data, error } = await supabase.rpc('track_jobs',
+      mode === 'plate' ? { p_slug: slug, p_plate: q } : { p_slug: slug, p_phone: query })
+    const list = Array.isArray(data) ? data : []
+    if (error) setSearchError(t('cv_search_error'))
+    if (mode === 'plate') setActiveJob(list[0] || null)
+    else {
       setJobs(list)
       if (list.length === 1) setActiveJob(list[0])
     }
@@ -223,8 +214,13 @@ export function CustomerView() {
           </div>
         )}
 
+        {/* The search itself failed (connection), which is not the same as "not found" */}
+        {searched && searchError && (
+          <p role="alert" className="bg-red-50 border border-red-200 rounded-md p-4 text-center text-sm font-medium text-red-700">{searchError}</p>
+        )}
+
         {/* Not found */}
-        {searched && !job && (mode === 'plate' || (mode === 'phone' && jobs.length === 0)) && (
+        {searched && !searchError && !job && (mode === 'plate' || (mode === 'phone' && jobs.length === 0)) && (
           <div className="bg-surface-card border border-hairline rounded-md p-8 text-center">
             <p className="text-charcoal font-semibold mb-1">{t('cv_not_found')}</p>
             <p className="text-mute text-sm">{mode === 'plate' ? t('cv_check_plate') : t('cv_check_phone')}</p>
