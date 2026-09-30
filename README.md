@@ -13,6 +13,22 @@ pin also satisfies Vite 8's requirement (Node 20.19+ or 22.12+).
 The existing `npm run lint` command needs an ESLint flat configuration; none is
 currently included in this repository.
 
+## Database changes of 30 Sep 2026
+
+Both files are already applied to the production project. Apply them, in order,
+to any other database before deploying the frontend that uses them:
+
+- `supabase/migrations/20260930120000_quotations.sql`: the `quotations` table
+  behind the **Sebut Harga** page. Owner-only; workers and the public have no access.
+- `supabase/migrations/20260930120100_attachments_and_secret_hardening.sql`:
+  drops the leftover public `workshops.toyyibpay_secret_key` column (the key
+  lives only in `workshop_secrets`), and limits uploads and deletes in the
+  `attachments` bucket to signed-in members of the workshop that owns the file.
+  Reading files stays public.
+
+`tests/quotations-storage.test.mjs` runs both against PGlite with owner, worker,
+stranger and logged-out roles.
+
 ## ToyyibPay setup and deployment
 
 There are two separate merchant accounts/configurations:
