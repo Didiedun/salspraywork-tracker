@@ -202,7 +202,7 @@ export const LEGAL = {
           ],
         ] },
         { id: 'perkhidmatan', title: 'Perkhidmatan', blocks: [
-          'Digital Depot ialah sistem pengurusan bengkel dalam talian: rekod kerja, halaman status pelanggan, sebut harga, invois, stok, pekerja dan gaji, dan laporan. Ia masih dalam versi BETA, jadi ciri boleh berubah dan mungkin ada pepijat. Sila laporkan masalah kepada kami.',
+          'Digital Depot ialah sistem pengurusan bengkel dalam talian: rekod kerja, halaman status pelanggan, sebut harga, invois, stok, pekerja dan gaji, dan laporan. Kami terus menambah baik sistem, jadi ciri boleh berubah dari semasa ke semasa. Sila laporkan sebarang masalah kepada kami.',
         ] },
         { id: 'harga', title: 'Pelan dan harga', blocks: [
           [
@@ -257,7 +257,7 @@ export const LEGAL = {
           'Kami memiliki perisian Digital Depot. Anda memiliki data bengkel anda, dan memberi kami kebenaran untuk menyimpan dan memprosesnya hanya untuk menyediakan perkhidmatan kepada anda.',
         ] },
         { id: 'liabiliti', title: 'Ketersediaan dan liabiliti', blocks: [
-          'Kami berusaha memastikan sistem sentiasa tersedia dan data selamat, tetapi semasa BETA perkhidmatan disediakan "seadanya", tanpa jaminan bahawa ia tidak akan terganggu. Simpan salinan rekod penting (contohnya eksport CSV).',
+          'Kami berusaha memastikan sistem sentiasa tersedia dan data selamat, tetapi perkhidmatan disediakan "seadanya", tanpa jaminan bahawa ia tidak akan terganggu. Simpan salinan rekod penting (contohnya eksport CSV).',
           'Setakat yang dibenarkan undang-undang, kami tidak bertanggungjawab atas kerugian tidak langsung atau kehilangan keuntungan, dan jumlah liabiliti kami terhad kepada yang lebih tinggi antara yuran yang anda bayar kepada kami dalam 12 bulan sebelum tuntutan, atau RM100. Tiada apa-apa dalam terma ini mengehadkan liabiliti yang tidak boleh dihadkan di sisi undang-undang.',
         ] },
         { id: 'penamatan', title: 'Penamatan', blocks: [
@@ -287,7 +287,7 @@ export const LEGAL = {
           ],
         ] },
         { id: 'perkhidmatan', title: 'The service', blocks: [
-          'Digital Depot is an online workshop management system: job records, a customer status page, quotations, invoices, stock, staff and payroll, and reports. It is still in BETA, so features may change and there may be bugs. Please report problems to us.',
+          'Digital Depot is an online workshop management system: job records, a customer status page, quotations, invoices, stock, staff and payroll, and reports. We keep improving the system, so features may change over time. Please report any problems to us.',
         ] },
         { id: 'harga', title: 'Plans and prices', blocks: [
           [
@@ -342,7 +342,7 @@ export const LEGAL = {
           'We own the Digital Depot software. You own your workshop\'s data, and allow us to store and process it only to provide the service to you.',
         ] },
         { id: 'liabiliti', title: 'Availability and liability', blocks: [
-          'We work to keep the system available and data safe, but during BETA the service is provided "as is", without a promise that it will never be interrupted. Keep copies of important records (for example the CSV export).',
+          'We work to keep the system available and data safe, but the service is provided "as is", without a promise that it will never be interrupted. Keep copies of important records (for example the CSV export).',
           'As far as the law allows, we are not liable for indirect losses or lost profits, and our total liability is limited to the greater of the fees you paid us in the 12 months before the claim, or RM100. Nothing in these terms limits liability that cannot be limited by law.',
         ] },
         { id: 'penamatan', title: 'Ending the service', blocks: [

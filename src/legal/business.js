@@ -5,7 +5,7 @@
 export const BUSINESS = {
   brand: 'Digital Depot',
   website: 'digitaldepot.my',
-  operator: '',     // full name (as on MyKad) of the person running Digital Depot, or the registered business name
+  operator: 'Mohamad Arif Daniel Bin Muhamaddun',   // or the registered business name, once registered
   ssm: '',          // SSM registration number, once registered
   email: 'arif.didie@gmail.com',
   phone: '',        // support or WhatsApp number

@@ -9,7 +9,7 @@ import {
   MessageSquare, BookOpen, AlertTriangle, Search,
 } from 'lucide-react'
 import { useState } from 'react'
-import { FeedbackWidget, openFeedback } from './FeedbackWidget'
+import { FeedbackWidget } from './FeedbackWidget'
 
 /* ─── helpers ─────────────────────────────────────────── */
 function scrollTo(id) {
@@ -388,7 +388,6 @@ export function LandingPage() {
               <span className="font-display font-bold text-white text-xs">DD</span>
             </div>
             <span className="landing-brand font-display font-bold text-ink whitespace-nowrap">Digital Depot</span>
-            <span className="hidden sm:inline text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded-full tracking-wide">BETA</span>
           </div>
           <div className="hidden lg:flex items-center gap-1">
             {[[t('land_features'),'ciri'], [t('land_how'),'cara'], [t('land_pricing'),'harga'], [t('land_faq'),'faq']].map(([label, id]) => (
@@ -412,20 +411,6 @@ export function LandingPage() {
       </nav>
 
       <main>
-
-      {/* ── BETA NOTICE ── */}
-      <div className="bg-amber-50 border-b border-amber-200">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8 py-2.5 text-center text-xs leading-relaxed text-amber-800">
-          <span className="font-bold bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded-full">BETA</span>
-          <span>Sistem ini masih dalam pembangunan awal. Mungkin ada pepijat kecil — jika jumpa sebarang masalah, sila</span>
-          <button
-            onClick={openFeedback}
-            className="font-bold underline hover:text-amber-900 transition-colors whitespace-nowrap px-1">
-            hantar laporan
-          </button>
-          <span>kepada kami.</span>
-        </div>
-      </div>
 
       {/* ── HERO ── */}
       <section className="max-w-6xl mx-auto px-5 sm:px-8">

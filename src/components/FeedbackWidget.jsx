@@ -6,7 +6,7 @@ import { useLang } from '../context/LanguageContext'
 const REPORT_EMAIL = 'arif.didie@gmail.com'
 const OPEN_EVENT = 'dd:open-feedback'
 
-// Opens the report dialog from anywhere (menus, the landing beta notice).
+// Opens the report dialog from anywhere (menus, the worker app).
 export const openFeedback = () => window.dispatchEvent(new Event(OPEN_EVENT))
 
 function FeedbackDialog({ onClose }) {
