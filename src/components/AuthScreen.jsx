@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useLang } from '../context/LanguageContext'
+import { LegalText } from './LegalText'
 import { Loader, CheckCircle, ClipboardList, Smartphone, Package } from 'lucide-react'
 
 function GoogleIcon() {
@@ -95,6 +96,10 @@ export function AuthScreen() {
                 {loading ? <Loader className="w-5 h-5 animate-spin text-ash" /> : <GoogleIcon />}
                 {loading ? t('auth_redir') : t('auth_google')}
               </button>
+
+              <p className="text-center text-xs text-mute leading-relaxed">
+                <LegalText text={t('auth_consent')} newTab />
+              </p>
 
               {error && (
                 <p role="alert" className="text-red-700 text-xs bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-center">

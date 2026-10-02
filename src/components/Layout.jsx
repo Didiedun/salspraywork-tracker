@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { NavLink, Link, useLocation } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LanguageContext'
+import { LegalBanner } from './LegalBanner'
 import { planStatus } from '../lib/plan'
 import { TutorialModal } from './TutorialModal'
 import { FeedbackWidget, openFeedback } from './FeedbackWidget'
@@ -222,6 +223,7 @@ export function Layout({ children }) {
           </div>
           <span className="max-w-[45%] truncate text-xs font-medium text-mute">{workshop?.name}</span>
         </header>
+        <LegalBanner />
         <PlanBanner workshop={workshop} />
         <main id="main-content" tabIndex={-1} className="flex-1 focus:outline-none">
           {children}

@@ -21,6 +21,7 @@ const WorkshopSettings = lazy(() => import('./components/WorkshopSettings').then
 const FinancePage      = lazy(() => import('./components/FinancePage').then(m => ({ default: m.FinancePage })))
 const PayrollPage      = lazy(() => import('./components/PayrollPage').then(m => ({ default: m.PayrollPage })))
 const QuotationsPage   = lazy(() => import('./components/QuotationsPage').then(m => ({ default: m.QuotationsPage })))
+const LegalPage        = lazy(() => import('./components/LegalPage').then(m => ({ default: m.LegalPage })))
 
 const MAINTENANCE = import.meta.env.VITE_MAINTENANCE === 'true'
 
@@ -41,6 +42,12 @@ function AppRoutes() {
     <Routes>
       {/* Always-public: customer status page per workshop */}
       <Route path="/w/:slug" element={<CustomerView />} />
+
+      {/* Always-public: Privacy Notice and Terms of Service (BM / EN) */}
+      <Route path="/privasi" element={<LegalPage kind="privacy" />} />
+      <Route path="/terma"   element={<LegalPage kind="terms" />} />
+      <Route path="/privacy" element={<Navigate to="/privasi" replace />} />
+      <Route path="/terms"   element={<Navigate to="/terma" replace />} />
 
       {/* Landing page — show when not logged in, redirect when logged in */}
       <Route path="/" element={!user ? <LandingPage /> : <Navigate to="/dashboard" replace />} />
