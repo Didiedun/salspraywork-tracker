@@ -1,12 +1,91 @@
 import { useState, useRef, useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LanguageContext'
+import { useNotify } from '../context/NotifyContext'
+import { useStages } from '../hooks/useStages'
 import { supabase } from '../lib/supabase'
+import { attachmentPath } from '../lib/storage'
+import { fetchAllJobs, jobsToCsv } from '../lib/exportJobs'
+import { BUSINESS } from '../legal/business'
 import { SPRAY_STAGES } from '../constants'
 import { planStatus, planPrices } from '../lib/plan'
-import { Upload, Save, Loader, Plus, Trash2, ChevronUp, ChevronDown, Eye, EyeOff, Globe, Zap, AlertTriangle, Check, KeyRound } from 'lucide-react'
+import { Upload, Save, Loader, Plus, Trash2, ChevronUp, ChevronDown, Eye, EyeOff, Globe, Zap, AlertTriangle, Check, KeyRound, Download, ShieldCheck } from 'lucide-react'
 import { PageHeader } from './PageHeader'
+
+// The owner's copy of every job, and the way to ask for the account to be deleted
+// (PDPA: access, portability, deletion). Deletion is confirmed by a person, by email.
+function DataPrivacyCard() {
+  const { workshop, user } = useApp()
+  const { t, lang } = useLang()
+  const { toast, confirm } = useNotify()
+  const { labelOf } = useStages()
+  const [exporting, setExporting] = useState(false)
+
+  const exportJobs = async () => {
+    setExporting(true)
+    try {
+      const jobs = await fetchAllJobs(supabase, workshop.id)
+      const url = URL.createObjectURL(new Blob([jobsToCsv(jobs, { lang, stageLabel: labelOf })], { type: 'text/csv;charset=utf-8' }))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `kerja_${workshop.slug || 'bengkel'}_${new Date().toISOString().slice(0, 10)}.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+      toast.success(t('st_export_done', { n: jobs.length }))
+    } catch (e) {
+      toast.error(`${t('st_export_failed')}: ${e.message}`)
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  const requestDeletion = async () => {
+    const ok = await confirm({
+      title: t('st_delete_confirm_title'), message: t('st_delete_confirm_msg', { email: BUSINESS.email }),
+      confirmLabel: t('st_delete_confirm_ok'), tone: 'danger',
+    })
+    if (!ok) return
+    const subject = t('st_delete_subject', { name: workshop.name })
+    const body = t('st_delete_body', { name: workshop.name, link: `${window.location.origin}/w/${workshop.slug}`, email: user?.email || '' })
+    window.location.href = `mailto:${BUSINESS.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+  }
+
+  return (
+    <div className="bg-surface-card border border-hairline rounded-lg p-5 space-y-5">
+      <div className="flex items-start gap-3">
+        <ShieldCheck className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" aria-hidden="true" />
+        <div>
+          <h2 className="font-semibold text-ink text-sm">{t('st_privacy_title')}</h2>
+          <p className="text-xs text-mute mt-0.5">{t('st_privacy_sub')}</p>
+        </div>
+      </div>
+      <div>
+        <button type="button" onClick={exportJobs} disabled={exporting}
+          className="inline-flex items-center gap-2 min-h-11 bg-surface-bone hover:bg-canvas border border-hairline text-charcoal font-semibold rounded-full px-4 text-sm transition-colors disabled:opacity-60">
+          {exporting ? <Loader className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+          {exporting ? t('st_exporting') : t('st_export_jobs')}
+        </button>
+        <p className="text-xs text-mute mt-1.5">{t('st_export_hint')}</p>
+      </div>
+      <div className="border-t border-hairline pt-4">
+        <h3 className="text-sm font-semibold text-ink">{t('st_delete_title')}</h3>
+        <p className="text-xs text-mute mt-0.5 leading-relaxed">{t('st_delete_hint')}</p>
+        <button type="button" onClick={requestDeletion}
+          className="mt-3 inline-flex items-center gap-2 min-h-11 border border-red-200 text-red-700 hover:bg-red-50 font-semibold rounded-full px-4 text-sm transition-colors">
+          <Trash2 className="w-4 h-4" /> {t('st_delete_btn')}
+        </button>
+      </div>
+      <div className="border-t border-hairline pt-4">
+        <h3 className="text-xs font-semibold text-charcoal mb-2">{t('st_legal_docs')}</h3>
+        <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
+          <Link to="/privasi" className="font-semibold text-primary underline underline-offset-2 hover:text-primary-deep">{t('legal_privacy')}</Link>
+          <Link to="/terma" className="font-semibold text-primary underline underline-offset-2 hover:text-primary-deep">{t('legal_terms')}</Link>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function BillingCard() {
   const { workshop } = useApp()
@@ -237,15 +316,8 @@ function PaymentGatewayCard() {
 
 const LOGO_EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' }
 
-// Storage path of a logo we uploaded ("logos/…"), from its public URL. Anything
-// else (an external URL, another folder) is never deleted.
-function logoPath(url) {
-  const marker = '/object/public/attachments/'
-  const i = url ? url.indexOf(marker) : -1
-  if (i === -1) return null
-  const path = decodeURIComponent(url.slice(i + marker.length).split('?')[0])
-  return path.startsWith('logos/') ? path : null
-}
+// Storage path of a logo we uploaded ("logos/…"); anything else is never deleted.
+const logoPath = (url) => attachmentPath(url, ['logos'])
 
 export function WorkshopSettings() {
   const { workshop, reloadWorkshop } = useApp()
@@ -391,6 +463,7 @@ export function WorkshopSettings() {
     ['langganan',  t('st_nav_billing')],
     ['pembayaran', t('st_nav_gateway')],
     ['link',       t('st_nav_link')],
+    ['privasi',    t('st_nav_privacy')],
   ]
 
   return (
@@ -545,6 +618,9 @@ export function WorkshopSettings() {
         </p>
         <p className="text-xs text-mute mt-1">{t('st_link_hint')}</p>
       </div>
+
+      {/* Data & privacy */}
+      <div id="privasi"><DataPrivacyCard /></div>
     </div>
   )
 }

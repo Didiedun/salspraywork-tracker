@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LanguageContext'
+import { LegalText } from './LegalText'
+import { acceptLegal } from '../lib/legal'
 import { supabase } from '../lib/supabase'
 import { ArrowRight, Key, User } from 'lucide-react'
 
@@ -29,6 +31,7 @@ export function Onboarding() {
   const [joinedAs, setJoinedAs]     = useState(null)  // {workshop_id} after joining
   const [workerName, setWorkerName] = useState('')
   const [savingName, setSavingName] = useState(false)
+  const [agreed, setAgreed]         = useState(false)   // Terms + Privacy Notice, required
 
   const handleNameChange = (e) => {
     setName(e.target.value)
@@ -40,6 +43,8 @@ export function Onboarding() {
     if (!name.trim() || !slug.trim()) return
     setSaving(true); setError('')
     try {
+      // Record the acceptance first; a failure here must not stop anyone getting started.
+      await acceptLegal(supabase).catch(() => {})
       await createWorkshop(name.trim(), slug.trim())
       navigate('/dashboard')
     } catch (err) {
@@ -52,6 +57,7 @@ export function Onboarding() {
     if (!inviteCode.trim()) return
     setSaving(true); setError('')
     try {
+      await acceptLegal(supabase).catch(() => {})
       const { data, error: rpcErr } = await supabase.rpc('join_workshop', { invite_code: inviteCode.trim() })
       if (rpcErr) throw rpcErr
       if (data?.error === 'invalid_code') throw new Error(t('ob_bad_code'))
@@ -75,6 +81,15 @@ export function Onboarding() {
 
   const inputCls = 'w-full bg-canvas border border-hairline rounded-full px-5 py-3 text-ink placeholder-ash focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-colors'
   const btnCls   = 'w-full bg-primary hover:bg-primary-deep disabled:bg-stone disabled:cursor-not-allowed text-white font-semibold rounded-full py-3 flex items-center justify-center gap-2 transition-colors text-sm border-2 border-primary hover:border-primary-deep disabled:border-stone'
+
+  // Same checkbox on both tabs. The links open in a new tab so the form stays filled in.
+  const consent = (
+    <label className="flex items-start gap-2.5 text-xs text-charcoal leading-relaxed cursor-pointer">
+      <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} required
+        className="mt-0.5 w-4 h-4 flex-shrink-0 accent-primary" />
+      <span><LegalText text={t('ob_consent')} newTab /></span>
+    </label>
+  )
 
   if (joinedAs) {
     return (
@@ -153,8 +168,9 @@ export function Onboarding() {
                 </div>
                 <p className="text-ash text-xs mt-1.5 px-1">{t('ob_url_hint')}</p>
               </div>
+              {consent}
               {error && <p className="text-red-700 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
-              <button type="submit" disabled={saving || !name.trim() || !slug.trim()} className={btnCls}>
+              <button type="submit" disabled={saving || !agreed || !name.trim() || !slug.trim()} className={btnCls}>
                 {saving ? t('ob_creating') : <><span>{t('ob_open_btn')}</span><ArrowRight className="w-4 h-4" /></>}
               </button>
             </form>
@@ -169,8 +185,9 @@ export function Onboarding() {
                   onChange={e => setInviteCode(e.target.value.toUpperCase())}
                   required placeholder={t('ob_inv_ph')} className={inputCls} />
               </div>
+              {consent}
               {error && <p className="text-red-700 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
-              <button type="submit" disabled={saving || !inviteCode.trim()} className={btnCls}>
+              <button type="submit" disabled={saving || !agreed || !inviteCode.trim()} className={btnCls}>
                 {saving ? t('ob_joining') : <><span>{t('ob_join_btn')}</span><ArrowRight className="w-4 h-4" /></>}
               </button>
             </form>

@@ -44,6 +44,42 @@ read tables directly. They are applied in two steps:
 
 `tests/tracking-lookup.test.mjs` covers both steps.
 
+## Database changes of 2 Oct 2026
+
+Apply in this order. The first three work with the current frontend, so they can
+go in before the deploy; the fourth only after it.
+
+1. `20261002120000_employee_self_service_limits.sql`: workers could change every
+   column of their own `employees` row through the API (including the basic salary
+   that payroll copies into payslips) and delete it along with their payslips. Now
+   they can only fill in IC, EPF/SOCSO and bank details; pay and employment details
+   stay with the owner.
+2. `20261002120100_public_lookup_minimisation.sql`: `workshop_public(slug)` returns
+   only what the tracking page shows, and `track_jobs` returns the customer's first
+   name and an initial ("Ahmad F.") instead of their full name.
+3. `20261002120200_legal_acceptances.sql`: records which version of the Terms of
+   Service and Privacy Notice each user accepted, with the server's time.
+4. `20261002120300_close_public_workshop_reads.sql`: removes the policy that let
+   anyone list every workshop's phone, address, owner and billing dates. Apply it
+   only once the frontend that calls `workshop_public` is live.
+
+`tests/employee-self-service.test.mjs` and `tests/public-lookup.test.mjs` cover them.
+
+## Privacy Notice, Terms and business details
+
+- `/privasi` and `/terma` show the Privacy Notice and Terms of Service in Bahasa
+  Melayu and English (`src/legal/content.js`). Keep them in step with what the app
+  does, and have a lawyer review changes.
+- `src/legal/business.js` holds who runs Digital Depot (name, SSM number once
+  registered, email, phone or address). The site footer and both documents read it;
+  the Consumer Protection (Electronic Trade Transactions) Regulations 2012 ask for
+  these details on the site.
+- `LEGAL_VERSION` in the same file is the documents' effective date. Change it when
+  either document changes materially: signed-in users then see a one-time banner to
+  accept the new version, and new users accept it at onboarding.
+- Settings → Data & privacy lets an owner export every job as CSV and email a
+  deletion request. Deletion is done by hand after confirming with the owner.
+
 ## ToyyibPay setup and deployment
 
 There are two separate merchant accounts/configurations:

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import { removeAttachmentFiles } from '../lib/storage'
 
 const lsKey = (wid) => `jobs_${wid}`
 function lsLoad(wid) {
@@ -134,13 +135,9 @@ export function useJobs(workshopId) {
     const { data: deleted, error: err } = await supabase.from('jobs').delete().eq('id', id).select('id')
     if (err) throw err
     if (!deleted || deleted.length === 0) throw new Error('tiada kebenaran memadam (RLS) atau rekod tidak wujud')
-    // Best-effort cleanup of the photo files — must never block the delete itself.
-    const paths = (job?.job_attachments?.filter(a => a.type === 'photo') || []).map(a => {
-      const marker = '/object/public/attachments/'
-      const idx = a.url.indexOf(marker)
-      return idx !== -1 ? a.url.slice(idx + marker.length) : null
-    }).filter(Boolean)
-    if (paths.length > 0) { try { await supabase.storage.from('attachments').remove(paths) } catch { /* ignore */ } }
+    // Then remove its files (photos and payment receipts): the bucket is public, so a
+    // file stays reachable by its link until it is gone. Best effort, never blocks the delete.
+    await removeAttachmentFiles(supabase.storage.from('attachments'), (job?.job_attachments || []).map(a => a.url))
     const next = jobs.filter(j => j.id !== id); setJobs(next); lsSave(workshopId, next)
   }
 
@@ -165,8 +162,13 @@ export function useJobs(workshopId) {
         j.id === jobId ? { ...j, job_attachments: j.job_attachments.filter(a => a.id !== attachmentId) } : j)
       lsSave(workshopId, next); setJobs(next); return
     }
-    const { error: err } = await supabase.from('job_attachments').delete().eq('id', attachmentId)
+    const url = jobs.find(j => j.id === jobId)?.job_attachments?.find(a => a.id === attachmentId)?.url
+    // .select() so a blocked delete fails visibly instead of removing the file of a
+    // photo that is still listed.
+    const { data: deleted, error: err } = await supabase.from('job_attachments').delete().eq('id', attachmentId).select('id')
     if (err) throw err
+    if (!deleted || deleted.length === 0) throw new Error('tiada kebenaran memadam (RLS) atau rekod tidak wujud')
+    if (url) await removeAttachmentFiles(supabase.storage.from('attachments'), [url])
     const next = jobs.map(j =>
       j.id === jobId ? { ...j, job_attachments: j.job_attachments.filter(a => a.id !== attachmentId) } : j)
     setJobs(next); lsSave(workshopId, next)

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { PaymentBadge, TypeBadge } from './StatusBadge'
 import { StageBar } from './StageBar'
@@ -77,8 +77,18 @@ export function CustomerView() {
 
   useEffect(() => {
     if (!slug) { setWsLoading(false); return }
-    supabase.from('workshops').select('*').eq('slug', slug).maybeSingle()
-      .then(({ data }) => { setWorkshop(data || null); setWsLoading(false) })
+    // Workshops are not readable when logged out; workshop_public returns only what this
+    // page and its invoice show. Until 20261002120100 is applied the function doesn't
+    // exist, so fall back to the old direct read (remove once every database has it).
+    const fallback = () => supabase.from('workshops')
+      .select('name, slug, logo_url, phone, address, instagram, tiktok, stages, toyyibpay_secret_set, toyyibpay_category_code, toyyibpay_sandbox')
+      .eq('slug', slug).maybeSingle()
+      .then(({ data: w }) => w && {
+        ...w, online_payments: !!w.toyyibpay_secret_set && !!w.toyyibpay_category_code && w.toyyibpay_sandbox === false,
+      })
+    supabase.rpc('workshop_public', { p_slug: slug })
+      .then(({ data, error }) => (error ? fallback() : data))
+      .then((w) => { setWorkshop(w || null); setWsLoading(false) }, () => setWsLoading(false))
   }, [slug])
 
   const search = async (e) => {
@@ -340,7 +350,7 @@ export function CustomerView() {
                       <span className="text-ink font-display font-bold text-lg">{formatMoney(balance)}</span>
                     </div>
                     {/* Live gateways only (the server refuses test mode too); online payments start at RM1 */}
-                    {workshop.toyyibpay_secret_set && workshop.toyyibpay_category_code && workshop.toyyibpay_sandbox === false && balance >= 1 && (
+                    {workshop.online_payments && balance >= 1 && (
                       <>
                         <button onClick={() => payOnline(job.id)} disabled={payLoading}
                           className="w-full mt-3 flex items-center justify-center gap-2 bg-primary hover:bg-primary-deep disabled:opacity-60 text-white font-semibold rounded-full py-3 transition-colors text-sm">
@@ -457,7 +467,9 @@ export function CustomerView() {
                 </div>
               )}
             </div>
-            <p className="text-on-dark-mute text-xs">{t('cv_powered')}</p>
+            <p className="text-on-dark-mute text-xs">
+              {t('cv_powered')} · <Link to="/privasi" className="underline underline-offset-2 hover:text-on-dark">{t('legal_privacy')}</Link>
+            </p>
           </div>
         </div>
       </footer>

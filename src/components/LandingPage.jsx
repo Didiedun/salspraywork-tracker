@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { usePlatformStats } from '../hooks/usePlatformStats'
+import { BUSINESS } from '../legal/business'
 import { useLang } from '../context/LanguageContext'
 import {
   ClipboardList, Package, Users, Smartphone, FileText,
@@ -185,12 +186,12 @@ const painPoints = [
 const features = [
   { icon: ClipboardList, title: 'Pengurusan Kerja',        desc: 'Jejak setiap kenderaan dari mula hingga siap. Tahu status setiap kerja pada bila-bila masa.' },
   { icon: Smartphone,    title: 'Portal Status Pelanggan', desc: 'Pelanggan semak sendiri melalui link khas bengkel. Kurang call, lebih fokus kerja.' },
-  { icon: Package,       title: 'Inventori Masa Nyata',    desc: 'Pantau stok bahan. Amaran automatik sebelum kehabisan supaya kerja tidak terganggu.' },
-  { icon: Users,         title: 'Pengurusan Pekerja',      desc: 'Jemput pekerja masuk sistem. Mereka nampak tugasan sahaja — data kewangan tetap peribadi.' },
+  { icon: Package,       title: 'Inventori & Stok',        desc: 'Stok bahan ditolak automatik bila kerja disimpan. Amaran stok rendah sebelum kehabisan.' },
+  { icon: Users,         title: 'Pengurusan Pekerja',      desc: 'Jemput pekerja masuk sistem. Mereka nampak senarai kerja sahaja — kewangan, perbelanjaan dan gaji kekal untuk pemilik.' },
   { icon: FileText,      title: 'Resit & Invois Digital',  desc: 'Jana resit profesional terus dari sistem. Pelanggan simpan sebagai PDF tanpa pencetak.' },
   { icon: BarChart2,     title: 'Laporan Pendapatan',      desc: 'Lihat pendapatan bulanan, kerja tertunggak dan prestasi bengkel dalam satu pandangan.' },
   { icon: Camera,        title: 'Gambar Sebelum & Selepas', desc: 'Lampir foto setiap peringkat kerja sebagai bukti kepada pelanggan dan rekod bengkel.' },
-  { icon: Clock,         title: 'Amaran Kerja Tertangguh', desc: 'Sistem tandakan kerja melebihi tempoh secara automatik. Tiada kerja terlupa atau tertangguh.' },
+  { icon: Clock,         title: 'Amaran Kerja Tertangguh', desc: 'Kerja yang lama tidak dikemas kini ditanda secara automatik, supaya tiada yang terlepas pandang.' },
 ]
 
 const steps = [
@@ -205,14 +206,12 @@ const trialFeatures = [
   'Resit & invois digital (print / PDF)',
   '1 akaun pekerja',
   'Inventori (maks 20 item)',
-  'Ringkasan pendapatan asas',
+  'Laporan pendapatan & eksport CSV',
 ]
 
 const proExtras = [
   'Kerja, pekerja & inventori tanpa had',
-  'Laporan & analitik lanjutan',
-  'Eksport data (CSV / PDF)',
-  'Sokongan keutamaan WhatsApp',
+  'Sokongan keutamaan',
 ]
 
 const earlyBirdFeatures = [
@@ -221,16 +220,16 @@ const earlyBirdFeatures = [
   'Pekerja & kod jemputan tanpa had',
   'Resit & invois digital (print / PDF)',
   'Inventori & pemantauan stok tanpa had',
-  'Laporan & analitik penuh',
+  'Laporan pendapatan & laporan harian',
   'Eksport data (CSV / PDF)',
 ]
 
 const faqs = [
-  { q: 'Apa yang berlaku selepas tempoh percuma?', a: 'Kami akan hantar peringatan sebelum tamat. Pendaftar awal (early bird) mendapat RM20/bulan selamanya selepas 12 bulan percuma. Pendaftar biasa perlu naik taraf ke Pro (RM30/bulan) selepas 14 hari percubaan. Jika tidak, akaun dibekukan — data anda tidak dipadam.' },
+  { q: 'Apa yang berlaku selepas tempoh percuma?', a: 'Anda akan nampak peringatan dalam sistem sebelum tamat. Pendaftar awal (early bird) mendapat RM20/bulan selamanya selepas 12 bulan percuma (lihat Terma Perkhidmatan). Pendaftar biasa perlu naik taraf ke Pro (RM30/bulan) selepas 14 hari percubaan. Jika tidak, anda masih boleh buka dan urus kerja sedia ada tetapi tidak boleh tambah kerja baharu — data anda tidak dipadam.' },
   { q: 'Apa had dalam percubaan percuma?', a: 'Semasa 14 hari percubaan, anda boleh rekod sehingga 30 kerja aktif, tambah 1 akaun pekerja, dan simpan sehingga 20 item inventori. Naik taraf ke Pro untuk semua had tanpa had.' },
   { q: 'Sistem ini untuk jenis bengkel apa?', a: 'Digital Depot sesuai untuk pelbagai jenis bengkel kereta — bengkel cat & spray, ketuk & tarik, dempul, polish, servis umum dan lain-lain. Setiap bengkel boleh tetapkan peringkat kerja sendiri mengikut aliran kerja mereka.' },
   { q: 'Boleh guna dari telefon?', a: 'Ya, Digital Depot direka khas untuk mudah alih. Berfungsi lancar di telefon, tablet dan komputer — tiada aplikasi perlu dimuat turun. Buka pelayar web, terus boleh guna.' },
-  { q: 'Adakah data bengkel saya selamat?', a: 'Data anda disimpan di pelayan bertaraf enterprise dengan enkripsi penuh. Setiap bengkel hanya boleh akses data mereka sendiri. Kami tidak kongsi maklumat anda dengan mana-mana pihak.' },
+  { q: 'Adakah data bengkel saya selamat?', a: 'Data disimpan oleh Supabase di pusat data di Singapura, disulitkan semasa dihantar dan semasa disimpan. Setiap bengkel hanya boleh akses data sendiri, dan pekerja hanya nampak apa yang perlu untuk kerja mereka. Kami tidak menjual data anda; kami hanya kongsi dengan penyedia yang menjalankan sistem ini (Supabase untuk pangkalan data, Google untuk log masuk, ToyyibPay untuk bayaran). Butiran penuh dalam Notis Privasi.' },
 ]
 
 /* ─── billing toggle component ───────────────────────── */
@@ -339,7 +338,7 @@ function BillingToggle({ stats, loading }) {
               <p className="text-charcoal text-sm leading-snug">
                 {earlyBird
                   ? 'Semua ciri tanpa had — aktif selepas tempoh percuma.'
-                  : 'Semua dalam percubaan, ditambah ciri lanjutan tanpa had.'}
+                  : 'Semua ciri, tanpa had kerja, pekerja atau inventori.'}
               </p>
             </div>
             <div className="space-y-2 mb-5 flex-1">
@@ -485,10 +484,10 @@ export function LandingPage() {
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-10">
             {[
-              [loading ? '—' : `${stats?.workshops ?? 0}+`, 'Bengkel Aktif'],
-              [loading ? '—' : `${stats?.jobs ?? 0}+`,      'Kenderaan Direkod'],
-              [loading ? '—' : `${stats?.paid ?? 0}+`,      'Invois Diselesaikan'],
-              [loading ? '—' : `${stats?.photos ?? 0}+`,    'Gambar Dimuat Naik'],
+              [loading ? '—' : `${stats?.workshops ?? 0}`, 'Bengkel Berdaftar'],
+              [loading ? '—' : `${stats?.jobs ?? 0}`,      'Kenderaan Direkod'],
+              [loading ? '—' : `${stats?.paid ?? 0}`,      'Invois Diselesaikan'],
+              [loading ? '—' : `${stats?.photos ?? 0}`,    'Gambar Dimuat Naik'],
             ].map(([val, label]) => (
               <div key={label} className="text-center">
                 <p className="font-display font-bold text-3xl sm:text-4xl text-primary">{val}</p>
@@ -627,6 +626,11 @@ export function LandingPage() {
         )}
 
         <BillingToggle stats={stats} loading={loading} />
+        <p className="max-w-2xl mx-auto mt-6 text-center text-xs leading-relaxed text-mute">
+          Harga dalam Ringgit Malaysia ialah jumlah penuh yang anda bayar — tiada caj tambahan.
+          Bayaran melalui ToyyibPay (FPX atau kad); langganan aktif sebaik sahaja bayaran disahkan. Tiada pembaharuan automatik.{' '}
+          <Link to="/terma#bayaran" className="font-semibold text-primary underline underline-offset-2 hover:text-primary-deep">Terma bayaran &amp; bayaran balik</Link>
+        </p>
       </section>
 
       {/* ── TRUST STRIP ── */}
@@ -634,9 +638,9 @@ export function LandingPage() {
         <div className="max-w-6xl mx-auto px-5 sm:px-8 py-12">
           <div className="grid sm:grid-cols-3 gap-8 text-center">
             {[
-              { icon: Shield,     title: 'Data Selamat',          desc: 'Enkripsi penuh. Data bengkel anda tidak dikongsi dengan sesiapa.' },
+              { icon: Shield,     title: 'Data Dilindungi',       desc: 'Disulitkan semasa dihantar dan disimpan. Kami tidak menjual data anda.' },
               { icon: TrendingUp, title: 'Skala Mengikut Keperluan', desc: 'Dari 1 pekerja ke 20 — sistem kami membesar bersama bengkel anda.' },
-              { icon: Zap,        title: 'Berfungsi di Mana-mana', desc: 'Telefon, tablet atau komputer. Data sentiasa disegerak masa nyata.' },
+              { icon: Zap,        title: 'Berfungsi di Mana-mana', desc: 'Telefon, tablet atau komputer. Data disimpan dalam talian, sama di setiap peranti.' },
             ].map(({ icon: Icon, title, desc }) => (
               <div key={title}>
                 <div className="w-10 h-10 rounded-xl bg-surface-card border border-hairline flex items-center justify-center mx-auto mb-3">
@@ -669,7 +673,10 @@ export function LandingPage() {
             Cuba percuma. Tiada risiko.
           </h2>
           <p className="text-on-dark/70 text-lg mb-8">
-            14 hari penuh, semua ciri tersedia. Tiada kad kredit.<br className="hidden sm:block" />
+            {earlyBird
+              ? 'Percuma 12 bulan untuk 10 bengkel pertama, semua ciri tanpa had. Tiada kad kredit.'
+              : '14 hari penuh untuk mencuba semua ciri. Tiada kad kredit.'}{' '}
+            <br className="hidden sm:block" />
             Batal bila-bila masa.
           </p>
           <Link to="/register"
@@ -709,9 +716,19 @@ export function LandingPage() {
               </div>
             </div>
           </div>
-          <div className="border-t border-white/5 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2">
-            <p className="text-on-dark/60 text-xs">© {new Date().getFullYear()} Digital Depot. Hak cipta terpelihara.</p>
-            <p className="text-on-dark/60 text-xs">Dibina untuk bengkel Malaysia</p>
+          <div className="border-t border-white/5 mt-8 pt-6 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div className="text-on-dark/60 text-xs space-y-1">
+              <p>© {new Date().getFullYear()} Digital Depot{BUSINESS.operator ? ` · ${t('legal_operator', { name: BUSINESS.operator })}` : ''}{BUSINESS.ssm ? ` (${BUSINESS.ssm})` : ''}</p>
+              <p>
+                <a href={`mailto:${BUSINESS.email}`} className="underline underline-offset-2 hover:text-on-dark">{BUSINESS.email}</a>
+                {BUSINESS.phone && <> · <a href={`tel:${BUSINESS.phone.replace(/[^\d+]/g, '')}`} className="underline underline-offset-2 hover:text-on-dark">{BUSINESS.phone}</a></>}
+                {BUSINESS.address && <> · {BUSINESS.address}</>}
+              </p>
+            </div>
+            <nav aria-label={t('land_legal_nav')} className="flex items-center gap-5 text-xs">
+              <Link to="/privasi" className="text-on-dark/60 hover:text-on-dark transition-colors">{t('legal_privacy')}</Link>
+              <Link to="/terma" className="text-on-dark/60 hover:text-on-dark transition-colors">{t('legal_terms')}</Link>
+            </nav>
           </div>
         </div>
       </footer>

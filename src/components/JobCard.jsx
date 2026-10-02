@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { uploadJobFile } from '../lib/storage'
 import { PaymentBadge, TypeBadge } from './StatusBadge'
 import { StageBar } from './StageBar'
 import { JobForm } from './JobForm'
@@ -116,13 +117,7 @@ export function JobCard({ job, visitCount = 1, onUpdate, onRefresh, onDelete, on
   const uploadFile = async (file, type) => {
     setUploading(type)
     try {
-      const ext    = file.name.split('.').pop()
-      const folder = type === 'photo' ? 'photos' : 'receipts'
-      const path   = `${folder}/${job.id}/${Date.now()}.${ext}`
-      const { error: upErr } = await supabase.storage.from('attachments').upload(path, file)
-      if (upErr) throw upErr
-      const { data: { publicUrl } } = supabase.storage.from('attachments').getPublicUrl(path)
-      await onAddAttachment(job.id, publicUrl, type, '', type === 'photo' ? job.stage : '')
+      await uploadJobFile(supabase.storage.from('attachments'), job, file, type, onAddAttachment)
     } catch (e) { toast.error(`${t('upload_failed')}: ${e.message}`) }
     finally { setUploading(null) }
   }

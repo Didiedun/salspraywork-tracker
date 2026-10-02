@@ -1,17 +1,20 @@
 import { useState, useMemo, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useJobs } from '../hooks/useJobs'
 import { supabase } from '../lib/supabase'
+import { uploadJobFile } from '../lib/storage'
 import { StageBar } from './StageBar'
 import { PaymentBadge } from './StatusBadge'
 import { Lightbox } from './Lightbox'
 import { daysIn, isStale } from '../constants'
 import { useStages } from '../hooks/useStages'
 import { useLang } from '../context/LanguageContext'
+import { LegalBanner } from './LegalBanner'
 import { useNotify } from '../context/NotifyContext'
 import {
   RefreshCw, ChevronRight, ChevronLeft, Search, LogOut, Wrench, Clock, Camera, DoorOpen, UserCheck,
-  Pencil, Check, X, AlertTriangle, Save, FileText, CheckCircle2, Loader, MessageSquarePlus,
+  Pencil, Check, X, AlertTriangle, Save, FileText, CheckCircle2, Loader, MessageSquarePlus, ShieldCheck,
 } from 'lucide-react'
 import { FeedbackWidget, openFeedback } from './FeedbackWidget'
 import { PayslipModal } from './PayslipModal'
@@ -167,12 +170,7 @@ export function WorkerView() {
   const uploadPhoto = async (job, file) => {
     setUploading(u => ({ ...u, [job.id]: true }))
     try {
-      const ext  = file.name.split('.').pop()
-      const path = `photos/${job.id}/${Date.now()}.${ext}`
-      const { error: upErr } = await supabase.storage.from('attachments').upload(path, file)
-      if (upErr) throw upErr
-      const { data: { publicUrl } } = supabase.storage.from('attachments').getPublicUrl(path)
-      await addAttachment(job.id, publicUrl, 'photo', '', job.stage)
+      await uploadJobFile(supabase.storage.from('attachments'), job, file, 'photo', addAttachment)
     } catch (e) { toast.error(`${t('upload_failed')}: ${e.message}`) }
     finally { setUploading(u => ({ ...u, [job.id]: false })) }
   }
@@ -256,6 +254,7 @@ export function WorkerView() {
           </div>
         </div>
       </header>
+      <LegalBanner />
 
       <main className="max-w-3xl mx-auto px-4 py-6 space-y-5 pb-16">
         {/* Greeting — the name can always be edited, not only on hover */}
@@ -496,6 +495,9 @@ export function WorkerView() {
           <button onClick={signOut} className="flex w-full min-h-12 items-center gap-3 px-4 text-sm font-semibold text-charcoal hover:bg-canvas transition-colors">
             <LogOut className="w-4 h-4" aria-hidden="true" /> {t('nav_logout')}
           </button>
+          <Link to="/privasi" className="flex w-full min-h-12 items-center gap-3 px-4 text-sm font-semibold text-charcoal hover:bg-canvas transition-colors">
+            <ShieldCheck className="w-4 h-4" aria-hidden="true" /> {t('legal_privacy')} · {t('legal_terms')}
+          </Link>
           <button onClick={leave} className="flex w-full min-h-12 items-center gap-3 px-4 text-left text-sm font-semibold text-red-700 hover:bg-red-50 transition-colors">
             <DoorOpen className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
             <span>{t('wv_leave')}<span className="block text-xs font-normal text-mute">{t('wv_leave_hint')}</span></span>
